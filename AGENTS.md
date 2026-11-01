@@ -24,6 +24,13 @@ Production runs on a constrained host (2 CPU cores, 2 GB physical RAM). Keep the
 - Keep service-worker caching versioned and bounded; do not cache private API responses or signed storage URLs by default.
 - Use semantic HTML, keyboard accessibility, labels, visible focus, and touch targets suitable for mobile use.
 
+## UI Design System
+
+- All referee-client and administration-console user interfaces must follow [`docs/ui/fiba_about_ui_specification.md`](docs/ui/fiba_about_ui_specification.md). Read it before implementing or materially changing UI; treat its design tokens, color palette, typography, component shapes, interaction states, and prohibited patterns as the shared baseline.
+- Do not introduce a competing visual system or one-off styling without documenting an explicit exception in the relevant product spec. For page-specific requirements, link to the shared UI specification rather than copying or redefining its rules.
+- Apply the specification in a way that preserves the product requirements above: mobile-first layout, accessible contrast and keyboard focus, appropriate touch targets, and fast courtside workflows. Do not apply sample marketing/editorial layouts or oversized whitespace mechanically to dense operational screens; keep the shared visual language while adapting layout and density to the task.
+- Before completing UI work, check the result against the specification's colors, forbidden styles, component requirements, responsive behavior, and interaction/accessibility states. Where the current specification conflicts with accessibility or an explicit product requirement, satisfy the product/accessibility requirement and record the narrow exception in the relevant spec.
+
 ## Testing and Quality
 
 - Use a lightweight unit-test setup such as Vitest when the frontend stack supports it. Keep unit-test execution memory below 300 MB; avoid loading the whole application or heavyweight browser tooling for unit tests.
