@@ -9,3 +9,4 @@ Store consequential technical and product decisions in this directory. Use seque
 - [ADR 0003: Scoped RBAC with Explicit Assignment Workflow](./0003-scoped-rbac-and-assignment-workflow.md) — combine baseline roles, explicit scope bindings, separate qualification attributes, and audited assignment state transitions.
 - [ADR 0004：API、数据库与认证技术基线](./0004-api-database-and-auth-stack.md) — use Fastify/TypeScript, PostgreSQL, and revocable server-side sessions.
 - [ADR 0005：对象存储供应商基线](./0005-object-storage-provider.md) — use Alibaba Cloud OSS behind an isolated provider adapter.
+- [ADR 0006：裁判端前端技术栈](./0006-referee-web-frontend-stack.md) — use Vue 3/TypeScript and Vite to build a static referee SPA.
