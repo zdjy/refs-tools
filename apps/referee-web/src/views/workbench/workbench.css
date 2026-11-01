@@ -30,7 +30,7 @@
 .clock-state { font-size: 12px; }
 .clock-running .clock-state { color: var(--green); }
 .clock-expired .clock-state { color: var(--red-hover); }
-.clock-value { margin: 14px 0; font-variant-numeric: tabular-nums; font-size: clamp(32px, 7vw, 42px); font-weight: 650; line-height: 1.1; }
+.clock-value { color: var(--ink); margin: 14px 0; font-variant-numeric: tabular-nums; font-size: clamp(32px, 7vw, 42px); font-weight: 650; line-height: 1.1; }
 .clock-controls { display: flex; align-items: center; gap: 8px; }
 .clock-controls > button:first-child { min-width: 86px; }
 .period-strip { min-height: 62px; margin-top: 12px; padding: 8px 14px; display: flex; align-items: center; gap: 14px; border-radius: 16px; background: var(--sand); color: var(--body); font-size: 13px; }
@@ -40,7 +40,7 @@
 .operations-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 12px; }
 .operation-section { min-width: 0; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.section-heading h3 { margin: 0; font-size: 16px; }
+.section-heading h3 { color: var(--ink); margin: 0; font-size: 16px; }
 .section-note, .event-count { color: var(--body); font-size: 12px; }
 .foul-teams { display: grid; gap: 8px; margin-top: 16px; }
 .team-row { min-height: 56px; padding: 6px 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); }
