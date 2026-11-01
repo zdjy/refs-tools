@@ -6,6 +6,7 @@ export const uiTokens = {
   font: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 } as const
 
+/** 将共享 token 注入根节点的 CSS 变量，使页面样式与组件库主题共用同一来源（ADR 0007）。 */
 export function applyUiTokens(root: { style: Pick<CSSStyleDeclaration, 'setProperty'> }): void {
   for (const [name, value] of Object.entries(uiTokens)) {
     root.style.setProperty(`--${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`, value)

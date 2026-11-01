@@ -5,9 +5,11 @@ import {
 
 export interface WorkbenchSnapshot {
   sessions: WorkbenchSession[]
+  /** 空字符串表示没有活动会话，不是一个可保存的会话 ID。 */
   activeId: string
 }
 
+/** 同步设备 IO 边界；失败应抛出，由页面状态层决定保留、重试或提示。 */
 export interface WorkbenchPorts {
   load(): WorkbenchSnapshot
   save(snapshot: WorkbenchSnapshot): void
@@ -47,6 +49,11 @@ function isSession(value: unknown): value is WorkbenchSession {
       && (event.detail === undefined || typeof event.detail === 'string'))
 }
 
+/**
+ * 只读恢复 v1 数据；整批校验失败即拒绝加载，避免静默丢弃损坏记录后覆盖原始数据。
+ * @returns 活动 ID 无效时回退到首个会话；无记录时 activeId 为空字符串。
+ * @throws 存储不可访问、JSON 损坏、会话结构无效或 ID 重复时向调用方传播错误。
+ */
 export function loadWorkbench(storage: Pick<Storage, 'getItem'>): WorkbenchSnapshot {
   const raw = storage.getItem(STORAGE_KEY)
   const sessions: unknown = raw === null ? [] : JSON.parse(raw)
@@ -59,6 +66,11 @@ export function loadWorkbench(storage: Pick<Storage, 'getItem'>): WorkbenchSnaps
   return { sessions, activeId }
 }
 
+/**
+ * 保存会话与活动 ID；空列表时移除两个键，沿用现有 v1 存储协议。
+ * 两个键的写入不具备事务性，恢复时由 loadWorkbench 校正失效的活动 ID。
+ * @throws 存储不可用或配额不足时传播错误，由调用方保留内存状态供重试/导出。
+ */
 export function saveWorkbench(storage: Pick<Storage, 'setItem' | 'removeItem'>, snapshot: WorkbenchSnapshot): void {
   if (!snapshot.sessions.length) {
     storage.removeItem(STORAGE_KEY)
@@ -69,6 +81,10 @@ export function saveWorkbench(storage: Pick<Storage, 'setItem' | 'removeItem'>, 
   storage.setItem(ACTIVE_SESSION_KEY, snapshot.activeId)
 }
 
+/**
+ * 以 localStorage 和 JSON 下载实现设备 IO，不上传业务比赛记录（MVP-001 §9.1）。
+ * @returns 调用方须在作用域销毁时调用 dispose，释放最近一次导出的 Blob URL。
+ */
 export function createBrowserWorkbenchPorts(): WorkbenchPorts {
   let exportUrl: string | undefined
   function dispose() {
@@ -79,6 +95,7 @@ export function createBrowserWorkbenchPorts(): WorkbenchPorts {
     load: () => loadWorkbench(localStorage),
     save: (snapshot) => saveWorkbench(localStorage, snapshot),
     download(session) {
+      // 保留本次 URL 供浏览器完成下载；下次导出或离开页面时释放，避免 Blob 累积。
       dispose()
       exportUrl = URL.createObjectURL(new Blob([JSON.stringify(session, null, 2)], { type: 'application/json' }))
       const link = document.createElement('a')

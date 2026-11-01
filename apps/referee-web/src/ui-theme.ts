@@ -1,12 +1,14 @@
 import type { GlobalThemeOverrides } from 'naive-ui'
 import { uiTokens as t } from './ui-tokens'
 
+// 通过公开主题接口同时适配两类输入控件，避免依赖 .n-* 内部结构；升级按 ADR 0007 回归。
 const inputTheme = {
   borderRadius: '12px', heightMedium: '46px', color: t.soft, colorFocus: t.soft,
   border: '1px solid transparent', borderFocus: `1px solid ${t.red}`,
   boxShadowFocus: t.focus, textColor: t.ink,
 }
 
+// 覆盖 Naive UI 默认品牌色和尺寸，统一映射共享 token，不在页面逐个修补（ADR 0007）。
 export const refereeTheme: GlobalThemeOverrides = {
   common: {
     primaryColor: t.ink, primaryColorHover: t.black, primaryColorPressed: t.black, primaryColorSuppl: t.ink,

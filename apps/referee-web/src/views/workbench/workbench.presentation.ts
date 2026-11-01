@@ -13,6 +13,10 @@ export const ruleFields = [
   { key: 'shortShotSeconds', label: '短进攻计时（秒）', max: 60 },
 ] as const
 
+/**
+ * 将计时状态投影为展示文案；到时独立于运行状态，不靠刷新过程改写领域对象。
+ * @param now 当前 Unix 时间戳（毫秒），与计时器时间基准一致。
+ */
 export function presentClock(clock: ClockState, now: number) {
   const remaining = remainingMs(clock, now)
   const expired = clock.status !== 'idle' && remaining === 0
@@ -25,5 +29,13 @@ export function presentClock(clock: ClockState, now: number) {
 }
 
 const timeFormat = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+/**
+ * 按设备本地时区显示操作时间，不改变导出记录的绝对时间。
+ * @param at Unix 时间戳（毫秒）。
+ */
 export const formatTime = (at: number) => timeFormat.format(at)
+/**
+ * 按设备本地时区显示会话日期，区别于导出文件名中的 UTC 日期。
+ * @param at Unix 时间戳（毫秒）。
+ */
 export const formatDate = (at: number) => new Date(at).toLocaleDateString('zh-CN')
