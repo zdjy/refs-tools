@@ -10,6 +10,7 @@
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
+    "naive-ui": "^2.45.3",
     "vue": "^3.5.44"
   },
   "devDependencies": {

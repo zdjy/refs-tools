@@ -2,6 +2,8 @@
 
 本项目采用 single-context 布局，业务术语共享一份根级 glossary，系统级架构决策统一存放于 `docs/decisions/`。
 
+开发规约统一维护在[全栈架构与 AI 编码规约](coding-standards.md)，通过根级 [AGENTS.md](../../AGENTS.md) 引用，不另设 DDD 规范或重复的架构规约。本文仅约定领域文档的阅读和术语维护方式；业务词汇见[统一语言表](../../GLOSSARY.md)，业务需求及具体决策分别见 `docs/specs/` 和 `docs/decisions/`。
+
 ## 探索代码前
 
 - 若根目录存在 `GLOSSARY.md`，阅读与当前任务相关的术语定义；文件不存在时静默继续，不要求预先创建。

@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
+  NAlert,
+  NButton,
+  NCard,
+  NConfigProvider,
+  NEmpty,
+  NInputNumber,
+  NModal,
+  NPopconfirm,
+} from 'naive-ui'
+import { refereeTheme } from './ui-theme'
+import {
   ACTIVE_SESSION_KEY,
   DEFAULT_RULES,
   STORAGE_KEY,
   addFoul,
   createSession,
-  elapsedMs,
   formatClock,
   remainingMs,
   resetClock,
@@ -23,7 +33,7 @@ const now = ref(Date.now())
 const storageError = ref('')
 const sessionNotice = ref('')
 const exportLink = ref('')
-const dialog = ref(false)
+const createDialogVisible = ref(false)
 const newRules = ref({ periodCount: DEFAULT_RULES.periodCount, periodMinutes: 10, shotSeconds: 24, shortShotSeconds: 14 })
 let ticker: number | undefined
 let exportUrl: string | undefined
@@ -72,7 +82,7 @@ function startSession() {
     const session = createSession(at, rules)
     sessions.value = [session, ...sessions.value]
     activeId.value = session.id
-    dialog.value = false
+    createDialogVisible.value = false
     sessionNotice.value = ''
     persist()
   } catch {
@@ -94,10 +104,6 @@ function switchPeriod() {
   })
 }
 
-function recordEvent(label: string, detail?: string) {
-  updateSession((session, at) => withEvent(session, { id: `event-${at}`, at, label, ...(detail ? { detail } : {}) }, at))
-}
-
 function onFoul(team: keyof FoulCount) {
   updateSession((session, at) => addFoul(session, team, at))
 }
@@ -110,7 +116,7 @@ function applyPreset(seconds: number) {
 }
 
 function clearEventLog() {
-  if (!activeSession.value || !window.confirm('清除当前比赛的操作日志？此操作不可撤销。')) return
+  if (!activeSession.value) return
   updateSession((session) => ({ ...session, events: [] }))
 }
 
@@ -120,7 +126,6 @@ function selectSession(id: string) {
 }
 
 function removeSession(id: string) {
-  if (!window.confirm('删除这场本地比赛？此操作不可撤销。')) return
   sessions.value = sessions.value.filter((session) => session.id !== id)
   activeId.value = sessions.value[0]?.id ?? ''
   if (activeId.value) persist()
@@ -136,7 +141,7 @@ function removeSession(id: string) {
 }
 
 function clearAll() {
-  if (!sessions.value.length || !window.confirm('清空本设备的全部比赛会话？此操作不可撤销。')) return
+  if (!sessions.value.length) return
   sessions.value = []
   activeId.value = ''
   try {
@@ -194,59 +199,63 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="app-shell">
+  <n-config-provider :theme-overrides="refereeTheme">
+    <main class="app-shell">
     <header class="topbar">
       <a class="brand" href="#main" aria-label="裁判工具箱主页"><span class="brand-mark">R</span><span>裁判工具箱</span></a>
-      <div class="topbar-meta"><span class="connection-dot"></span><span>离线工作台</span><button class="text-button" type="button" @click="clearAll">清空全部</button></div>
+      <div class="topbar-meta"><span class="connection-dot"></span><span>离线工作台</span><n-popconfirm positive-text="清空" negative-text="取消" @positive-click="clearAll"><template #trigger><n-button quaternary size="small" class="text-button">清空全部</n-button></template>清空本设备的全部比赛会话？</n-popconfirm></div>
     </header>
 
     <section id="main" class="workspace">
       <aside class="sidebar" aria-label="比赛会话列表">
-        <div class="sidebar-heading"><h1>比赛</h1><button class="icon-button" type="button" aria-label="新建比赛" title="新建比赛" @click="dialog = true">+</button></div>
+        <div class="sidebar-heading"><h1>比赛</h1><n-button quaternary circle class="icon-button" aria-label="新建比赛" title="新建比赛" @click="createDialogVisible = true">+</n-button></div>
         <p class="sidebar-caption">仅保存在这台设备</p>
         <ul v-if="sessions.length" class="session-list">
           <li v-for="session in sessions" :key="session.id">
-            <button class="session-item" :class="{ selected: activeId === session.id }" type="button" @click="selectSession(session.id)">
+            <n-button quaternary block class="session-item" :class="{ selected: activeId === session.id }" @click="selectSession(session.id)">
               <span class="session-name">{{ session.title }}</span><span class="session-date">{{ new Date(session.createdAt).toLocaleDateString('zh-CN') }} · 第 {{ session.period }} 节</span>
-            </button>
+            </n-button>
           </li>
         </ul>
-        <div v-else class="empty-list"><span class="empty-mark">+</span><p>还没有比赛</p><button class="link-button" type="button" @click="dialog = true">创建一场</button></div>
+        <div v-else class="empty-list"><span class="empty-mark">+</span><p>还没有比赛</p><n-button quaternary size="small" class="link-button" @click="createDialogVisible = true">创建一场</n-button></div>
         <div class="sidebar-bottom"><div class="privacy-icon" aria-hidden="true">◈</div><p>共享设备提示</p><span>赛后请导出需要保留的记录，并清除此设备中的比赛数据。</span></div>
       </aside>
 
       <section v-if="activeSession" class="main-panel" aria-label="比赛控制台">
-        <div v-if="storageError" class="notice notice-error" role="alert">{{ storageError }}</div>
-        <div v-if="sessionNotice" class="notice notice-info" role="status"><span>{{ sessionNotice }}</span><button type="button" class="notice-close" aria-label="关闭提示" @click="sessionNotice = ''">×</button></div>
+        <n-alert v-if="storageError" class="notice" type="error" :show-icon="false">{{ storageError }}</n-alert>
+        <n-alert v-if="sessionNotice" class="notice" type="info" closable :show-icon="false" @close="sessionNotice = ''">{{ sessionNotice }}</n-alert>
         <header class="match-header">
           <div><p class="eyebrow">场边工作台</p><h2>{{ activeSession.title }}</h2><p class="match-subtitle">第 {{ activeSession.period }} 节 <span class="separator">/</span> {{ activeSession.rules.label }}</p></div>
-          <div class="header-actions"><button class="secondary-button" type="button" @click="exportSession"><span aria-hidden="true">↓</span> 导出</button><button class="danger-quiet" type="button" aria-label="删除当前比赛" title="删除比赛" @click="removeSession(activeSession.id)">⌫</button></div>
+          <div class="header-actions"><n-button secondary round class="secondary-button" @click="exportSession"><span aria-hidden="true">↓</span> 导出</n-button><n-popconfirm positive-text="删除" negative-text="取消" @positive-click="removeSession(activeSession.id)"><template #trigger><n-button quaternary circle class="danger-quiet" aria-label="删除当前比赛" title="删除比赛">⌫</n-button></template>删除这场本地比赛？</n-popconfirm></div>
         </header>
 
         <section class="clock-grid" aria-label="计时器">
-          <article v-for="entry in clockEntries" :key="entry.kind" class="clock-panel" :class="{ 'clock-running': activeSession.clocks[entry.kind].status === 'running', 'clock-expired': remainingMs(activeSession.clocks[entry.kind], now) === 0 && activeSession.clocks[entry.kind].status !== 'idle' }">
+          <n-card v-for="entry in clockEntries" :key="entry.kind" class="clock-panel" :class="{ 'clock-running': activeSession.clocks[entry.kind].status === 'running', 'clock-expired': remainingMs(activeSession.clocks[entry.kind], now) === 0 && activeSession.clocks[entry.kind].status !== 'idle' }" content-style="padding: 16px 18px;">
             <div class="clock-title"><span>{{ entry.label }}</span><span class="clock-state">{{ activeSession.clocks[entry.kind].status === 'running' ? '进行中' : activeSession.clocks[entry.kind].status === 'paused' ? '已暂停' : '待开始' }}</span></div>
             <div class="clock-value" role="timer" aria-live="off">{{ formatClock(remainingMs(activeSession.clocks[entry.kind], now)) }}</div>
-            <div class="clock-controls"><button class="primary-button" type="button" @click="updateSession((session, at) => ({ ...session, clocks: { ...session.clocks, [entry.kind]: toggleClock(session.clocks[entry.kind], at) }, updatedAt: at }))">{{ activeSession.clocks[entry.kind].status === 'running' ? '暂停' : '开始' }}</button><button class="reset-button" type="button" :aria-label="`重置${entry.label}`" title="重置" @click="updateSession((session, at) => ({ ...session, clocks: { ...session.clocks, [entry.kind]: resetClock(session.clocks[entry.kind]) }, updatedAt: at }))">↺</button></div>
-          </article>
+            <div class="clock-controls"><n-button type="primary" round class="primary-button" @click="updateSession((session, at) => ({ ...session, clocks: { ...session.clocks, [entry.kind]: toggleClock(session.clocks[entry.kind], at) }, updatedAt: at }))">{{ activeSession.clocks[entry.kind].status === 'running' ? '暂停' : '开始' }}</n-button><n-button quaternary circle class="reset-button" :aria-label="`重置${entry.label}`" title="重置" @click="updateSession((session, at) => ({ ...session, clocks: { ...session.clocks, [entry.kind]: resetClock(session.clocks[entry.kind]) }, updatedAt: at }))">↺</n-button></div>
+          </n-card>
         </section>
 
-        <div class="period-strip"><span>节次</span><strong>{{ String(activeSession.period).padStart(2, '0') }} <small>/ {{ String(activeSession.rules.periodCount).padStart(2, '0') }}</small></strong><button class="secondary-button" type="button" @click="switchPeriod">下一节 <span aria-hidden="true">→</span></button></div>
+        <div class="period-strip"><span>节次</span><strong>{{ String(activeSession.period).padStart(2, '0') }} <small>/ {{ String(activeSession.rules.periodCount).padStart(2, '0') }}</small></strong><n-button secondary round class="secondary-button" @click="switchPeriod">下一节 <span aria-hidden="true">→</span></n-button></div>
 
         <div class="operations-grid">
-          <section class="operation-section foul-section"><div class="section-heading"><div><p class="eyebrow">赛事记录</p><h3>球队犯规</h3></div><span class="section-note">本节</span></div><div class="foul-teams"><div class="team-row"><div><span class="team-name">主队</span><span class="foul-total">{{ activeSession.fouls.home }}</span></div><button class="secondary-button" type="button" @click="onFoul('home')"><span aria-hidden="true">+</span> 记录犯规</button></div><div class="team-row"><div><span class="team-name">客队</span><span class="foul-total">{{ activeSession.fouls.away }}</span></div><button class="secondary-button" type="button" @click="onFoul('away')"><span aria-hidden="true">+</span> 记录犯规</button></div></div></section>
+          <n-card class="operation-section foul-section" :bordered="true" content-style="padding: 20px;"><div class="section-heading"><div><p class="eyebrow">赛事记录</p><h3>球队犯规</h3></div><span class="section-note">本节</span></div><div class="foul-teams"><div class="team-row"><div><span class="team-name">主队</span><span class="foul-total">{{ activeSession.fouls.home }}</span></div><n-button secondary round class="secondary-button" @click="onFoul('home')"><span aria-hidden="true">+</span> 记录犯规</n-button></div><div class="team-row"><div><span class="team-name">客队</span><span class="foul-total">{{ activeSession.fouls.away }}</span></div><n-button secondary round class="secondary-button" @click="onFoul('away')"><span aria-hidden="true">+</span> 记录犯规</n-button></div></div></n-card>
 
-          <section class="operation-section shot-section"><div class="section-heading"><div><p class="eyebrow">计时辅助</p><h3>进攻计时</h3></div></div><p class="shot-caption">快速重置 <span>·</span> 以当前配置为准</p><div class="preset-row"><button v-for="seconds in shotPresets" :key="seconds" class="preset-button" type="button" @click="applyPreset(seconds)">{{ seconds }}<span>秒</span></button></div><p class="rules-note">计时提示不替代裁判对比赛规则的最终判断。</p></section>
+          <n-card class="operation-section shot-section" :bordered="true" content-style="padding: 20px;"><div class="section-heading"><div><p class="eyebrow">计时辅助</p><h3>进攻计时</h3></div></div><p class="shot-caption">快速重置 <span>·</span> 以当前配置为准</p><div class="preset-row"><n-button v-for="seconds in shotPresets" :key="seconds" class="preset-button" @click="applyPreset(seconds)">{{ seconds }}<span>秒</span></n-button></div><p class="rules-note">计时提示不替代裁判对比赛规则的最终判断。</p></n-card>
         </div>
 
-        <section class="event-section"><div class="section-heading"><div><p class="eyebrow">现场记录</p><h3>操作日志</h3></div><div class="event-actions"><span class="event-count">{{ activeSession.events.length }} 条</span><button v-if="activeSession.events.length" class="link-button" type="button" @click="clearEventLog">清除日志</button></div></div><div v-if="activeSession.events.length" class="event-table"><div v-for="event in activeSession.events" :key="event.id" class="event-row"><time>{{ formatTime(event.at) }}</time><strong>{{ event.label }}</strong><span>{{ event.detail ?? '' }}</span></div></div><p v-else class="empty-events">暂无操作记录</p></section>
+        <n-card class="event-section" :bordered="true" content-style="padding: 20px;"><div class="section-heading"><div><p class="eyebrow">现场记录</p><h3>操作日志</h3></div><div class="event-actions"><span class="event-count">{{ activeSession.events.length }} 条</span><n-popconfirm v-if="activeSession.events.length" positive-text="清除" negative-text="取消" @positive-click="clearEventLog"><template #trigger><n-button quaternary size="small" class="link-button">清除日志</n-button></template>清除当前比赛的操作日志？</n-popconfirm></div></div><div v-if="activeSession.events.length" class="event-table"><div v-for="event in activeSession.events" :key="event.id" class="event-row"><time>{{ formatTime(event.at) }}</time><strong>{{ event.label }}</strong><span>{{ event.detail ?? '' }}</span></div></div><n-empty v-else class="empty-events" description="暂无操作记录" :show-icon="false" /></n-card>
       </section>
-      <section v-else class="no-session"><div class="empty-mark">+</div><h2>开始一场比赛</h2><p>创建本地工作台，准备记录计时与现场事件。</p><button class="primary-button" type="button" @click="dialog = true">新建比赛</button></section>
+      <section v-else class="no-session"><n-empty description="还没有比赛" :show-icon="false"><template #extra><n-button type="primary" round class="primary-button" @click="createDialogVisible = true">新建比赛</n-button></template></n-empty></section>
     </section>
 
-    <div v-if="dialog" class="dialog-backdrop" @click.self="dialog = false">
-      <section class="create-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><button class="dialog-close" type="button" aria-label="关闭" @click="dialog = false">×</button><p class="eyebrow">新建会话</p><h2 id="dialog-title">比赛工作台</h2><p class="dialog-copy">新会话将保存本次配置。计时规则可按赛事要求调整。</p><div class="rule-form"><label>比赛节数<input v-model.number="newRules.periodCount" type="number" min="1" max="12" /></label><label>每节分钟<input v-model.number="newRules.periodMinutes" type="number" min="1" max="60" /></label><label>进攻计时（秒）<input v-model.number="newRules.shotSeconds" type="number" min="1" max="60" /></label><label>短进攻计时（秒）<input v-model.number="newRules.shortShotSeconds" type="number" min="1" max="60" /></label></div><div class="dialog-footer"><button class="secondary-button" type="button" @click="dialog = false">取消</button><button class="primary-button" type="button" @click="startSession">创建比赛</button></div></section>
-    </div>
+    <n-modal v-model:show="createDialogVisible" preset="card" title="比赛工作台" class="create-dialog" :style="{ maxWidth: '460px', width: 'calc(100vw - 32px)' }" :segmented="{ footer: true }">
+      <p class="dialog-copy">新会话将保存本次配置。计时规则可按赛事要求调整。</p>
+      <div class="rule-form"><label>比赛节数<n-input-number v-model:value="newRules.periodCount" :min="1" :max="12" /></label><label>每节分钟<n-input-number v-model:value="newRules.periodMinutes" :min="1" :max="60" /></label><label>进攻计时（秒）<n-input-number v-model:value="newRules.shotSeconds" :min="1" :max="60" /></label><label>短进攻计时（秒）<n-input-number v-model:value="newRules.shortShotSeconds" :min="1" :max="60" /></label></div>
+      <template #footer><div class="dialog-footer"><n-button secondary round class="secondary-button" @click="createDialogVisible = false">取消</n-button><n-button type="primary" round class="primary-button" @click="startSession">创建比赛</n-button></div></template>
+    </n-modal>
     <a v-if="exportLink" class="sr-only" :href="exportLink" download tabindex="-1" aria-hidden="true">导出文件</a>
-  </main>
+    </main>
+  </n-config-provider>
 </template>

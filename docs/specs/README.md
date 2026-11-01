@@ -1,6 +1,8 @@
-# Specifications
+# 产品与技术规格
 
-Store product and technical specifications in this directory. Each spec should describe its scope, actors, expected behavior, edge cases, and testable acceptance criteria. Keep implementation decisions in `docs/decisions/` and link to relevant decision records where useful.
+本目录存放产品与技术规格，描述范围、参与者、预期行为、边界情况及可测试的验收标准。具体架构决策存放于 [`docs/decisions/`](../decisions/README.md)。
+
+开发规约仅维护在 [`docs/agents/coding-standards.md`](../agents/coding-standards.md)，由根级 [`AGENTS.md`](../../AGENTS.md) 引用；本目录不另设 DDD 或编码规约。业务术语见[统一语言表](../../GLOSSARY.md)。
 
 ## 规格索引
 
