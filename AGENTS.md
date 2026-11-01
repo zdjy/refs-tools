@@ -54,3 +54,13 @@ Production runs on a constrained host (2 CPU cores, 2 GB physical RAM). Keep the
 - Keep documentation in sync with implementation. Use concise comments only where code intent is not clear from the code itself.
 
 **Language**: Write all technical documentation, specifications in `docs/specs/`, architecture decision records in `docs/decisions/`, issue discussions, and code comments in Simplified Chinese (简体中文). Keep code identifiers (variable, function, and class names) and standard technical terms (such as PWA, ADR, TDD, OSS, Presigned URL, API) in English.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked as Markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+single-context layout: read the root `GLOSSARY.md` when present and relevant ADRs in `docs/decisions/`. See `docs/agents/domain.md`.
