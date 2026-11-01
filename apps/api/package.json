@@ -1,0 +1,15 @@
+{
+  "name": "@refs-tools/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json --outDir dist",
+    "start": "node dist/src/server.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@refs-tools/contracts": "workspace:*",
+    "fastify": "^5.6.1"
+  }
+}
