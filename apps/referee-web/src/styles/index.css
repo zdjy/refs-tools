@@ -1,0 +1,8 @@
+/*
+ * 全局样式唯一入口：本文件只做分层导入，不写具体规则。
+ * 顺序即优先级：base（基线） → layout（跨页面骨架） → utilities（共享原子类）。
+ * 页面与组件样式由各自页面根组件导入，不在此处引入。
+ */
+@import './base.css';
+@import './layout.css';
+@import './utilities.css';
