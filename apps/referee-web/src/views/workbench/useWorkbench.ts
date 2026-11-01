@@ -10,7 +10,7 @@ import { createBrowserWorkbenchPorts, type WorkbenchPorts } from '../../infrastr
  * @param ports 同步存储/导出边界，缺省使用浏览器适配；须在 Vue 活动作用域内调用以释放资源。
  * @returns initialize 由视图挂载后调用；存储失败通过状态反馈，未保存输入保留供重试。
  */
-export function useWorkbench(ports: WorkbenchPorts = createBrowserWorkbenchPorts()) {
+export function createWorkbenchState(ports: WorkbenchPorts = createBrowserWorkbenchPorts()) {
   const sessions = ref<WorkbenchSession[]>([])
   const activeId = ref('')
   const now = ref(Date.now())
@@ -41,19 +41,16 @@ export function useWorkbench(ports: WorkbenchPorts = createBrowserWorkbenchPorts
   function initialize() {
     restore()
     now.value = Date.now()
-    // 定时器仅触发显示刷新，实际剩余时间由领域函数按时间戳推导，避免后台节流累计误差。
     if (!ticker) ticker = setInterval(() => { now.value = Date.now() }, 100)
   }
 
   function persist(): boolean {
-    // 读取失败不是空数据；阻止写入，直到恢复成功或用户明确清空，避免覆盖旧记录。
     if (restoreFailed.value) return false
     try {
       ports.save({ sessions: sessions.value, activeId: activeId.value })
       storageError.value = ''
       return true
     } catch {
-      // 普通编辑保存失败不回滚内存，保留场边操作结果，供后续重试或导出。
       storageError.value = '本地存储不可用或空间不足。当前更改尚未保存，请重试或导出会话数据。'
       return false
     }
@@ -95,7 +92,6 @@ export function useWorkbench(ports: WorkbenchPorts = createBrowserWorkbenchPorts
     const next = sessions.value.filter((session) => !ids.includes(session.id))
     const nextId = next.some((session) => session.id === activeId.value) ? activeId.value : next[0]?.id ?? ''
     try {
-      // 删除采用先写后改界面；与普通编辑不同，失败时不能让仍在磁盘上的记录从界面消失。
       ports.save({ sessions: next, activeId: nextId })
       sessions.value = next
       activeId.value = nextId
@@ -111,7 +107,6 @@ export function useWorkbench(ports: WorkbenchPorts = createBrowserWorkbenchPorts
     if (!activeSession.value) return
     try {
       ports.download(activeSession.value)
-      // 触发下载无法证明文件已落盘，提示用户确认而不报告已保存成功。
       sessionNotice.value = '已发起会话导出，请确认浏览器已保存文件。文件可能包含比赛数据，请妥善保管。'
     } catch {
       sessionNotice.value = '导出失败，当前会话仍然保留，请重试导出。'
@@ -137,3 +132,6 @@ export function useWorkbench(ports: WorkbenchPorts = createBrowserWorkbenchPorts
     clearEventLog: () => updateSession((session, at) => ({ ...session, events: [], updatedAt: at })),
   }
 }
+
+export const useWorkbench = createWorkbenchState
+export type WorkbenchState = ReturnType<typeof createWorkbenchState>

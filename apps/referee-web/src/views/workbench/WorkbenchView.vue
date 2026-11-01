@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NEmpty, NPopconfirm } from 'naive-ui'
-import { useWorkbench } from './useWorkbench'
+import { useWorkbenchStore } from '../../stores/workbench'
 import { clockEntries } from './workbench.presentation'
 import './workbench.css'
 import WorkbenchSidebar from './components/WorkbenchSidebar.vue'
@@ -10,11 +11,15 @@ import WorkbenchOperations from './components/WorkbenchOperations.vue'
 import WorkbenchEventLog from './components/WorkbenchEventLog.vue'
 import CreateWorkbenchDialog from './components/CreateWorkbenchDialog.vue'
 
+const workbench = useWorkbenchStore()
 const {
   sessions, activeId, now, activeSession, presets, storageError, sessionNotice, formError,
-  restoreFailed, createDialogVisible, newRules, initialize, startSession, selectSession, exportSession,
-  retryStorage, removeSession, clearAll, switchPeriod, onFoul, applyPreset, toggleClock, resetClock, clearEventLog,
-} = useWorkbench()
+  restoreFailed, createDialogVisible, newRules,
+} = storeToRefs(workbench)
+const {
+  initialize, startSession, selectSession, exportSession, retryStorage, removeSession, clearAll,
+  switchPeriod, onFoul, applyPreset, toggleClock, resetClock, clearEventLog,
+} = workbench
 onMounted(initialize)
 </script>
 
