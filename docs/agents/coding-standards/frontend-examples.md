@@ -77,7 +77,7 @@ onMounted(() => {
       <h1 class="text-xl font-bold">裁判选派管理</h1>
     </header>
 
-    <div v-if="loading" class="text-gray-500">正在获取排班数据...</div>
+    <div v-if="loading" class="text-body">正在获取排班数据...</div>
     <div v-else-if="errorMessage" class="text-red-500">{{ errorMessage }}</div>
     <AssignmentList v-else :items="assignments" />
   </div>

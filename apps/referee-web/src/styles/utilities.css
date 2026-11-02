@@ -1,2 +1,0 @@
-/* 仅保留待迁移的旧工具类；新增界面使用 Tailwind，见 ADR 0013。 */
-.icon-button { width: 44px; height: 44px; font-size: 22px; }

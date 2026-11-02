@@ -3,23 +3,15 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <template>
-  <main class="app-shell">
-    <header class="topbar">
-      <RouterLink class="brand" to="/workbench"><span class="brand-mark">R</span><span>裁判工具箱</span></RouterLink>
+  <main class="min-h-screen">
+    <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-surface px-4 py-2 md:px-8">
+      <RouterLink class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" to="/workbench"><span class="grid size-7 place-items-center rounded-full bg-ink text-surface">R</span><span>裁判工具箱</span></RouterLink>
     </header>
-    <section class="not-found" aria-labelledby="not-found-title">
-      <p class="eyebrow">404</p>
-      <h1 id="not-found-title">页面不存在</h1>
-      <p>该地址没有对应的页面。</p>
-      <RouterLink class="not-found-link" to="/workbench">返回本地工作台</RouterLink>
+    <section class="mx-auto my-16 max-w-[42rem] px-6 py-0" aria-labelledby="not-found-title">
+      <p class="text-muted">404</p>
+      <h1 id="not-found-title" class="mx-0 my-2">页面不存在</h1>
+      <p class="text-muted">该地址没有对应的页面。</p>
+      <RouterLink class="font-semibold text-ink" to="/workbench">返回本地工作台</RouterLink>
     </section>
   </main>
 </template>
-
-<style scoped>
-.not-found { max-width: 42rem; margin: 4rem auto; padding: 0 1.5rem; }
-.not-found h1 { margin: 0.5rem 0; }
-.not-found p { color: var(--muted); }
-.not-found-link { color: var(--ink); font-weight: 600; }
-.not-found-link:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
-</style>

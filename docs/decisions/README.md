@@ -17,5 +17,5 @@
 - [ADR 0010：邮箱验证、密码与会话安全](./0010-email-auth-and-session-security.md) — 邮箱 challenge、SMTP、服务端可撤销 Cookie 会话与认证安全边界。
 - [ADR 0011：本机完整联调的 Docker Compose 环境](./0011-local-compose-environment.md) — 静态前端、API、PostgreSQL、TLS 本地邮箱和隔离测试库的一键启动。
 - [ADR 0012：邮箱验证后首次设置密码免重复验证](./0012-initial-password-after-email-verification.md) — 已验证且无密码账号直接设置首次密码，已有密码修改保留邮箱重验。
-- [ADR 0013：前端样式采用 Tailwind CSS](./0013-tailwindcss-styling.md) — 使用 Tailwind CSS 4.x 与官方 Vite 插件，复用 FIBA token，渐进替换存量手写样式。
+- [ADR 0013：前端样式采用 Tailwind CSS](./0013-tailwindcss-styling.md) — 使用 Tailwind CSS 4.x 与官方 Vite 插件，复用 FIBA token，现有界面已完成迁移并保留必要 CSS 例外。
 - [ADR 0014：实时作用域授权与追加式审计基础](./0014-scoped-authorization-and-audit-foundation.md) — 提前建立最小归属骨架，使用实时角色/成员门禁和同事务追加审计，区分平台与组织权限。

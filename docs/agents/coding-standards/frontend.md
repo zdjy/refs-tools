@@ -18,7 +18,7 @@ apps/referee-web/src/
 │   └── <feature>.api.ts          # 纯网络请求函数（Axios/Fetch 封装）
 └── views/<feature>/
     ├── <Feature>View.vue          # 主视图（纯骨架、布局组装）
-    ├── <feature>.css             # 迁移期旧样式或必要的局部 CSS 例外（详见样式规约）
+    ├── <feature>.css             # 仅在必要时保留有说明的局部 CSS 例外（详见样式规约）
     ├── use<Feature>.ts            # 页面交互状态、表单逻辑、列表分页等组合式函数
     └── components/                # 该页面私有子组件
         ├── <Feature>List.vue      # 列表/表格展示

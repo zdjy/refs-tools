@@ -1,5 +1,3 @@
-/* 暂不启用 Preflight；保留旧 CSS 与可访问性基线，渐进迁移见 ADR 0013。 */
+/* 保留 reset 与可访问性基线，不启用 Preflight，见 ADR 0013。 */
 @import './tailwind.css';
 @import './base.css';
-@import './layout.css';
-@import './utilities.css';

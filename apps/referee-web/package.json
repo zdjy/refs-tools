@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc -p tsconfig.json && vite build",
     "typecheck": "vue-tsc -p tsconfig.json",
-    "test": "vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "test:styles": "node scripts/check-styles.mjs"
   },
   "dependencies": {
     "@refs-tools/contracts": "workspace:*",

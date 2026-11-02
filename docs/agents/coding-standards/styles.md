@@ -7,7 +7,7 @@
 * **新增与迁移的界面使用 Tailwind CSS 4.x 工具类**，不再以手写纯 CSS 作为页面布局、间距、排版和状态的默认方案。Naive UI 继续负责基础交互组件，Tailwind 不替代组件库的语义、键盘行为和主题接口。
 * `tailwindcss` 与 `@tailwindcss/vite` 只声明在实际使用它们的前端应用的 `devDependencies`，通过官方 Vite 插件构建静态 CSS；不得加入 API、contracts、domain 或生产运行时。
 * 使用 v4 CSS-first 配置，不新增 `tailwind.config.js`、v3 `@tailwind` 指令或并行的 PostCSS/Autoprefixer 管线。新增插件、其他原子类框架或共享样式包前先记录 ADR。
-* 本轮只完成构建接入与规范切换。存量 CSS 暂时保留以避免无关视觉回归，不代表允许新增第二套纯 CSS 页面。后续按组件/页面逐步迁移，同步清理失效规则。
+* 当前应用的存量布局、排版和状态已迁移为工具类；全局基线与必要的局部例外仍保留 CSS。后续新增或迁移组件时同步清理失效规则，不恢复第二套纯 CSS 页面。迁移范围与验收记录见[迁移规格](../../specs/0004-tailwind-migration.md)。
 
 ## 2. 目录与文件职责
 
@@ -18,14 +18,12 @@ apps/referee-web/
     ├── ui-tokens.ts          # 颜色、字体、阴影、焦点等设计 token 单一来源
     ├── ui-theme.ts           # Naive UI 公开主题适配，消费同一 token
     ├── styles/
-    │   ├── index.css        # 唯一全局入口：Tailwind → base → 旧 layout/utilities
+    │   ├── index.css        # 唯一全局入口：Tailwind → base
     │   ├── tailwind.css     # Tailwind layer、扫描范围及 @theme 映射
-    │   ├── base.css         # reset、根排版、触控、focus、reduced-motion 基线
-    │   ├── layout.css       # 仅保留待迁移的旧骨架样式
-    │   └── utilities.css    # 仅保留待迁移的旧工具类，不新增自制工具类
+    │   └── base.css         # reset、根排版、触控、focus、reduced-motion 基线
     └── views/<feature>/
         ├── <Feature>View.vue # 模板内使用 Tailwind 静态类名与状态绑定
-        ├── <feature>.css    # 存量样式或工具类无法合理表达的局部例外
+        ├── <feature>.css    # 仅在存在必要局部 CSS 例外时建立
         └── components/     # 页面私有展示组件
 ```
 
@@ -35,9 +33,9 @@ apps/referee-web/
 | `styles/index.css` | 全局 `@import`，Tailwind 入口必须先引入 | 具体样式规则、页面样式导入 | 20 行 |
 | `styles/tailwind.css` | layer 声明、Tailwind 导入、`@source`、`@theme` | 业务选择器、重复色值、全量扫描其他应用或依赖 | 150 行 |
 | `styles/base.css` | 全局 reset、根排版、控件触控尺寸、焦点、reduced-motion | 业务类、页面布局、重复工具类 | 150 行 |
-| `styles/layout.css` | 待迁移的旧应用骨架 | 新增骨架或业务类 | 200 行，迁移时只减不增 |
-| `styles/utilities.css` | 待迁移的旧共享原子类 | 新增间距、排版等自制工具类 | 100 行，迁移时只减不增 |
-| `views/<feature>/<feature>.css` | 未迁移的旧规则；有说明的局部 CSS 例外 | 新增整页纯 CSS 布局、全局 reset、跨页面工具类 | 230 行 |
+| `views/<feature>/<feature>.css` | 有说明的必要局部 CSS 例外 | 整页纯 CSS 布局、全局 reset、跨页面工具类 | 230 行 |
+
+旧 `layout.css`、`utilities.css` 已删除，不重新建立自制布局或工具类集合。
 
 `.vue` 继续遵守[前端规约](frontend.md)的 230 行上限；工具类增加模板长度也不得豁免。通过拆分真实展示子组件控制复杂度，不将类名挪进业务状态层来绕过限制。
 
@@ -76,8 +74,10 @@ apps/referee-web/
 
 * `main.ts` 在根组件之前导入唯一入口 `./styles/index.css`。Tailwind 声明 `theme → base → components → utilities` 层；普通声明在这些命名层之间按此顺序提升优先级，不能把 token 或主题接口描述成额外 CSS 优先级。
 * **暂不导入 Preflight**，保留 `base.css` 的现有 reset 与可访问性基线。原生元素不能假定 Tailwind 已重置浏览器默认值，例如需要边框时显式使用 `border border-solid border-line`。后续启用 Preflight 必须单独评估 Naive UI、旧页面、表单和焦点回归。
-* 旧全局/页面 CSS 与 Naive UI 样式目前多为未分层规则；同等来源的重要性下，未分层普通声明高于分层工具类，不能假定“Tailwind 最后加载就一定覆盖”。旧 CSS 中的类只能作为兼容实现保留；迁移时删除对应旧声明，不在同一元素上用两套体系竞争同一属性。
+* `base.css` 中的 reset、根排版和默认尺寸放在 `base` 层，以便自有 DOM 的工具类覆盖；按压反馈、键盘焦点和 reduced-motion 保持未分层，确保 Naive UI 不屏蔽这些全局基线。不得把整个组件库放入低优先级层或取消焦点来解决层叠。
+* Naive UI 样式仍为未分层规则；同等来源的重要性下，未分层普通声明高于分层工具类，不能假定“Tailwind 最后加载就一定覆盖”。不在同一元素上用两套体系竞争同一属性；尺寸差异集中在 `ui-theme.ts` 的 `refereeControlThemes`，间距和选中背景优先放到自有外围 DOM，文字可放在自有 slot 节点。
 * Tailwind 主要用于自有 DOM 和组件外围布局。Naive UI 的颜色、形状、尺寸与内部状态仍优先使用公开 props、slots 和 `ui-theme.ts`，不依赖工具类穿透其内部节点，不覆盖 `.n-*` 或以深层选择器修补。
+* Modal preset 的 Card 未分层 `width:100%` 无法由分层工具类覆盖，使用集中维护的 `refereeModalStyle` 经公开 `style` 属性设置视口留白宽度；最大宽高、滚动仍用工具类。这是非主题尺寸适配的窄范围例外，不允许借此内联颜色、圆角或阴影。
 * 禁止 `!important`、Tailwind important 修饰符和全局 important 模式。仅保留 `base.css` 已有、带原因说明的 reduced-motion 例外，用于压制第三方动效；其他情况通过职责边界解决。
 
 ## 6. 手写 CSS 例外与迁移
@@ -89,6 +89,6 @@ apps/referee-web/
 
 ## 7. 交付检查
 
-* 执行相关单测、`typecheck` 和生产构建；独立验证语义 token、四档断点、状态变体及任意值类确实生成，且无默认调色板、Preflight 或仓库外扫描意外进入产物。
+* 执行相关单测、`typecheck` 和生产构建；使用 `pnpm --filter @refs-tools/referee-web test:styles` 独立验证语义 token、四档断点、状态变体及任意值类确实生成，且无默认调色板、Preflight 或扫描范围外规则意外进入产物。该命令执行内存构建，不并入低内存单测。
 * 比较构建前后的 CSS/JS 体积；Tailwind 只参与构建，不能因此增加生产前端服务、远程字体/CDN 或私有数据缓存。浏览器基线及兼容性取舍见 ADR 0013。
 * 组件迁移必须另做浏览器验收：320px 移动端及桌面无页面级横向溢出、44×44px 触控目标、可访问名称、键盘/焦点、禁用/加载/错误状态、系统 reduced-motion 和 FIBA 主题一致性。仅修改依赖和配置时不得将“构建通过”表述为“所有页面已完成视觉验收”。

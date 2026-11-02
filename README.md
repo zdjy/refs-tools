@@ -81,7 +81,9 @@ docker compose --profile test down
 
 ## 前端样式
 
-前端已接入 Tailwind CSS 构建，存量页面样式按后续任务逐步迁移。本次选型与兼容性取舍见 [ADR 0013](docs/decisions/0013-tailwindcss-styling.md)，新增界面与迁移统一遵循[样式规约](docs/agents/coding-standards/styles.md)，视觉基线仍为[共享 FIBA UI 规范](docs/ui/fiba_about_ui_specification.md)。
+现有导航、认证/账号、404 和队伍级记录台已迁移至 Tailwind CSS，保留全局可访问性基线及品牌几何裁切，不启用 Preflight。范围与验收见[迁移规格](docs/specs/0004-tailwind-migration.md)，选型及兼容性取舍见 [ADR 0013](docs/decisions/0013-tailwindcss-styling.md)；工程约束统一遵循[样式规约](docs/agents/coding-standards/styles.md)，视觉基线仍为[共享 FIBA UI 规范](docs/ui/fiba_about_ui_specification.md)。
+
+独立样式构建检查：`pnpm --filter @refs-tools/referee-web test:styles`，不并入低内存单测。
 
 ## 自动化测试
 

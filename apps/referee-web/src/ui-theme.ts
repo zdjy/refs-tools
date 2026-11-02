@@ -8,6 +8,16 @@ const inputTheme = {
   boxShadowFocus: t.focus, textColor: t.ink,
 }
 
+// Modal preset 的 Card 根样式未分层且固定 width:100%；通过公开 style 属性保留移动端两侧留白。
+export const refereeModalStyle = { width: 'calc(100vw - 32px)' }
+
+// 根节点未分层样式优先于工具类，尺寸差异通过公开主题接口适配，见 ADR 0013。
+export const refereeControlThemes = {
+  iconButton: { fontSizeMedium: '22px' },
+  sessionButton: { heightMedium: '58px' },
+  wrappingButton: { heightMedium: 'auto' },
+} satisfies Record<string, NonNullable<GlobalThemeOverrides['Button']>>
+
 // 覆盖 Naive UI 默认品牌色和尺寸，统一映射共享 token，不在页面逐个修补（ADR 0007）。
 export const refereeTheme: GlobalThemeOverrides = {
   common: {
