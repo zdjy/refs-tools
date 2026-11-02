@@ -3,6 +3,7 @@
 - 状态：已接受
 - 日期：2026-11-02
 - 范围：FS-0002 Task 3、ticket 01
+- 后续修订：[ADR 0012](0012-initial-password-after-email-verification.md) 对邮箱已验证且尚无密码账号的首次设置免除重复 challenge；已有密码修改仍遵循本决策。
 
 ## 背景
 

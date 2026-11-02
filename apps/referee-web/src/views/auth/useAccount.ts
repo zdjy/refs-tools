@@ -9,6 +9,7 @@ export function useAccount(auth: ReturnType<typeof useAuthStore>) {
   const success = ref('')
   const challenge = useEmailChallenge()
   const busy = computed(() => auth.busy || challenge.sending.value)
+  const isInitialPassword = computed(() => auth.user?.hasPassword === false && auth.user.emailVerified)
   watch(() => auth.user?.id, () => {
     challenge.reset()
     fields.code = ''; fields.password = ''; fields.confirmation = ''
@@ -16,7 +17,7 @@ export function useAccount(auth: ReturnType<typeof useAuthStore>) {
   })
 
   async function sendCode() {
-    if (!auth.user || busy.value) return
+    if (!auth.user || busy.value || isInitialPassword.value) return
     success.value = ''
     await challenge.send(auth.user.email, 'password')
   }
@@ -24,23 +25,28 @@ export function useAccount(auth: ReturnType<typeof useAuthStore>) {
   async function savePassword(): Promise<boolean> {
     if (!auth.user || busy.value) return false
     success.value = ''
-    const proof = challenge.proof(auth.user.email, 'password')
+    const initial = isInitialPassword.value
+    const proof = initial ? null : challenge.proof(auth.user.email, 'password')
     const next: Record<string, string> = {}
-    if (!proof) next.code = '请先获取有效的邮箱验证码。'
-    else if (!/^\d{6}$/.test(fields.code)) next.code = '请输入 6 位数字验证码。'
+    if (!initial) {
+      if (!proof) next.code = '请先获取有效的邮箱验证码。'
+      else if (!/^\d{6}$/.test(fields.code)) next.code = '请输入 6 位数字验证码。'
+    }
     if (!fields.password || fields.password.length > 128) next.password = '请输入不超过 128 个字符的新密码。'
     if (fields.confirmation !== fields.password) next.confirmation = '两次输入的密码不一致。'
     errors.value = next
-    if (Object.keys(next).length || !proof) return false
-    const saved = await auth.setPassword({ challengeId: proof.challengeId, code: fields.code, newPassword: fields.password })
+    if (Object.keys(next).length || (!initial && !proof)) return false
+    const saved = await auth.setPassword(initial ? { newPassword: fields.password }
+      : { challengeId: proof!.challengeId, code: fields.code, newPassword: fields.password })
     if (saved) {
       challenge.reset()
       fields.code = ''; fields.password = ''; fields.confirmation = ''
-      success.value = '密码已更新，其他旧登录会话已失效，当前登录已安全续期。'
+      success.value = initial ? '密码设置成功，注册已完成。以后可使用邮箱和密码登录。'
+        : '密码已更新，其他旧登录会话已失效，当前登录已安全续期。'
     }
     return saved
   }
 
   onScopeDispose(() => { fields.password = ''; fields.confirmation = '' })
-  return { fields, errors, success, challenge, busy, sendCode, savePassword }
+  return { fields, errors, success, challenge, busy, isInitialPassword, sendCode, savePassword }
 }

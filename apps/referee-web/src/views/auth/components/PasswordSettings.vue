@@ -4,7 +4,7 @@ import { NButton, NInput } from 'naive-ui'
 import { useAuthStore } from '../../../stores/auth'
 import { useAccount } from '../useAccount'
 const auth = useAuthStore()
-const { fields, errors, success, challenge, busy, sendCode, savePassword } = useAccount(auth)
+const { fields, errors, success, challenge, busy, isInitialPassword, sendCode, savePassword } = useAccount(auth)
 const { remaining, sending, notice, error: sendError, expired } = challenge
 const summary = ref<HTMLElement | null>(null)
 async function submit() {
@@ -14,14 +14,14 @@ async function submit() {
 
 <template>
   <section class="auth-password-section" aria-labelledby="password-heading">
-    <h3 id="password-heading">设置或更换密码</h3>
-    <p class="auth-section-description">先验证当前邮箱。更新密码后，其他旧登录会话将失效。</p>
+    <h3 id="password-heading">{{ isInitialPassword ? '设置登录密码' : '更换登录密码' }}</h3>
+    <p class="auth-section-description">{{ isInitialPassword ? '邮箱已验证，无需再次获取验证码。设置密码即可完成注册，以后也可使用邮箱和密码登录。' : '先验证当前邮箱。更新密码后，其他旧登录会话将失效。' }}</p>
     <form novalidate :aria-busy="busy" @submit.prevent="submit">
       <div v-if="Object.keys(errors).length || auth.error" ref="summary" class="auth-error-summary" role="alert" tabindex="-1">
         {{ auth.error || '请检查以下输入后再试。' }}
         <ul><li v-for="(message, field) in errors" :key="field"><a :href="`#settings-${field}`">{{ message }}</a></li></ul>
       </div>
-      <div class="auth-field">
+      <div v-if="!isInitialPassword" class="auth-field">
         <label for="settings-code">邮箱验证码</label>
         <div class="auth-code-row">
           <n-input v-model:value="fields.code" placeholder="6 位数字" :maxlength="6" :disabled="busy"
@@ -49,7 +49,7 @@ async function submit() {
       <p v-else-if="expired" class="auth-field-error" role="status">验证码已过期，请重新获取。</p>
       <p v-else-if="notice" class="auth-send-notice" role="status">{{ notice }}</p>
       <p v-if="success" class="auth-send-notice" role="status">{{ success }}</p>
-      <n-button type="primary" attr-type="submit" block :loading="auth.busy" :disabled="busy">保存新密码</n-button>
+      <n-button type="primary" attr-type="submit" block :loading="auth.busy" :disabled="busy">{{ isInitialPassword ? '设置密码并完成注册' : '保存新密码' }}</n-button>
     </form>
   </section>
 </template>

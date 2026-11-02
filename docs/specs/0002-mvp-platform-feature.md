@@ -418,8 +418,18 @@ export type AuditEvent = {
 | `POST /auth/register` | `{challengeId, code, displayName, password?}`；回 `{user, expiresAt}` 并通过安全会话 Cookie 建立会话。 | 匿名；验证码有效且未使用 |
 | `POST /auth/login/email-code` | `{email, challengeId, code}`；回 `{user, expiresAt}` 并通过安全会话 Cookie 建立会话。 | 匿名；验证码一次性 |
 | `POST /auth/login/password` | `{email, password}`；回 `{user, expiresAt}` 并通过安全会话 Cookie 建立会话。 | 匿名；已设置密码 |
-| `POST /auth/password` | `{newPassword, challengeId, code}`；回 `{updated:true}`。 | 已登录且完成邮箱重新验证 |
+| `POST /auth/password` | 首次设置 `{newPassword}`；更换已有密码 `{newPassword, challengeId, code}`；回 `{user, expiresAt}` 并轮换安全会话 Cookie、撤销所有旧会话。 | 已登录；无 proof 仅允许邮箱已验证且尚无密码；已有密码必须完成本人邮箱重新验证 |
 | `POST /auth/credential-merge-requests` | `{sourceAccountId, targetCredential}`；回 `{requestId,status}`。 | 已验证两个凭据；人工审核；不自动合并 |
+
+认证会话响应的 `user.hasPassword` 表示是否已设置密码，不包含密码或哈希。账号页据此区分首次设置与修改；服务端在同一事务的账号锁内重新核验会话、邮箱验证与密码状态，不信任前端投影。proof 必须完全省略或同时提供 `challengeId`、`code`，不接受残缺 proof。
+
+账号注册后首次设置密码的验收：
+
+- 邮箱验证码注册成功进入 `/account`，显示“设置登录密码”，不显示验证码输入及发送按钮；输入一致且符合策略的密码后显示注册完成。
+- 刷新账号页仍可继续首次设置；设置成功后会话投影的 `hasPassword` 为 `true`，旧会话失效，新密码可登录。
+- 已有密码时仍显示邮箱验证码；省略验证码的请求返回 `403 PASSWORD_VERIFICATION_REQUIRED`，未验证邮箱返回 `403 EMAIL_NOT_VERIFIED`，失效会话返回 `401 UNAUTHENTICATED`。
+- 弱密码、确认不一致或网络错误不显示成功，保留可恢复输入；并发首次设置最多一个成功，不得覆盖已设置的密码。
+- UI 延续[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，保留字段标签、错误摘要焦点与移动端触控目标，不新增视觉例外。
 
 ### 3.3 组织和成员
 

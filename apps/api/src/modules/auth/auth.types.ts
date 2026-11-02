@@ -1,7 +1,7 @@
 import type { AuthUser, ChallengePurpose } from '@refs-tools/contracts/auth'
 import type { TransactionRunner } from '../../application/transaction.js'
 
-export type AuthAccount = AuthUser & { status: 'active' | 'disabled'; passwordHash: string | null }
+export type AuthAccount = Omit<AuthUser, 'hasPassword'> & { status: 'active' | 'disabled'; passwordHash: string | null }
 export type EmailChallenge = {
   id: string; email: string; purpose: ChallengePurpose; codeHash: string
   expiresAt: Date; attempts: number; consumedAt: Date | null

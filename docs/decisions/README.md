@@ -16,3 +16,4 @@
 - [ADR 0009：数据库基础设施归属与应用事务端口](./0009-database-infrastructure-and-transactions.md) — 数据库适配集中于 infrastructure，以无驱动端口向用例提供事务内 Repository。
 - [ADR 0010：邮箱验证、密码与会话安全](./0010-email-auth-and-session-security.md) — 邮箱 challenge、SMTP、服务端可撤销 Cookie 会话与认证安全边界。
 - [ADR 0011：本机完整联调的 Docker Compose 环境](./0011-local-compose-environment.md) — 静态前端、API、PostgreSQL、TLS 本地邮箱和隔离测试库的一键启动。
+- [ADR 0012：邮箱验证后首次设置密码免重复验证](./0012-initial-password-after-email-verification.md) — 已验证且无密码账号直接设置首次密码，已有密码修改保留邮箱重验。

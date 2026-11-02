@@ -1,8 +1,8 @@
 import { randomInt, randomUUID } from 'node:crypto'
-import type { ChallengeProof, ChallengePurpose, EmailChallengeBody, RegisterBody } from '@refs-tools/contracts/auth'
+import type { ChallengeProof, ChallengePurpose, EmailChallengeBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
 import { DomainError } from '../../application/errors.js'
 import { challengeDigest, digest, equalDigest, hashPassword } from './auth.security.js'
-import type { AuthDependencies, AuthRepository, EmailChallenge, SessionGrant } from './auth.types.js'
+import type { AuthAccount, AuthDependencies, AuthRepository, EmailChallenge, SessionGrant } from './auth.types.js'
 import { SessionService } from './session.service.js'
 
 /** 邮箱 challenge 的签发与一次性消费；外部邮件只在事务提交后发送。 */
@@ -51,18 +51,37 @@ export class AuthService extends SessionService {
     })
   }
 
-  async setPassword(token: string | undefined, input: ChallengeProof & { newPassword: string }): Promise<SessionGrant> {
+  async setPassword(token: string | undefined, input: SetPasswordBody): Promise<SessionGrant> {
     const session = await this.requireSession(token)
+    if (!('challengeId' in input)) {
+      return this.dependencies.transaction.run(async ({ auth }) => {
+        // 与密码修改共用账号锁，并在锁内重验会话，防止并发首次设置覆盖已设置的密码。
+        const account = await auth.lockAccount(session.user.id)
+        const current = await auth.findSession(digest(token!), this.dependencies.now())
+        if (!account || account.status !== 'active' || !current) {
+          throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
+        }
+        if (!account.emailVerified) throw new DomainError('EMAIL_NOT_VERIFIED', '请先验证邮箱', 403)
+        if (account.passwordHash !== null) {
+          throw new DomainError('PASSWORD_VERIFICATION_REQUIRED', '更换已有密码需要重新验证邮箱', 403)
+        }
+        return this.updatePassword(auth, account, input.newPassword)
+      })
+    }
     return this.consume(input, 'password', session.user.email, async (auth) => {
       const account = await auth.lockAccount(session.user.id)
       const current = await auth.findSession(digest(token!), this.dependencies.now())
       if (!account || account.status !== 'active' || !current) return this.invalidChallenge()
-      const hash = await this.passwordHash(input.newPassword)
-      await auth.setPassword(account.id, hash)
-      await auth.verifyEmail(account.id, this.dependencies.now())
-      await auth.revokeUserSessions(account.id, this.dependencies.now())
-      return this.createSession(auth, { ...account, emailVerified: true })
+      return this.updatePassword(auth, account, input.newPassword)
     })
+  }
+
+  private async updatePassword(auth: AuthRepository, account: AuthAccount, password: string): Promise<SessionGrant> {
+    const passwordHash = await this.passwordHash(password)
+    await auth.setPassword(account.id, passwordHash)
+    await auth.verifyEmail(account.id, this.dependencies.now())
+    await auth.revokeUserSessions(account.id, this.dependencies.now())
+    return this.createSession(auth, { ...account, passwordHash, emailVerified: true })
   }
 
   private async consume(

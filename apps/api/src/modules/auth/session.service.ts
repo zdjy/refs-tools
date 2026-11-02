@@ -5,7 +5,8 @@ import { digest, verifyPassword } from './auth.security.js'
 import type { AuthAccount, AuthDependencies, AuthRepository, SessionGrant } from './auth.types.js'
 
 function publicUser(account: AuthAccount): AuthUser {
-  return { id: account.id, email: account.email, displayName: account.displayName, emailVerified: account.emailVerified }
+  return { id: account.id, email: account.email, displayName: account.displayName,
+    emailVerified: account.emailVerified, hasPassword: account.passwordHash !== null }
 }
 
 /** 可撤销会话用例；每次门禁重新读取用户和会话的当前状态。 */

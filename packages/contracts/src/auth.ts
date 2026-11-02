@@ -23,12 +23,15 @@ export const EmailCodeLoginBodySchema = Type.Object({
 export const PasswordLoginBodySchema = Type.Object({
   email: EmailSchema, password: PasswordSchema,
 }, { additionalProperties: false })
-export const SetPasswordBodySchema = Type.Object({
-  ...ChallengeProofSchema.properties, newPassword: PasswordSchema,
-}, { additionalProperties: false })
+/** 首次设置无需重复验证码；已有密码时由服务端强制要求完整 proof。 */
+export const SetPasswordBodySchema = Type.Union([
+  Type.Object({ newPassword: PasswordSchema }, { additionalProperties: false }),
+  Type.Object({ ...ChallengeProofSchema.properties, newPassword: PasswordSchema }, { additionalProperties: false }),
+])
 export const AuthUserSchema = Type.Object({
   id: Type.String({ format: 'uuid' }), email: EmailSchema,
   displayName: Type.String(), emailVerified: Type.Boolean(),
+  hasPassword: Type.Boolean(),
 }, { additionalProperties: false })
 export const AuthSessionResponseSchema = Type.Object({
   data: Type.Object({ user: AuthUserSchema, expiresAt: Type.String({ format: 'date-time' }) }),

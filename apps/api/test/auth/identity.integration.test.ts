@@ -43,6 +43,25 @@ describe('PostgreSQL 身份与凭据', () => {
     expect(results.filter((r) => r.status === 'rejected')).toMatchObject([{ reason: { code: 'INVALID_CHALLENGE' } }])
   })
 
+  it('并发首次设置只接受一个密码，持久化状态与轮换会话一致', async () => {
+    const c = await service.issueChallenge({ email: 'ref@example.com', purpose: 'register' }, 'ip')
+    const original = await service.register({ ...c, code: mail[0]!.code, displayName: '裁判' })
+    expect((await service.requireSession(original.token)).user.hasPassword).toBe(false)
+    const passwords = ['first-password-123', 'second-password-123']
+    const results = await Promise.allSettled(passwords.map((newPassword) => service.setPassword(original.token, { newPassword })))
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1)
+    expect(results.filter((result) => result.status === 'rejected')).toMatchObject([{ reason: { code: 'UNAUTHENTICATED' } }])
+    const winner = results.findIndex((result) => result.status === 'fulfilled')
+    const result = results[winner]!
+    if (result.status !== 'fulfilled') throw new Error('首次设置未产生成功结果')
+    expect((await service.requireSession(result.value.token)).user.hasPassword).toBe(true)
+    await expect(service.requireSession(original.token)).rejects.toMatchObject({ code: 'UNAUTHENTICATED' })
+    await expect(service.loginWithPassword({ email: original.user.email, password: passwords[winner]! }, 'ip'))
+      .resolves.toHaveProperty('user.id', original.user.id)
+    await expect(service.loginWithPassword({ email: original.user.email, password: passwords[1 - winner]! }, 'ip'))
+      .rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' })
+  })
+
   it('不同 challenge 并发注册同一邮箱不能创建第二个账号', async () => {
     const first = await service.issueChallenge({ email: 'ref@example.com', purpose: 'register' }, 'ip')
     const firstCode = mail[0]!.code

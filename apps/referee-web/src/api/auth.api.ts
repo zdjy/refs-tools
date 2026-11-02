@@ -43,6 +43,8 @@ export function authErrorMessage(error: unknown): string {
     RATE_LIMITED: '操作过于频繁，请稍后再试。',
     EMAIL_UNAVAILABLE: '邮件暂时无法发送，请稍后重新获取验证码。',
     WEAK_PASSWORD: '密码不符合当前安全策略，请使用更长的密码后重试。',
+    PASSWORD_VERIFICATION_REQUIRED: '账号已设置密码，请刷新页面并验证邮箱后再更换密码。',
+    EMAIL_NOT_VERIFIED: '请先使用邮箱验证码登录，验证邮箱后再设置密码。',
     AUTH_BUSY: '登录服务繁忙，请稍后重试。',
     UNAUTHENTICATED: '登录已失效，请重新登录。',
     ORIGIN_REJECTED: '当前访问地址无法完成登录，请从平台正式地址访问。',

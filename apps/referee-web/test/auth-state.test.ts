@@ -3,7 +3,7 @@ import { createAuthState } from '../src/application/auth-state'
 import { AuthApiError } from '../src/api/auth.api'
 import type { AuthApi } from '../src/api/auth.api'
 
-const session = { user: { id: 'u-1', email: 'ref@example.com', displayName: '裁判员', emailVerified: true }, expiresAt: '2030-01-01T00:00:00.000Z' }
+const session = { user: { id: 'u-1', email: 'ref@example.com', displayName: '裁判员', emailVerified: true, hasPassword: false }, expiresAt: '2030-01-01T00:00:00.000Z' }
 const api = (overrides: Partial<AuthApi> = {}): AuthApi => ({
   session: vi.fn().mockResolvedValue(session), challenge: vi.fn(), register: vi.fn(),
   loginWithCode: vi.fn(), loginWithPassword: vi.fn(), setPassword: vi.fn(), logout: vi.fn(), ...overrides,
