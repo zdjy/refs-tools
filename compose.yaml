@@ -1,0 +1,168 @@
+name: refs-tools-local
+
+x-api-build: &api-build
+  context: .
+  target: api
+
+x-database-environment: &database-environment
+  PGHOST: db
+  PGPORT: "5432"
+  PGDATABASE: refs_tools
+  PGUSER: refs_tools
+  PGPASSWORD: ${POSTGRES_PASSWORD:?请复制 .env.example 为 .env 并配置本地密码}
+  DATABASE_POOL_MAX: "5"
+
+services:
+  certificates:
+    build:
+      context: .
+      target: certificates
+    volumes:
+      - certificates:/certs
+    restart: "no"
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: refs_tools
+      POSTGRES_USER: refs_tools
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请配置 POSTGRES_PASSWORD}
+    command:
+      - postgres
+      - -c
+      - max_connections=20
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - effective_cache_size=512MB
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U refs_tools -d refs_tools"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+
+  migrate:
+    build: *api-build
+    environment: *database-environment
+    command: ["node", "apps/api/dist/infrastructure/database/migrate.js", "up"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    mem_limit: 256m
+
+  mailpit:
+    image: axllent/mailpit:v1.33.0
+    environment:
+      MP_SMTP_TLS_CERT: /certs/local.crt
+      MP_SMTP_TLS_KEY: /certs/local.key
+      MP_SMTP_REQUIRE_STARTTLS: "true"
+      MP_MAX_MESSAGES: "100"
+      MP_MAX_MESSAGE_SIZE: "1"
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+      MP_QUIET: "true"
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+    volumes:
+      - certificates:/certs:ro
+    depends_on:
+      certificates:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 128m
+
+  api:
+    build: *api-build
+    environment:
+      <<: *database-environment
+      HOST: 0.0.0.0
+      PORT: "3000"
+      AUTH_CHALLENGE_SECRET: ${AUTH_CHALLENGE_SECRET:?请配置至少 32 字节的本地随机密钥}
+      AUTH_PUBLIC_ORIGIN: https://localhost:${WEB_PORT:-8443}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_FROM: no-reply@refs-tools.test
+      NODE_EXTRA_CA_CERTS: /certs/local.crt
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    volumes:
+      - certificates:/certs:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    mem_limit: 384m
+    init: true
+
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8443}:443"
+    volumes:
+      - certificates:/certs:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-check-certificate -q -O /dev/null https://127.0.0.1/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    mem_limit: 64m
+
+  test-db:
+    image: postgres:17-alpine
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: refs_tools_test
+      POSTGRES_USER: refs_tools_test
+      POSTGRES_PASSWORD: local-test-only
+    ports:
+      - "127.0.0.1:${TEST_POSTGRES_PORT:-5433}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U refs_tools_test -d refs_tools_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 256m
+
+  tests:
+    build:
+      context: .
+      target: tests
+    profiles: ["test"]
+    environment:
+      TEST_DATABASE_URL: postgres://refs_tools_test:local-test-only@test-db:5432/refs_tools_test
+      NODE_OPTIONS: --max-old-space-size=192
+    depends_on:
+      test-db:
+        condition: service_healthy
+    mem_limit: 300m
+
+volumes:
+  database:
+  certificates:

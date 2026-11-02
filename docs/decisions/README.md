@@ -15,3 +15,4 @@
 - [ADR 0007：Vue 裁判端 UI 框架](./0007-vue-ui-framework.md) — use Naive UI 2.x for typed, themeable Vue base components.
 - [ADR 0009：数据库基础设施归属与应用事务端口](./0009-database-infrastructure-and-transactions.md) — 数据库适配集中于 infrastructure，以无驱动端口向用例提供事务内 Repository。
 - [ADR 0010：邮箱验证、密码与会话安全](./0010-email-auth-and-session-security.md) — 邮箱 challenge、SMTP、服务端可撤销 Cookie 会话与认证安全边界。
+- [ADR 0011：本机完整联调的 Docker Compose 环境](./0011-local-compose-environment.md) — 静态前端、API、PostgreSQL、TLS 本地邮箱和隔离测试库的一键启动。
