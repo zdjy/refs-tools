@@ -3,6 +3,8 @@ style_name: Apple 风格（FIBA 官网·暖沙金机构版）
 style_slug: apple-style-fiba-about
 style_source: /styles/apple-style-fiba-about
 
+> 工程落地说明：本文中的色值与 Tailwind class 是视觉参考，不是独立工程配置；实际代码的语义 token 映射、断点、CSS 例外和迁移约束统一遵循[样式规约](../agents/coding-standards/styles.md)。Naive UI 继续通过集中主题适配本文，不要求逐项堆叠示例 class。
+
 # Hard Prompt
 
 请严格遵守以下风格规则并保持一致性，禁止风格漂移。

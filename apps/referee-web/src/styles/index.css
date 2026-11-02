@@ -1,8 +1,5 @@
-/*
- * 全局样式唯一入口：本文件只做分层导入，不写具体规则。
- * 顺序即优先级：base（基线） → layout（跨页面骨架） → utilities（共享原子类）。
- * 页面与组件样式由各自页面根组件导入，不在此处引入。
- */
+/* 暂不启用 Preflight；保留旧 CSS 与可访问性基线，渐进迁移见 ADR 0013。 */
+@import './tailwind.css';
 @import './base.css';
 @import './layout.css';
 @import './utilities.css';

@@ -79,6 +79,10 @@ docker compose --profile test down
 
 **只有确认可以清空所有联调数据时**才执行 `docker compose --profile test down -v`；它会同时删除数据库和证书 volume，再次启动后需更新本机证书信任。修改 `.env` 的数据库密码不会自动修改已初始化 volume 中的密码；需显式修改数据库账号密码，或确认数据可丢弃后重建。原有 `referee_*` 容器不属于此 Compose 项目；如它们启动后占用相同端口，先停旧服务或调整 `.env`。
 
+## 前端样式
+
+前端已接入 Tailwind CSS 构建，存量页面样式按后续任务逐步迁移。本次选型与兼容性取舍见 [ADR 0013](docs/decisions/0013-tailwindcss-styling.md)，新增界面与迁移统一遵循[样式规约](docs/agents/coding-standards/styles.md)，视觉基线仍为[共享 FIBA UI 规范](docs/ui/fiba_about_ui_specification.md)。
+
 ## 自动化测试
 
 ### 在 Docker 中运行（无需本机 Node.js）

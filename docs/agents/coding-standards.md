@@ -16,7 +16,7 @@
 | [后端规约](coding-standards/backend.md) | API、持久化与迁移：五文件垂直切片、行数限制、Repository、事务、DDD 边界与验证 |
 | [前端规约](coding-standards/frontend.md) | Vue 应用：展示/状态/API 分离、行数限制、Naive UI、Pinia、Router 与测试 |
 | [代码注释规约](coding-standards/comments.md) | 所有任务：注释意图、JSDoc / TSDoc、TODO 及规格/ADR 引用 |
-| [样式规约](coding-standards/styles.md) | UI 与样式变更：token、全局分层、页面样式、加载顺序、命名与断点 |
+| [样式规约](coding-standards/styles.md) | UI 与样式变更：Tailwind CSS、token 映射、扫描与层叠、CSS 例外及迁移 |
 | [后端代码模板](coding-standards/backend-examples.md) | 新建后端模块时对照的 Schema、路由、Service、类型与 Repository 示例 |
 | [前端代码模板](coding-standards/frontend-examples.md) | 新建前端功能时对照的 API、Composable 与视图示例 |
 | [执行协议与自检清单](coding-standards/workflow.md) | 所有任务：契约先行的实施顺序与交付检查 |

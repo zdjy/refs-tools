@@ -1,7 +1,6 @@
 /*
- * 应用骨架：跨页面共用的外壳、顶栏、侧栏容器与主内容区。
- * 只声明布局与容器外观，不写某个页面或组件内部的类。
- * 断点按移动优先升序排列。
+ * 待迁移的旧应用骨架；新增布局使用 Tailwind，见 ADR 0013。
+ * 迁移时检查跨页面引用后移除对应规则，避免影响其他页面。
  */
 .app-shell { min-height: 100vh; }
 .topbar { min-height: 64px; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface); border-bottom: 1px solid var(--line); }

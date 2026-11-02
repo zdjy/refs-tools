@@ -12,13 +12,13 @@
 apps/referee-web/src/
 ├── ui-tokens.ts                 # 设计 token 单一来源，注入为 CSS 变量
 ├── ui-theme.ts                  # UI 框架主题适配，集中映射共享设计 token
-├── styles/                      # 全局样式分层（base/layout/utilities，详见样式规约）
+├── styles/                      # Tailwind 入口、token 映射与全局基线（详见样式规约）
 ├── components/ui/               # 按实际复用需求建立的无业务基础组件
 ├── api/
 │   └── <feature>.api.ts          # 纯网络请求函数（Axios/Fetch 封装）
 └── views/<feature>/
     ├── <Feature>View.vue          # 主视图（纯骨架、布局组装）
-    ├── <feature>.css             # 本页与私有子组件的样式（详见样式规约）
+    ├── <feature>.css             # 迁移期旧样式或必要的局部 CSS 例外（详见样式规约）
     ├── use<Feature>.ts            # 页面交互状态、表单逻辑、列表分页等组合式函数
     └── components/                # 该页面私有子组件
         ├── <Feature>List.vue      # 列表/表格展示
@@ -81,7 +81,7 @@ apps/referee-web/src/
 
 * 当前主题入口为 `apps/referee-web/src/ui-theme.ts`，使用 `GlobalThemeOverrides` 集中映射共享 UI 规范；全局 CSS 变量必须与主题保持同一语义和取值，不得另立一套视觉 token。主题增长时可按组件拆分适配文件，但必须由同一入口导出。
 * `NConfigProvider` 在应用根部统一装配；`NMessageProvider`、`NDialogProvider` 等按实际需求在表现层接入，不得在业务页面重复配置全局主题，也不得在模块顶层创建脱离根主题的全局通知/弹框实例。
-* 颜色、字体、圆角、阴影、触控尺寸和通用交互状态优先通过主题与通用 UI 封装统一实现。页面仅处理布局和明确的展示差异，禁止散落重复的 `theme-overrides` 或为单页发明新 token。样式文件的分层与存放位置见[样式规约](styles.md)。
+* 颜色、字体、圆角、阴影、触控尺寸和通用交互状态优先通过主题与通用 UI 封装统一实现。页面使用 Tailwind CSS 处理布局和自有元素的展示差异，禁止散落重复的 `theme-overrides` 或为单页发明新 token。Tailwind 的依赖、CSS-first 配置、token 映射、类名扫描与存量 CSS 迁移边界统一见[样式规约](styles.md)，选型见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)。
 * 优先使用库公开的 props、slots 与主题接口；不得默认依赖 `.n-*` 内部结构、深层选择器或 `!important` 修补样式。确有公开接口无法覆盖的缺口时，将覆盖集中在适配层，注明原因与兼容风险，并在升级时回归验证。
 * 第三方组件的默认配色、按钮形状及状态不视为已符合项目规范；移动优先密度、至少 44×44 CSS px 的触控目标、可见键盘焦点、可访问名称、弹窗焦点恢复和 reduced-motion 均需实际验证。可访问性或业务操作密度与视觉示例冲突时，按根级 `AGENTS.md` 的优先级处理，并在相关规格记录窄范围例外，不机械套用营销页的大留白。
 
