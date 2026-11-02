@@ -641,7 +641,7 @@ export type AuditEvent = {
 - **状态**：已实现；PostgreSQL 17 集成验证通过，使用方式见 [数据库说明](../../apps/api/db/README.md)。
 - **依赖**：Task 1。
 - **实现**：建立迁移、测试数据库清理、事务测试工具；落实连接池上限与低内存测试配置。
-- **文件**：`apps/api/db/migrations/0001_core.sql`、`apps/api/src/db/pool.ts`、`apps/api/test/helpers/database.ts`、`apps/api/test/db/migration.test.ts`。
+- **文件**：`apps/api/db/migrations/0001_core.sql`、`apps/api/src/infrastructure/database/pool.ts`、`apps/api/src/infrastructure/database/transaction.ts`、`apps/api/src/application/transaction.ts`、`apps/api/test/helpers/database.ts`、`apps/api/test/db/migration.test.ts`。
 - **测试**：迁移可从空库执行/回滚；唯一约束、外键、事务回滚有效；测试数据库连接数受配置限制。
 
 ### Task 3：身份、邮箱验证与账号会话

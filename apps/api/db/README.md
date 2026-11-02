@@ -1,6 +1,6 @@
 # PostgreSQL 迁移与测试
 
-架构依据见 [ADR 0004](../../../docs/decisions/0004-api-database-and-auth-stack.md)，验收范围见 [FS-0002 Task 2](../../../docs/specs/0002-mvp-platform-feature.md#task-2数据库迁移与事务测试基架)。
+架构依据见 [ADR 0004](../../../docs/decisions/0004-api-database-and-auth-stack.md) 与 [ADR 0009](../../../docs/decisions/0009-database-infrastructure-and-transactions.md)，DDD 边界统一遵循[编码规约第二章](../../../docs/agents/coding-standards.md#3-数据访问事务与-ddd-边界)，验收范围见 [FS-0002 Task 2](../../../docs/specs/0002-mvp-platform-feature.md#task-2数据库迁移与事务测试基架)。
 
 ## 运行命令
 
@@ -11,7 +11,7 @@ pnpm --filter @refs-tools/api db:migrate
 pnpm --filter @refs-tools/api db:rollback
 ```
 
-`db:migrate` 应用所有待执行文件，重复运行无副作用；`db:rollback` 只回滚最后一条记录。使用编译产物时，执行 `node apps/api/dist/db/migrate.js up` 或 `down`，并保留相邻的 `apps/api/db/migrations` 目录。迁移账号需要目标 schema 的 DDL 权限，业务运行账号不应拥有迁移权限。
+`db:migrate` 应用所有待执行文件，重复运行无副作用；`db:rollback` 只回滚最后一条记录。使用编译产物时，执行 `node apps/api/dist/infrastructure/database/migrate.js up` 或 `down`，并保留相邻的 `apps/api/db/migrations` 目录。迁移账号需要目标 schema 的 DDL 权限，业务运行账号不应拥有迁移权限。
 
 迁移文件格式为 `NNNN_name.sql`，必须各有一个 `-- migrate:up` 和 `-- migrate:down` 标记，up 在前、down 在后。不在迁移文件内自行提交事务。迁移失败会回滚本次命令的全部变更；历史表保留已成功执行的编号。已应用迁移保持不变，后续修订新增文件。
 

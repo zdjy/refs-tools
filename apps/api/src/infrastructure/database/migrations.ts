@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { Pool, PoolClient } from 'pg'
-import { withTransaction } from './pool.js'
+import { withTransaction } from './transaction.js'
 
 export type Migration = { id: string; name: string; up: string; down: string }
 type MigrationRecord = { id: string; name: string }

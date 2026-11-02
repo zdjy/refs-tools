@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import type { Pool, PoolClient } from 'pg'
-import { createDatabasePool, withTransaction } from '../../src/db/pool.js'
-import { loadMigrations, migrateUp } from '../../src/db/migrations.js'
+import { createDatabasePool } from '../../src/infrastructure/database/pool.js'
+import { withTransaction } from '../../src/infrastructure/database/transaction.js'
+import { loadMigrations, migrateUp } from '../../src/infrastructure/database/migrations.js'
 
 export const migrationsDirectory = fileURLToPath(new URL('../../db/migrations/', import.meta.url))
 

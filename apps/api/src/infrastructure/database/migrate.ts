@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { createDatabasePool, databaseConfigFromEnvironment } from './pool.js'
 import { loadMigrations, migrateDown, migrateUp } from './migrations.js'
 
-const directory = fileURLToPath(new URL('../../db/migrations/', import.meta.url))
+const directory = fileURLToPath(new URL('../../../db/migrations/', import.meta.url))
 const direction = process.argv[2] ?? 'up'
 if (direction !== 'up' && direction !== 'down') throw new Error('Usage: db:migrate [up|down]')
 

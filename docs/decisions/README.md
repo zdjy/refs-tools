@@ -13,3 +13,4 @@
 - [ADR 0005：对象存储供应商基线](./0005-object-storage-provider.md) — use Alibaba Cloud OSS behind an isolated provider adapter.
 - [ADR 0006：裁判端前端技术栈](./0006-referee-web-frontend-stack.md) — use Vue 3/TypeScript and Vite to build a static referee SPA.
 - [ADR 0007：Vue 裁判端 UI 框架](./0007-vue-ui-framework.md) — use Naive UI 2.x for typed, themeable Vue base components.
+- [ADR 0009：数据库基础设施归属与应用事务端口](./0009-database-infrastructure-and-transactions.md) — 数据库适配集中于 infrastructure，以无驱动端口向用例提供事务内 Repository。

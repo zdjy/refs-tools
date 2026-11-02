@@ -1,4 +1,4 @@
-import { Pool, type PoolConfig, type PoolClient } from 'pg'
+import { Pool, type PoolConfig } from 'pg'
 
 export type DatabaseConfig = PoolConfig
 
@@ -17,30 +17,6 @@ export function createDatabasePool(config: DatabaseConfig = {}): Pool {
   // pg 已移除故障空闲连接；只输出通用信息，避免底层异常夹带连接凭据。
   pool.on('error', () => console.error('数据库空闲连接已断开'))
   return pool
-}
-
-/** 用同一连接提交或回滚事务；回滚失败时销毁连接，保留原始异常。 */
-export async function withTransaction<T>(
-  pool: Pick<Pool, 'connect'>,
-  callback: (client: PoolClient) => Promise<T>,
-): Promise<T> {
-  const client = await pool.connect()
-  let destroy = false
-  try {
-    await client.query('BEGIN')
-    const result = await callback(client)
-    await client.query('COMMIT')
-    return result
-  } catch (error) {
-    try {
-      await client.query('ROLLBACK')
-    } catch {
-      destroy = true
-    }
-    throw error
-  } finally {
-    client.release(destroy)
-  }
 }
 
 /** 读取迁移连接配置；测试库必须由测试 helper 显式选择。 */

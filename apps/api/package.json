@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "db:migrate": "tsx src/db/migrate.ts up",
-    "db:rollback": "tsx src/db/migrate.ts down",
+    "db:migrate": "tsx src/infrastructure/database/migrate.ts up",
+    "db:rollback": "tsx src/infrastructure/database/migrate.ts down",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json"
   },

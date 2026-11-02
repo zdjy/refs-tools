@@ -4,8 +4,8 @@ import {
   applyTestMigrations, createTestDatabase, migrationsDirectory, withinRollback,
   type TestDatabase,
 } from '../helpers/database.js'
-import { appliedMigrations, loadMigrations, migrateDown, migrateUp } from '../../src/db/migrations.js'
-import { withTransaction } from '../../src/db/pool.js'
+import { appliedMigrations, loadMigrations, migrateDown, migrateUp } from '../../src/infrastructure/database/migrations.js'
+import { createTransactionRunner, withTransaction } from '../../src/infrastructure/database/transaction.js'
 
 const migrations = await loadMigrations(migrationsDirectory)
 
@@ -81,6 +81,26 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
     await withinRollback(pool, async (client) => { await client.query('INSERT INTO transaction_probe VALUES (3)') })
     const result = await pool.query('SELECT id FROM transaction_probe ORDER BY id')
     expect(result.rows).toEqual([{ id: 1 }])
+  })
+
+  it('事务端口将多个 Repository 绑定到同一事务，失败时一起回滚', async () => {
+    await pool.query('CREATE TABLE repository_probe (id integer PRIMARY KEY)')
+    const transaction = createTransactionRunner(pool, (client) => ({
+      records: { save: () => client.query('INSERT INTO repository_probe VALUES (1)') },
+      audit: { append: () => client.query('INSERT INTO repository_probe VALUES (2)') },
+    }))
+    const error = new Error('业务失败')
+    await expect(transaction.run(async ({ records, audit }) => {
+      await records.save()
+      await audit.append()
+      throw error
+    })).rejects.toBe(error)
+    expect((await pool.query('SELECT id FROM repository_probe')).rows).toEqual([])
+    await transaction.run(async ({ records, audit }) => {
+      await records.save()
+      await audit.append()
+    })
+    expect((await pool.query('SELECT id FROM repository_probe ORDER BY id')).rows).toEqual([{ id: 1 }, { id: 2 }])
   })
 
   it('测试池达到两条连接后等待并超时，释放后恢复', async () => {
