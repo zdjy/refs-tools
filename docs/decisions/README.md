@@ -2,7 +2,7 @@
 
 本目录记录重要技术与产品决策，按顺序命名，例如 `0001-static-spa-deployment.md`。每份 ADR 应说明状态、背景、决策、备选方案及后果，不得包含密钥或环境专属凭据。
 
-开发规约仅维护在 [`docs/agents/coding-standards.md`](../agents/coding-standards.md)，由根级 [`AGENTS.md`](../../AGENTS.md) 引用；ADR 记录具体选型及原因，不重复维护 DDD 或编码规约。
+开发规约仅维护在[编码规约索引](../agents/coding-standards.md)链接的主题文档中，由根级 [`AGENTS.md`](../../AGENTS.md) 引用；ADR 记录具体选型及原因，不重复维护 DDD 或编码规约。
 
 ## 决策索引
 

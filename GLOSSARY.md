@@ -1,6 +1,6 @@
 # 统一语言表
 
-本表是项目 single-context 布局下共享的业务术语入口。模块使用同一术语时遵守这里的定义；出现语义分歧时先补充限定词，不另建同义概念。开发规约统一见 [全栈架构与编码规约](docs/agents/coding-standards.md)，本表仅维护业务术语，不另设开发规约；业务范围以 [MVP-001](docs/specs/0001-mvp-scope-and-business-rules.md) 为准。
+本表是项目 single-context 布局下共享的业务术语入口。模块使用同一术语时遵守这里的定义；出现语义分歧时先补充限定词，不另建同义概念。开发规约统一见[全栈架构与编码规约索引及其主题文档](docs/agents/coding-standards.md)，本表仅维护业务术语，不另设开发规约；业务范围以 [MVP-001](docs/specs/0001-mvp-scope-and-business-rules.md) 为准。
 
 ## 身份、组织与资质
 

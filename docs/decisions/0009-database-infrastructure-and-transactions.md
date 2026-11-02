@@ -7,7 +7,7 @@
 
 ADR 0004 选择 `pg` 参数化 SQL 和轻量迁移运行器。当前 API 尚无业务 Repository，数据库代码集中在 `src/db/`，其中 `pool.ts` 同时承担连接配置与事务执行。旧规约要求 Service 发起事务并传递事务句柄，现有 helper 的回调类型是 `PoolClient`；直接沿用会让应用用例依赖数据库驱动。
 
-需要在业务模块落地前明确数据库基础设施的位置，并提供可注入、可脱离 PostgreSQL 测试的事务边界。统一编码约束仍仅维护在[编码规约第二章](../agents/coding-standards.md#3-数据访问事务与-ddd-边界)。
+需要在业务模块落地前明确数据库基础设施的位置，并提供可注入、可脱离 PostgreSQL 测试的事务边界。统一编码约束仍仅维护在[后端规约：数据访问、事务与 DDD 边界](../agents/coding-standards/backend.md#3-数据访问事务与-ddd-边界)。
 
 ## 决策
 

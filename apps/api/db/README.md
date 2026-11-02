@@ -1,6 +1,6 @@
 # PostgreSQL 迁移与测试
 
-架构依据见 [ADR 0004](../../../docs/decisions/0004-api-database-and-auth-stack.md) 与 [ADR 0009](../../../docs/decisions/0009-database-infrastructure-and-transactions.md)，DDD 边界统一遵循[编码规约第二章](../../../docs/agents/coding-standards.md#3-数据访问事务与-ddd-边界)，验收范围见 [FS-0002 Task 2](../../../docs/specs/0002-mvp-platform-feature.md#task-2数据库迁移与事务测试基架)。
+架构依据见 [ADR 0004](../../../docs/decisions/0004-api-database-and-auth-stack.md) 与 [ADR 0009](../../../docs/decisions/0009-database-infrastructure-and-transactions.md)，DDD 边界统一遵循[后端规约：数据访问、事务与 DDD 边界](../../../docs/agents/coding-standards/backend.md#3-数据访问事务与-ddd-边界)，验收范围见 [FS-0002 Task 2](../../../docs/specs/0002-mvp-platform-feature.md#task-2数据库迁移与事务测试基架)。
 
 ## 运行命令
 

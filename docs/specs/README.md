@@ -2,7 +2,7 @@
 
 本目录存放产品与技术规格，描述范围、参与者、预期行为、边界情况及可测试的验收标准。具体架构决策存放于 [`docs/decisions/`](../decisions/README.md)。
 
-开发规约仅维护在 [`docs/agents/coding-standards.md`](../agents/coding-standards.md)，由根级 [`AGENTS.md`](../../AGENTS.md) 引用；本目录不另设 DDD 或编码规约。业务术语见[统一语言表](../../GLOSSARY.md)。
+开发规约仅维护在[编码规约索引](../agents/coding-standards.md)链接的主题文档中，由根级 [`AGENTS.md`](../../AGENTS.md) 引用；本目录不另设 DDD 或编码规约。业务术语见[统一语言表](../../GLOSSARY.md)。
 
 ## 规格索引
 

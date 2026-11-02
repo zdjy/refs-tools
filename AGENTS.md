@@ -6,8 +6,8 @@ Build a basketball referee comprehensive toolkit and workbench with a mobile-fir
 
 ## 开发规约
 
-- [`docs/agents/coding-standards.md`](docs/agents/coding-standards.md) 是本项目统一的全栈架构与 AI 编码规约。新增功能、重构和修复前必须完整阅读并遵守，交付前逐项执行其自检清单。
-- 包依赖、共享契约、后端五文件垂直切片、前端展示/状态/API 分离、文件行数限制及实施顺序均以该文档为唯一维护入口；不要在规格、ADR 或 README 中另建一份重复规约。
+- [`docs/agents/coding-standards.md`](docs/agents/coding-standards.md) 是本项目统一的全栈架构与 AI 编码规约索引。新增功能、重构和修复前必须按索引的阅读顺序完整阅读通用规约及任务涉及的主题文档并遵守，交付前逐项执行[自检清单](docs/agents/coding-standards/workflow.md#2-交付前自检清单必须逐条通过)。
+- 包依赖、共享契约、后端五文件垂直切片、前端展示/状态/API 分离、文件行数限制及实施顺序均以该索引链接的主题文档为唯一维护来源；不要在规格、ADR 或 README 中另建一份重复规约。
 - 本文件保留产品、资源、安全和文档管理约束；业务需求查阅 `docs/specs/`，具体架构选型及历史原因查阅 `docs/decisions/`。发现规约、规格或既有 ADR 冲突时明确说明，不静默覆盖或自行放宽要求。
 
 ## Architecture and Resource Budget
