@@ -23,7 +23,7 @@ pnpm test
 pnpm test:db
 ```
 
-`test` 为低并发单测；`test:db` 要求显式设置 `TEST_DATABASE_URL`，缺失即失败。集成测试为每次运行创建随机 schema，仅删除自己创建的 schema，不删除 `public`，但仍应使用专用测试数据库和账号。测试账号需有创建 schema 的权限。业务表尚未进入 Task 2，唯一约束与外键由测试 schema 内的临时探针表验证。
+`test` 为低并发单测；`test:db` 要求显式设置 `TEST_DATABASE_URL`，缺失即失败。集成测试为每次运行创建随机 schema，仅删除自己创建的 schema，不删除 `public`，但仍应使用专用测试数据库和账号。测试账号需有创建 schema 的权限；Task 4 的最小权限审计验收还需要专用测试账号具备 CREATEROLE / SET ROLE 能力，详见[授权与审计说明](AUTHORIZATION_AUDIT.md)。生产 API 账号不得获得这些权限。除了临时探针，身份及 RBAC/审计集成测试会直接验证真实业务表。
 
 ## 2C2G 资源起点
 

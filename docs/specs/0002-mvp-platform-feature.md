@@ -349,10 +349,9 @@ export type AuditEvent = {
 | --- | --- | --- |
 | `users` | `id uuid PK`, `email citext UNIQUE NULL`, `email_verified_at timestamptz NULL`, `password_hash text NULL`, `phone_e164 text UNIQUE NULL`, `status text`, `created_at`, `deleted_at` | 至少有一个可登录凭据；密码只存强哈希；验证码不得存明文。邮箱/手机号唯一，禁止跨用户重复绑定。 |
 | `referee_profiles` | `user_id uuid PK/FK`, `display_name text`, `legal_name text`, `avatar_media_id uuid NULL`, `region text`, `updated_at` | 实名字段受限访问；列表使用目的限定投影，不返回整行。 |
-| `platform_role_bindings` | `id uuid PK`, `user_id uuid FK`, `role text`, `starts_at`, `expires_at NULL`, `revoked_at NULL`, `granted_by uuid FK` | 平台角色独立授权、可撤销；活动授权不能仅依赖 JWT 快照。 |
 | `organizations` | `id uuid PK`, `name text`, `region text`, `purpose text`, `owner_user_id uuid FK`, `status text`, `reviewed_by uuid NULL`, `reviewed_at timestamptz NULL` | `status=active` 才允许业务操作；冻结/驳回保留历史。 |
 | `organization_memberships` | `id uuid PK`, `organization_id uuid FK`, `user_id uuid FK`, `status text`, `invited_by uuid NULL`, `joined_at NULL`, `ended_at NULL` | `(organization_id,user_id)` 对当前 active/pending 关系唯一；所有者不得被删除到组织无所有者。 |
-| `role_bindings` | `id uuid PK`, `user_id uuid FK`, `role text`, `scope_type text`, `scope_id uuid NULL`, `granted_by uuid FK`, `starts_at`, `expires_at NULL`, `revoked_at NULL` | 作用域由服务端解析；角色授予者必须有覆盖该 scope 的授权。 |
+| `role_bindings` | `id uuid PK`, `subject_user_id uuid FK`, `role text`, `scope_type text`, `scope_id uuid NULL`, `granted_by uuid FK`, `starts_at`, `expires_at NULL`, `revoked_at NULL` | 平台与业务角色统一存储，平台绑定 scope ID 为 NULL；角色/范围组合受 CHECK 约束。作用域由服务端解析，授予者必须有覆盖该 scope 的授权，见 ADR 0014。 |
 | `organization_invites` | `id uuid PK`, `organization_id uuid FK`, `token_hash text UNIQUE`, `max_uses int`, `uses int`, `expires_at`, `revoked_at NULL`, `created_by uuid FK` | 只存 token 哈希；事务内原子扣减使用次数；永不用于授予角色。 |
 | `organization_applications` | `id uuid PK`, `applicant_id uuid FK`, `organization_id uuid FK NULL`, `organization_payload jsonb`, `status text`, `reviewed_by uuid NULL`, `review_reason text NULL` | 自助创建先 `pending_review`；未 active 不允许业务授权。平台创建邀请码为独立凭证表/用途。 |
 | `certifications` | `id uuid PK`, `user_id uuid FK`, `scope_type text`, `organization_id uuid NULL`, `level text`, `status text`, `certificate_number text`, `issuer text`, `obtained_at date NULL`, `version int`, `reviewed_by uuid NULL`, `reviewed_at NULL`, `review_note text NULL` | `scope_type=platform` 时组织 ID 必须 NULL；organization 时必须非 NULL。每组织/用户最多一条当前有效记录；保留版本/状态历史。级别不排序。 |
@@ -385,7 +384,7 @@ export type AuditEvent = {
 | `post_game_media` | `record_id uuid FK`, `media_id uuid FK`, `kind text`, `sort_order int` | 至少一张预览图；原图可选；对象私有、长期保留、访问/删除审计。 |
 | `forum_posts` | `id uuid PK`, `author_id uuid FK`, `board_id uuid FK`, `body jsonb`, `status text`, `edited_until timestamptz`, `deleted_at NULL` | 富文本服务端清洗；删除为软删除；附件发布前完成基础校验。 |
 | `forum_reports` | `id uuid PK`, `post_id uuid FK NULL`, `reply_id uuid FK NULL`, `reporter_id uuid FK`, `reason text`, `status text`, `handled_by uuid NULL` | 幂等/防刷；审核操作写入审计。 |
-| `audit_events` | `id uuid PK`, `actor_user_id uuid`, `action text`, `resource_type text`, `resource_id uuid`, `scope_type text`, `scope_id uuid NULL`, `reason text NULL`, `before jsonb NULL`, `after jsonb NULL`, `created_at timestamptz` | append-only；不允许业务角色更新/删除；不得记录验证码、密码、签名 URL、原件内容。 |
+| `audit_events` | `id uuid PK`, `actor_user_id uuid`, `action text`, `resource_type text`, `resource_id uuid`, `scope_type text`, `scope_id uuid NULL`, `organization_id uuid NULL`, `reason text NULL`, `before jsonb NULL`, `after jsonb NULL`, `created_at timestamptz` | append-only；不允许业务角色更新/删除/清空；organization ID 保存服务端解析归属，支持组织及下属资源查询。before/after 仅白名单状态/版本/角色/UUID 投影，不得记录验证码、密码、签名 URL、原件内容。 |
 
 ### 2.3 核心唯一性和状态约束
 
@@ -670,10 +669,11 @@ export type AuditEvent = {
 
 ### Task 4：作用域 RBAC 与审计基础设施
 
+- **状态**：已实现；范围、部署权限及后续模块接入见 [ADR 0014](../decisions/0014-scoped-authorization-and-audit-foundation.md) 和[授权与审计说明](../../apps/api/db/AUTHORIZATION_AUDIT.md)。提前创建组织/成员/赛事/比赛的最小归属与状态骨架用于真实 scope 查询，Task 7/15 再通过新增迁移扩展，不代表相应业务接口已实现。
 - **依赖**：Task 3。
 - **实现**：role bindings、组织/事件/比赛 scope resolver、默认拒绝 policy、append-only audit writer。
 - **文件**：`apps/api/db/migrations/0003_rbac_audit.sql`、`apps/api/src/modules/authorization/*`、`apps/api/src/modules/audit/*`、`packages/domain/src/permissions.ts`。
-- **测试**：`apps/api/test/authorization/scope-matrix.test.ts`、`audit/append-only.test.ts`；覆盖跨组织 ID、撤权即时生效、自身资源与无权限场景。
+- **测试**：`apps/api/test/authorization/scope-matrix.test.ts`、`audit/append-only.test.ts` 及同目录独立 `.integration.test.ts`；覆盖跨组织 ID、真实归属解析、撤权/成员退出/冻结即时生效、自身资源、非法角色范围、并发授予、同事务审计回滚、不可变限制、查询分页与 Cookie HTTP 门禁。
 
 ### Task 5：对象存储 adapter 与媒体上传意图
 
@@ -691,6 +691,7 @@ export type AuditEvent = {
 
 ### Task 7：组织、邀请、成员关系与平台审核
 
+- **迁移接续**：Task 4 已建立组织/成员最小归属与状态骨架；本任务以 `0005` 扩展现有表并补齐业务字段/约束，不重复建表。
 - **依赖**：Task 3、Task 4。
 - **实现**：组织申请、平台审核、一次性创建邀请码、成员邀请接受/拒绝/申请/成员码、角色授予/撤销、组织冻结/所有权变更审计。
 - **文件**：`apps/api/db/migrations/0005_organizations.sql`、`apps/api/src/modules/organizations/*`、`packages/contracts/src/organizations.ts`。
@@ -747,6 +748,7 @@ export type AuditEvent = {
 
 ### Task 15：赛事岗位模板与发布锁定
 
+- **迁移接续**：Task 4 已建立赛事/比赛最小归属与状态骨架；本任务以 `0013` 扩展现有表并补齐业务字段/约束，不重复建表。
 - **依赖**：Task 7、Task 8、Task 4。
 - **实现**：事件/比赛/岗位模板、候选成员过滤、认证范围提示、越过理由、发布锁定、岗位回应和替换链。
 - **文件**：`apps/api/db/migrations/0013_competitions_assignments.sql`、`apps/api/src/modules/assignments/*`、`packages/domain/src/assignment-state.ts`。

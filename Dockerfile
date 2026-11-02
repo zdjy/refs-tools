@@ -28,6 +28,7 @@ ENV NODE_ENV=production
 COPY --from=production-dependencies /workspace ./
 COPY --from=api-build /workspace/apps/api/dist ./apps/api/dist
 COPY --from=api-build /workspace/packages/contracts/dist ./packages/contracts/dist
+COPY --from=api-build /workspace/packages/domain/dist ./packages/domain/dist
 COPY apps/api/db/migrations ./apps/api/db/migrations
 USER node
 EXPOSE 3000

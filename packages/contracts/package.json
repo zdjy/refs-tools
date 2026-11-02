@@ -4,6 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./authorization": {
+      "types": "./src/authorization.ts",
+      "development": "./src/authorization.ts",
+      "import": "./dist/authorization.js"
+    },
+    "./audit": {
+      "types": "./src/audit.ts",
+      "development": "./src/audit.ts",
+      "import": "./dist/audit.js"
+    },
     "./auth": {
       "types": "./src/auth.ts",
       "development": "./src/auth.ts",

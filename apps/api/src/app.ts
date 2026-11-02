@@ -3,9 +3,10 @@ import { ApiError, apiError, apiResponse } from '@refs-tools/contracts'
 
 import { DomainError } from './application/errors.js'
 import { authRoutes, type AuthRouteDependencies } from './modules/auth/auth.routes.js'
+import { auditRoutes, type AuditRouteDependencies } from './modules/audit/audit.routes.js'
 
 type AppOptions = FastifyServerOptions
-type AppDependencies = { auth?: AuthRouteDependencies; close?: () => Promise<void> }
+type AppDependencies = { auth?: AuthRouteDependencies; audit?: AuditRouteDependencies; close?: () => Promise<void> }
 
 class SafeLogController extends LogController {
   constructor() { super({ disableRequestLogging: true }) }
@@ -57,6 +58,7 @@ export async function buildApp(options: AppOptions = {}, dependencies: AppDepend
 
   if (dependencies.close) app.addHook('onClose', dependencies.close)
   if (dependencies.auth) await app.register(authRoutes(dependencies.auth), { prefix: '/api/v1/auth' })
+  if (dependencies.audit) await app.register(auditRoutes(dependencies.audit), { prefix: '/api/v1' })
 
   await app.ready()
   return app
