@@ -402,7 +402,7 @@ export type AuditEvent = {
 ### 3.1 通用约定
 
 - API 路径前缀：`/api/v1`。所有接口使用 HTTPS 和 JSON，媒体上传除外。
-- `Authorization: Bearer <access-token>` 用于认证；服务端每次保护请求重新解析有效角色绑定和资源作用域。
+- 认证使用服务端可撤销会话 Cookie：浏览器仅发送 `__Host-refs_session` 的 `HttpOnly; Secure; SameSite=Lax; Path=/` Cookie；服务端每次保护请求重新读取有效用户、角色绑定和资源作用域，不使用 Bearer/accessToken。
 - 资源 ID 使用 UUID；响应中的日期为 UTC ISO-8601。
 - 所有非幂等创建接口支持 `Idempotency-Key`；状态转换支持 `If-Match` 或 `expectedVersion`，避免重放和并发覆盖。
 - 成功响应统一形状：`{ "data": ..., "meta"?: ... }`。列表支持 `cursor`、`limit`。
@@ -415,9 +415,9 @@ export type AuditEvent = {
 | Method / Endpoint | 请求与响应 | 鉴权要求 |
 | --- | --- | --- |
 | `POST /auth/email-challenges` | 入参 `{email, purpose}`；回 `{challengeId, expiresAt}`。不得暴露邮箱是否已注册。 | 匿名；IP/邮箱频控 |
-| `POST /auth/register` | `{challengeId, code, displayName, password?}`；回 `{user, accessToken, emailVerified:true}`。 | 匿名；验证码有效且未使用 |
-| `POST /auth/login/email-code` | `{email, challengeId, code}`；回 `{user, accessToken}`。 | 匿名；验证码一次性 |
-| `POST /auth/login/password` | `{email, password}`；回 `{user, accessToken}`。 | 匿名；已设置密码 |
+| `POST /auth/register` | `{challengeId, code, displayName, password?}`；回 `{user, expiresAt}` 并通过安全会话 Cookie 建立会话。 | 匿名；验证码有效且未使用 |
+| `POST /auth/login/email-code` | `{email, challengeId, code}`；回 `{user, expiresAt}` 并通过安全会话 Cookie 建立会话。 | 匿名；验证码一次性 |
+| `POST /auth/login/password` | `{email, password}`；回 `{user, expiresAt}` 并通过安全会话 Cookie 建立会话。 | 匿名；已设置密码 |
 | `POST /auth/password` | `{newPassword, challengeId, code}`；回 `{updated:true}`。 | 已登录且完成邮箱重新验证 |
 | `POST /auth/credential-merge-requests` | `{sourceAccountId, targetCredential}`；回 `{requestId,status}`。 | 已验证两个凭据；人工审核；不自动合并 |
 
@@ -646,6 +646,7 @@ export type AuditEvent = {
 
 ### Task 3：身份、邮箱验证与账号会话
 
+- **状态**：已实现；部署变量与维护命令见 [认证部署配置](../../apps/api/db/AUTH_DEPLOYMENT.md)。
 - **依赖**：Task 2。
 - **实现**：用户、邮箱 challenge、可选密码、会话、凭据唯一性和邮箱验证门禁；短信接口先留 provider adapter，不阻塞邮箱登录。
 - **文件**：`apps/api/db/migrations/0002_identity.sql`、`apps/api/src/modules/auth/*`、`packages/contracts/src/auth.ts`。

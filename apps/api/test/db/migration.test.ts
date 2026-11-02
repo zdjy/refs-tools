@@ -11,7 +11,7 @@ const migrations = await loadMigrations(migrationsDirectory)
 
 describe('迁移文件', () => {
   it('加载可执行及可回滚的核心迁移', () => {
-    expect(migrations.map(({ id }) => id)).toEqual(['0001'])
+    expect(migrations.map(({ id }) => id)).toEqual(['0001', '0002'])
     expect(migrations[0]?.up).toContain('CREATE FUNCTION set_updated_at()')
     expect(migrations[0]?.down).toContain('DROP FUNCTION set_updated_at()')
   })
@@ -29,32 +29,34 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
   afterAll(async () => { await database?.close() })
 
   it('空 schema 可迁移、幂等重跑、回滚后重新应用', async () => {
-    expect(await applyTestMigrations(pool)).toEqual(['0001'])
+    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002'])
     expect(await applyTestMigrations(pool)).toEqual([])
+    expect(await migrateDown(pool, migrations)).toBe('0002')
+    expect((await pool.query("SELECT to_regclass('users') AS table")).rows[0].table).toBeNull()
     expect(await migrateDown(pool, migrations)).toBe('0001')
     const result = await pool.query("SELECT to_regprocedure('set_updated_at()') AS function")
     expect(result.rows[0].function).toBeNull()
     expect(await appliedMigrations(pool)).toEqual([])
     expect(await migrateDown(pool, migrations)).toBeNull()
-    expect(await applyTestMigrations(pool)).toEqual(['0001'])
+    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002'])
   })
 
   it('并发迁移只应用一次', async () => {
     const results = await Promise.all([applyTestMigrations(pool), applyTestMigrations(pool)])
-    expect(results.flat()).toEqual(['0001'])
-    expect(await appliedMigrations(pool)).toHaveLength(1)
+    expect(results.flat()).toEqual(['0001', '0002'])
+    expect(await appliedMigrations(pool)).toHaveLength(2)
   })
 
   it('失败的迁移连同 DDL 一起回滚', async () => {
     await applyTestMigrations(pool)
     await expect(migrateUp(pool, [...migrations, {
-      id: '0002', name: 'broken',
+      id: '9999', name: 'broken',
       up: 'CREATE TABLE failed_migration (id integer); SELECT 1 / 0;',
       down: 'DROP TABLE failed_migration;',
     }])).rejects.toMatchObject({ code: '22012' })
     const result = await pool.query("SELECT to_regclass('failed_migration') AS table")
     expect(result.rows[0].table).toBeNull()
-    expect(await appliedMigrations(pool)).toHaveLength(1)
+    expect(await appliedMigrations(pool)).toHaveLength(2)
   })
 
   it('唯一约束及外键拒绝非法写入', async () => {

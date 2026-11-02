@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NEmpty, NPopconfirm } from 'naive-ui'
 import { useWorkbenchStore } from '../../stores/workbench'
@@ -30,6 +31,7 @@ onMounted(initialize)
       <a class="brand" href="#main" aria-label="裁判工具箱主页"><span class="brand-mark">R</span><span>裁判工具箱</span></a>
       <div class="topbar-meta">
         <span class="local-label">本地工作台</span>
+        <RouterLink class="account-link" to="/account">账号</RouterLink>
         <n-popconfirm positive-text="清空" negative-text="取消" @positive-click="clearAll">
           <template #trigger><n-button quaternary :disabled="!sessions.length && !restoreFailed">清空全部</n-button></template>
           清空本设备的全部比赛会话？此操作无法撤销，请先导出需要保留的记录。

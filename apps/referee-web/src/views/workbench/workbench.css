@@ -3,6 +3,9 @@
  * 由 WorkbenchView.vue 导入；只包含本页与 views/workbench/components/ 使用的类。
  * 断点按移动优先升序排列，同一断点的规则合并到同一个媒体查询块。
  */
+.account-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; color: var(--body); font-size: 13px; text-decoration: none; }
+.account-link:hover { color: var(--red); }
+
 .sidebar-heading { display: flex; align-items: center; justify-content: space-between; }
 .sidebar-heading h1 { margin: 0; font-size: 18px; }
 .sidebar-caption { margin: 4px 0 12px; color: var(--body); font-size: 12px; }

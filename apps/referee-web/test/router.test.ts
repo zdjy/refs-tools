@@ -10,8 +10,12 @@ describe('裁判端静态路由', () => {
     expect(router.resolve('/missing').name).toBe('not-found')
   })
 
-  it('页面路由使用懒加载组件', () => {
+  it('页面路由使用懒加载组件，并提供认证入口', () => {
     expect(typeof router.resolve('/workbench').matched.at(-1)?.components?.default).toBe('function')
+    expect(typeof router.resolve('/login').matched.at(-1)?.components?.default).toBe('function')
+    expect(router.resolve('/login').meta.title).toBe('登录')
+    expect(router.resolve('/register').meta.title).toBe('创建账号')
+    expect(router.resolve('/account').meta.title).toBe('账号与安全')
     expect(typeof router.resolve('/missing').matched.at(-1)?.components?.default).toBe('function')
   })
 })

@@ -5,8 +5,9 @@ if (!process.env['TEST_DATABASE_URL']) {
 }
 
 export default defineConfig({
+  resolve: { conditions: ['development', 'import', 'default'] },
   test: {
-    include: ['apps/api/test/db/migration.test.ts'],
+    include: ['apps/api/test/db/migration.test.ts', 'apps/api/test/**/*.integration.test.ts'],
     pool: 'threads',
     fileParallelism: false,
     maxWorkers: 1,
