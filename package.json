@@ -6,7 +6,8 @@
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
     "typecheck": "pnpm --recursive run typecheck",
-    "test": "vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "test:db": "vitest run --config vitest.database.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

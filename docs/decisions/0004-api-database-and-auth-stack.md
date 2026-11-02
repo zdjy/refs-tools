@@ -31,7 +31,11 @@ Task 1 需要在业务模块开始前确定轻量 API、关系数据库和认证
 
 采用 Fastify + TypeScript 作为 API 基线，PostgreSQL 作为生产关系数据库，认证采用服务端可撤销会话。API 统一使用 `/api/v1` 前缀和 JSON transport contract；请求输入在 API 边界使用运行时 schema 校验。
 
-本任务只建立框架和共享契约，不提前实现数据库连接、用户表或认证流程。数据库连接池上限、迁移工具和会话存储细节在 Task 2/3 实现时补充，并须保持低内存配置。
+Task 2 采用 `pg` 直接执行参数化 SQL，以保持运行时依赖较小；相比 ORM，无需引入模型生成和额外查询抽象。迁移采用编号 SQL 文件及显式 up/down 段，由轻量运行器管理历史，不引入独立迁移框架。开发命令使用 `tsx` 执行 TypeScript，生产仍可使用编译后的 Node.js 入口。
+
+API 池默认最多 5 条连接，空闲连接 10 秒回收、获取连接超时 5 秒；`DATABASE_POOL_MAX` 必须为正整数。业务 service 通过事务 helper 编排，SQL 和池实例仅在 repository 或数据库基础设施中使用；本任务不新增业务端点及全局连接实例。每次迁移命令在同一事务内执行，并在创建历史表前获取事务级 advisory lock，避免并发迁移。核心迁移仅提供共享更新时间触发器函数；身份、审计、媒体、组织表分别留在后续任务建立。
+
+数据库集成测试通过独立 `pnpm test:db` 运行，必须设置 `TEST_DATABASE_URL`。每次测试创建唯一 schema，清理只作用于该 schema。测试池最多 2 条连接，schema 管理池最多 1 条连接；单 worker 串行执行。会话存储细节在 Task 3 补充。
 
 ## 后果
 

@@ -638,6 +638,7 @@ export type AuditEvent = {
 
 ### Task 2：数据库迁移与事务测试基架
 
+- **状态**：已实现；PostgreSQL 17 集成验证通过，使用方式见 [数据库说明](../../apps/api/db/README.md)。
 - **依赖**：Task 1。
 - **实现**：建立迁移、测试数据库清理、事务测试工具；落实连接池上限与低内存测试配置。
 - **文件**：`apps/api/db/migrations/0001_core.sql`、`apps/api/src/db/pool.ts`、`apps/api/test/helpers/database.ts`、`apps/api/test/db/migration.test.ts`。
