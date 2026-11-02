@@ -6,9 +6,15 @@ import { useAccount } from '../useAccount'
 const auth = useAuthStore()
 const { fields, errors, success, challenge, busy, isInitialPassword, sendCode, savePassword } = useAccount(auth)
 const { remaining, sending, notice, error: sendError, expired } = challenge
+const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)
 async function submit() {
-  if (!await savePassword()) { await nextTick(); summary.value?.focus() }
+  if (!await savePassword()) {
+    await nextTick()
+    const invalidInput = form.value?.querySelector<HTMLElement>('input[aria-invalid="true"]')
+    if (invalidInput) invalidInput.focus()
+    else summary.value?.focus()
+  }
 }
 </script>
 
@@ -16,10 +22,9 @@ async function submit() {
   <section class="mt-6 border-0 border-t border-solid border-line pt-6" aria-labelledby="password-heading">
     <h3 class="mt-0 mr-0 mb-2 ml-0 text-[18px]" id="password-heading">{{ isInitialPassword ? '设置登录密码' : '更换登录密码' }}</h3>
     <p class="mt-0 mr-0 mb-5 ml-0 text-[13px] leading-[1.8] text-body">{{ isInitialPassword ? '邮箱已验证，无需再次获取验证码。设置密码即可完成注册，以后也可使用邮箱和密码登录。' : '先验证当前邮箱。更新密码后，其他旧登录会话将失效。' }}</p>
-    <form novalidate :aria-busy="busy" @submit.prevent="submit">
-      <div v-if="Object.keys(errors).length || auth.error" ref="summary" class="mb-5 rounded-xl border border-solid border-red bg-soft px-4 py-3 text-[13px] leading-[1.7] text-red-hover" role="alert" tabindex="-1">
-        {{ auth.error || '请检查以下输入后再试。' }}
-        <ul class="mt-2 mr-0 mb-0 ml-0 pl-5"><li v-for="(message, field) in errors" :key="field"><a class="inline-block px-0 py-1" :href="`#settings-${field}`">{{ message }}</a></li></ul>
+    <form ref="form" novalidate :aria-busy="busy" @submit.prevent="submit">
+      <div v-if="auth.error" ref="summary" class="mb-5 rounded-xl border border-solid border-red bg-soft px-4 py-3 text-[13px] leading-[1.7] text-red-hover" role="alert" tabindex="-1">
+        {{ auth.error }}
       </div>
       <div v-if="!isInitialPassword" class="mb-5 min-w-0">
         <label class="mb-2 block text-[14px] font-semibold" for="settings-code">邮箱验证码</label>

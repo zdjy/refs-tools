@@ -434,7 +434,7 @@ export type AuditEvent = {
 - 刷新账号页仍可继续首次设置；设置成功后会话投影的 `hasPassword` 为 `true`，旧会话失效，新密码可登录。
 - 已有密码时仍显示邮箱验证码；省略验证码的请求返回 `403 PASSWORD_VERIFICATION_REQUIRED`，未验证邮箱返回 `403 EMAIL_NOT_VERIFIED`，失效会话返回 `401 UNAUTHENTICATED`。
 - 弱密码、确认不一致或网络错误不显示成功，保留可恢复输入；并发首次设置最多一个成功，不得覆盖已设置的密码。
-- UI 延续[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，保留字段标签、错误摘要焦点与移动端触控目标，不新增视觉例外。
+- UI 延续[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，保留字段标签与移动端触控目标，不新增视觉例外；首次设置及更换登录密码均仅在对应输入框下方展示字段错误，不重复展示顶部字段错误列表。提交校验失败聚焦首个无效输入框，非字段错误仍保留可见提示并在无无效字段时聚焦该提示。
 
 ### 3.3 组织和成员
 
