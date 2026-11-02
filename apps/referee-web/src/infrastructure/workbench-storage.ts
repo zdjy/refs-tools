@@ -2,20 +2,9 @@ import {
   ACTIVE_SESSION_KEY, STORAGE_KEY,
   type ClockState, type RuleSet, type WorkbenchSession,
 } from '../domain/workbench'
+import type { WorkbenchPorts, WorkbenchSnapshot } from '../application/workbench-ports'
 
-export interface WorkbenchSnapshot {
-  sessions: WorkbenchSession[]
-  /** 空字符串表示没有活动会话，不是一个可保存的会话 ID。 */
-  activeId: string
-}
-
-/** 同步设备 IO 边界；失败应抛出，由页面状态层决定保留、重试或提示。 */
-export interface WorkbenchPorts {
-  load(): WorkbenchSnapshot
-  save(snapshot: WorkbenchSnapshot): void
-  download(session: WorkbenchSession): void
-  dispose(): void
-}
+export type { WorkbenchPorts, WorkbenchSnapshot } from '../application/workbench-ports'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
@@ -82,7 +71,7 @@ export function saveWorkbench(storage: Pick<Storage, 'setItem' | 'removeItem'>, 
 }
 
 /**
- * 以 localStorage 和 JSON 下载实现设备 IO，不上传业务比赛记录（MVP-001 §9.1）。
+ * 以 localStorage 和 JSON 下载实现设备 IO，不上传业务比赛记录（MVP-001 §9.1）；只实现端口，不决定失败后的用例行为。
  * @returns 调用方须在作用域销毁时调用 dispose，释放最近一次导出的 Blob URL。
  */
 export function createBrowserWorkbenchPorts(): WorkbenchPorts {

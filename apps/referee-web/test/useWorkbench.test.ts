@@ -1,6 +1,8 @@
 import { effectScope } from 'vue'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useWorkbench } from '../src/views/workbench/useWorkbench'
+import { createWorkbenchState } from '../src/application/workbench-state'
+import { createWorkbenchViewState } from '../src/views/workbench/useWorkbench'
+import { defaultRuleInput, rulesFromInput } from '../src/domain/workbench-commands'
 import { createSession } from '../src/domain/workbench'
 import type { WorkbenchPorts } from '../src/infrastructure/workbench-storage'
 
@@ -10,7 +12,7 @@ function setup(overrides: Partial<WorkbenchPorts> = {}) {
     download: vi.fn(), dispose: vi.fn(), ...overrides,
   }
   const scope = effectScope()
-  const state = scope.run(() => useWorkbench(ports))!
+  const state = scope.run(() => createWorkbenchState(ports))!
   scopes.push(scope)
   return { state, ports, scope }
 }
@@ -20,17 +22,11 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('工作台页面状态（不挂载组件库）', () => {
-  it('参数失败时保留表单，创建成功后由领域命令记录操作并保存', () => {
+describe('工作台应用状态（不挂载组件库）', () => {
+  it('应用状态接受已校验的规则输入并编排领域命令和持久化', () => {
     const { state, ports } = setup()
-    state.newRules.value.periodCount = null
-    state.createDialogVisible.value = true
-    state.startSession()
-    expect(state.formError.value).not.toBe('')
-    expect(state.createDialogVisible.value).toBe(true)
-    expect(ports.save).not.toHaveBeenCalled()
-    state.newRules.value.periodCount = 2
-    state.startSession()
+    const rules = rulesFromInput({ ...defaultRuleInput(), periodCount: 2 }, 100)
+    state.startSession(rules)
     state.toggleClock('game')
     state.onFoul('away')
     state.applyPreset(14)
@@ -40,10 +36,26 @@ describe('工作台页面状态（不挂载组件库）', () => {
     expect(ports.save).toHaveBeenCalledTimes(4)
   })
 
+  it('页面表单状态负责校验反馈并在失败时保留输入', () => {
+    const { state, ports } = setup()
+    const view = createWorkbenchViewState(state)
+    view.newRules.value.periodCount = null
+    view.createDialogVisible.value = true
+    view.startSession()
+    expect(view.formError.value).not.toBe('')
+    expect(view.createDialogVisible.value).toBe(true)
+    expect(ports.save).not.toHaveBeenCalled()
+    view.newRules.value.periodCount = 2
+    view.startSession()
+    expect(state.activeSession.value?.rules.periodCount).toBe(2)
+    expect(view.formError.value).toBe('')
+    expect(view.createDialogVisible.value).toBe(false)
+  })
+
   it('存储失败保留内存会话与提示，重试成功后清除错误', () => {
     const save = vi.fn().mockImplementationOnce(() => { throw new Error('quota') })
     const { state } = setup({ save })
-    state.startSession()
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
     expect(state.sessions.value).toHaveLength(1)
     expect(state.storageError.value).toContain('尚未保存')
     state.retryStorage()
@@ -55,13 +67,18 @@ describe('工作台页面状态（不挂载组件库）', () => {
       .mockReturnValue({ sessions: [], activeId: '' })
     const { state, ports } = setup({ load })
     state.initialize()
-    state.startSession()
+    const view = createWorkbenchViewState(state)
+    view.newRules.value = { ...defaultRuleInput(), periodCount: 2 }
+    view.createDialogVisible.value = true
+    view.startSession()
     expect(state.restoreFailed.value).toBe(true)
     expect(state.storageError.value).toContain('旧数据保持不变')
+    expect(view.createDialogVisible.value).toBe(true)
+    expect(view.formError.value).toBe('')
     expect(ports.save).not.toHaveBeenCalled()
     state.retryStorage()
     expect(state.restoreFailed.value).toBe(false)
-    state.startSession()
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
     expect(state.sessions.value).toHaveLength(1)
   })
 
@@ -86,7 +103,7 @@ describe('工作台页面状态（不挂载组件库）', () => {
     vi.setSystemTime(1000)
     const { state, ports, scope } = setup()
     state.initialize()
-    state.startSession()
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
     state.toggleClock('shot')
     vi.advanceTimersByTime(2000)
     expect(state.now.value).toBe(3000)

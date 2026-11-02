@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NEmpty, NPopconfirm } from 'naive-ui'
 import { useWorkbenchStore } from '../../stores/workbench'
+import { createWorkbenchViewState } from './useWorkbench'
 import { clockEntries } from './workbench.presentation'
 import './workbench.css'
 import WorkbenchSidebar from './components/WorkbenchSidebar.vue'
@@ -13,11 +14,11 @@ import CreateWorkbenchDialog from './components/CreateWorkbenchDialog.vue'
 
 const workbench = useWorkbenchStore()
 const {
-  sessions, activeId, now, activeSession, presets, storageError, sessionNotice, formError,
-  restoreFailed, createDialogVisible, newRules,
+  sessions, activeId, now, activeSession, presets, storageError, sessionNotice, restoreFailed,
 } = storeToRefs(workbench)
+const { formError, createDialogVisible, newRules, startSession } = createWorkbenchViewState(workbench)
 const {
-  initialize, startSession, selectSession, exportSession, retryStorage, removeSession, clearAll,
+  initialize, selectSession, exportSession, retryStorage, removeSession, clearAll,
   switchPeriod, onFoul, applyPreset, toggleClock, resetClock, clearEventLog,
 } = workbench
 onMounted(initialize)
