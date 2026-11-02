@@ -1,3 +1,5 @@
+import { createScorer, type ScorerRules, type ScorerState } from './scorer'
+
 export type ClockStatus = 'idle' | 'running' | 'paused'
 export type ClockKind = 'game' | 'shot' | 'timeout'
 
@@ -19,6 +21,9 @@ export interface WorkbenchEvent {
   at: number
   label: string
   detail?: string
+  period?: number
+  gameRemainingMs?: number
+  score?: string
 }
 
 export interface FoulCount {
@@ -33,6 +38,7 @@ export interface RuleSet {
   periodDurationMs: number
   shotClockDurationMs: number
   shortShotClockDurationMs: number
+  scorerRules?: ScorerRules
 }
 
 export interface WorkbenchSession {
@@ -42,12 +48,13 @@ export interface WorkbenchSession {
   createdAt: number
   /** 最近一次会话变更的 Unix 时间戳（毫秒），不是最后一次持久化时间。 */
   updatedAt: number
-  /** 从 1 开始的节次，不超过 rules.periodCount。 */
+  /** 从 1 开始的节次，超过 rules.periodCount 时表示加时。 */
   period: number
   /** 创建时固定的规则快照，恢复时不以当前默认配置覆盖，见 MVP-001 §9.1。 */
   rules: RuleSet
   clocks: Record<ClockKind, ClockState>
   fouls: FoulCount
+  scorer: ScorerState
   events: WorkbenchEvent[]
 }
 
@@ -75,7 +82,7 @@ export function createClock(kind: ClockKind, durationMs: number, label: string):
 /**
  * 创建仅保存在设备本地的工作台，并复制规则以固定历史会话参数（MVP-001 §9.1）。
  * @param now 创建时刻的 Unix 时间戳（毫秒），缺省取 Date.now()。
- * @param rules 比赛/进攻计时取对应 durationMs 配置，缺省取 DEFAULT_RULES；暂停计时使用独立初始值。
+ * @param rules 各类时长取规则快照，缺省取 DEFAULT_RULES；旧规则缺少暂停参数时使用初始默认值。
  */
 export function createSession(now = Date.now(), rules = DEFAULT_RULES): WorkbenchSession {
   return {
@@ -84,12 +91,13 @@ export function createSession(now = Date.now(), rules = DEFAULT_RULES): Workbenc
     createdAt: now,
     updatedAt: now,
     period: 1,
-    rules: { ...rules },
+    rules: { ...rules, ...(rules.scorerRules ? { scorerRules: { ...rules.scorerRules } } : {}) },
     clocks: {
       game: createClock('game', rules.periodDurationMs, '比赛计时'),
       shot: createClock('shot', rules.shotClockDurationMs, '进攻计时'),
-      timeout: createClock('timeout', 60_000, '暂停计时'),
+      timeout: createClock('timeout', rules.scorerRules?.timeoutDurationMs ?? 60_000, '暂停计时'),
     },
+    scorer: createScorer(rules.scorerRules),
     fouls: { home: 0, away: 0 },
     events: [{ id: `event-${now}`, at: now, label: '创建比赛工作台' }],
   }
@@ -162,5 +170,10 @@ export function addFoul(session: WorkbenchSession, team: keyof FoulCount, now: n
  * @returns 保留最近 200 条事件的新会话，不作为完整审计记录。
  */
 export function withEvent(session: WorkbenchSession, event: WorkbenchEvent, now: number): WorkbenchSession {
-  return { ...session, updatedAt: now, events: [event, ...session.events].slice(0, 200) }
+  const contextualEvent = {
+    period: session.period, gameRemainingMs: remainingMs(session.clocks.game, now),
+    score: `${session.scorer.teams.home.score}:${session.scorer.teams.away.score}`, ...event,
+    id: globalThis.crypto?.randomUUID?.() ?? `${event.id}-${Math.random().toString(36).slice(2)}`,
+  }
+  return { ...session, updatedAt: now, events: [contextualEvent, ...session.events].slice(0, 200) }
 }

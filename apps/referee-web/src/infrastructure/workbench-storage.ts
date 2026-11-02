@@ -1,3 +1,4 @@
+import { isScorer, isScorerRules, migrateScorer } from './scorer-validation'
 import {
   ACTIVE_SESSION_KEY, STORAGE_KEY,
   type ClockState, type RuleSet, type WorkbenchSession,
@@ -15,6 +16,7 @@ function isRuleSet(value: unknown): value is RuleSet {
     && isPositive(value.periodCount) && Number.isInteger(value.periodCount)
     && isPositive(value.periodDurationMs) && isPositive(value.shotClockDurationMs)
     && isPositive(value.shortShotClockDurationMs)
+    && (value.scorerRules === undefined || isScorerRules(value.scorerRules))
 }
 
 function isClock(value: unknown, kind: string): value is ClockState {
@@ -30,12 +32,15 @@ function isSession(value: unknown): value is WorkbenchSession {
   return typeof value.id === 'string' && typeof value.title === 'string'
     && isFiniteNumber(value.createdAt) && isFiniteNumber(value.updatedAt)
     && isRuleSet(value.rules) && isPositive(value.period) && Number.isInteger(value.period)
-    && value.period <= value.rules.periodCount
+    && isScorer(value.scorer)
     && isClock(value.clocks.game, 'game') && isClock(value.clocks.shot, 'shot') && isClock(value.clocks.timeout, 'timeout')
     && [value.fouls.home, value.fouls.away].every((count) => isFiniteNumber(count) && Number.isInteger(count) && count >= 0)
     && Array.isArray(value.events) && value.events.every((event: unknown) => isRecord(event)
       && typeof event.id === 'string' && isFiniteNumber(event.at) && typeof event.label === 'string'
-      && (event.detail === undefined || typeof event.detail === 'string'))
+      && (event.detail === undefined || typeof event.detail === 'string')
+      && (event.period === undefined || (isPositive(event.period) && Number.isInteger(event.period)))
+      && (event.gameRemainingMs === undefined || (isFiniteNumber(event.gameRemainingMs) && event.gameRemainingMs >= 0))
+      && (event.score === undefined || typeof event.score === 'string'))
 }
 
 /**
@@ -45,7 +50,8 @@ function isSession(value: unknown): value is WorkbenchSession {
  */
 export function loadWorkbench(storage: Pick<Storage, 'getItem'>): WorkbenchSnapshot {
   const raw = storage.getItem(STORAGE_KEY)
-  const sessions: unknown = raw === null ? [] : JSON.parse(raw)
+  const parsed: unknown = raw === null ? [] : JSON.parse(raw)
+  const sessions: unknown = Array.isArray(parsed) ? parsed.map(migrateScorer) : parsed
   if (!Array.isArray(sessions) || !sessions.every(isSession)
     || new Set(sessions.map((session) => session.id)).size !== sessions.length) {
     throw new Error('本地工作台数据格式无效')

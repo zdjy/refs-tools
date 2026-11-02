@@ -25,14 +25,14 @@ describe('工作台领域命令', () => {
     expect(reset.updatedAt).toBe(4000)
   })
 
-  it('末节后保持现有回到第一节行为，重置本节犯规及比赛/进攻计时', () => {
+  it('末节后进入加时，重置本节犯规及比赛/进攻计时', () => {
     const session = createSession(0)
     session.period = 4
     session.fouls = { home: 3, away: 2 }
     const next = advancePeriod(session, 99)
-    expect(next.period).toBe(1)
+    expect(next.period).toBe(5)
     expect(next.fouls).toEqual({ home: 0, away: 0 })
-    expect(next.clocks.game.durationMs).toBe(session.rules.periodDurationMs)
+    expect(next.clocks.game.durationMs).toBe(session.scorer.rules.overtimeDurationMs)
     expect(next.rules).toEqual(session.rules)
     expect(session.fouls.home).toBe(3)
   })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { NButton, NCard, NEmpty, NPopconfirm } from 'naive-ui'
-import type { WorkbenchEvent } from '../../../domain/workbench'
+import { formatClock, type WorkbenchEvent } from '../../../domain/workbench'
 import { formatTime } from '../workbench.presentation'
 
 defineProps<{ events: WorkbenchEvent[] }>()
@@ -22,7 +22,7 @@ const emit = defineEmits<{ clear: [] }>()
     <ol v-if="events.length" class="event-table" aria-label="操作日志">
       <li v-for="event in events" :key="event.id" class="event-row">
         <time :datetime="new Date(event.at).toISOString()">{{ formatTime(event.at) }}</time>
-        <strong>{{ event.label }}</strong><span>{{ event.detail ?? '' }}</span>
+        <strong>{{ event.label }}</strong><span><template v-if="event.period">第 {{ event.period }} 节 · {{ event.gameRemainingMs === undefined ? '' : formatClock(event.gameRemainingMs) }} · {{ event.score }} </template>{{ event.detail ?? '' }}</span>
       </li>
     </ol>
     <n-empty v-else class="empty-events" description="暂无操作记录" :show-icon="false" />

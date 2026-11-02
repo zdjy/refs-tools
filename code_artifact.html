@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIBA Pro 篮球记录台操作终端</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Orbitron & Share Tech Mono for LED look, Inter for UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        led: ['Orbitron', 'Share Tech Mono', 'monospace'],
+                        mono: ['Share Tech Mono', 'monospace']
+                    },
+                    colors: {
+                        console: {
+                            bg: '#070a10',
+                            panel: '#111622',
+                            border: '#1e293b',
+                            ledBg: '#05070b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #070a10;
+            color: #f8fafc;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* 数码管发光特效 */
+        .led-red {
+            color: #ff2a2a;
+            text-shadow: 0 0 12px rgba(255, 42, 42, 0.7), 0 0 24px rgba(255, 0, 0, 0.4);
+        }
+        .led-amber {
+            color: #ffb700;
+            text-shadow: 0 0 12px rgba(255, 183, 0, 0.7), 0 0 24px rgba(255, 183, 0, 0.35);
+        }
+        .led-green {
+            color: #00e676;
+            text-shadow: 0 0 12px rgba(0, 230, 118, 0.7), 0 0 20px rgba(0, 230, 118, 0.35);
+        }
+        .led-cyan {
+            color: #00e5ff;
+            text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+        }
+
+        /* 拟真LED显示屏底纹 */
+        .led-screen {
+            background: radial-gradient(circle at center, #0d131f 0%, #05070b 100%);
+            box-shadow: inset 0 4px 15px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.06);
+            border: 2px solid #1e293b;
+            position: relative;
+        }
+
+        /* 控制台物理按键质感 */
+        .btn-console {
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 3px 0 rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+        .btn-console:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #283548;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b4d68;
+        }
+
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+        .animate-foul-out {
+            animation: pulse-fast 1.2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen lg:h-screen flex flex-col justify-between p-2 gap-2 text-xs">
+
+    <!-- ==================== 顶部导航与系统状态栏 ==================== -->
+    <header class="bg-console-panel border border-console-border rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0 shadow-lg">
+        <!-- 左侧品牌与规则切换 -->
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]"></span>
+                <span class="font-extrabold text-sm tracking-wider bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                    FIBA PRO SCORER CONSOLE
+                </span>
+                <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">v3.5</span>
+            </div>
+
+            <div class="h-4 w-[1px] bg-slate-700 hidden sm:block"></div>
+
+            <!-- 赛制预设 -->
+            <div class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-lg border border-slate-800">
+                <span class="text-[11px] text-slate-400 px-1.5"><i class="fa-solid fa-sliders mr-1"></i>赛制规则:</span>
+                <button onclick="applyRulePreset('FIBA')" id="rule-FIBA" class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500 text-slate-950 transition">
+                    FIBA (10分/5犯)
+                </button>
+                <button onclick="applyRulePreset('NBA')" id="rule-NBA" class="px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                    NBA (12分/6犯)
+                </button>
+            </div>
+        </div>
+
+        <!-- 中间快捷键提示条 -->
+        <div class="hidden xl:flex items-center gap-3 text-[11px] text-slate-400 bg-slate-900/70 px-3 py-1 rounded-lg border border-slate-800/80">
+            <span><kbd class="px-1.5 py-0.5 bg-slate-800 text-amber-400 rounded border border-slate-700 font-mono">Space</kbd> 启停时钟</span>
+            <span><kbd class="px-1.5 py-0.5 bg-slate-800 text-amber-400 rounded border border-slate-700 font-mono">R</kbd> 24秒重置</span>
+            <span><kbd class="px-1.5 py-0.5 bg-slate-800 text-amber-400 rounded border border-slate-700 font-mono">T</kbd> 14秒重置</span>
+            <span><kbd class="px-1.5 py-0.5 bg-slate-800 text-amber-400 rounded border border-slate-700 font-mono">P</kbd> 切换球权</span>
+            <span><kbd class="px-1.5 py-0.5 bg-slate-800 text-amber-400 rounded border border-slate-700 font-mono">H</kbd> 蜂鸣器</span>
+            <span><kbd class="px-1.5 py-0.5 bg-slate-800 text-amber-400 rounded border border-slate-700 font-mono">Ctrl+Z</kbd> 撤销</span>
+        </div>
+
+        <!-- 右侧全局工具按钮 -->
+        <div class="flex items-center gap-2">
+            <!-- 裁判哨声与蜂鸣器 -->
+            <button onclick="SoundEngine.whistle()" class="btn-console px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 flex items-center gap-1.5 font-semibold" title="吹响裁判哨音">
+                <i class="fa-solid fa-bullhorn text-cyan-400"></i> 哨音
+            </button>
+            <button onclick="SoundEngine.buzzer()" class="btn-console px-2.5 py-1.5 rounded-lg bg-red-950/90 hover:bg-red-900 text-red-200 border border-red-700/80 flex items-center gap-1.5 font-bold" title="手动鸣响记录台蜂鸣器 (快捷键 H)">
+                <i class="fa-solid fa-volume-high text-red-400 animate-pulse"></i> 蜂鸣器
+            </button>
+            <button onclick="toggleMute()" id="btn-mute" class="btn-console w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 flex items-center justify-center" title="静音开关">
+                <i class="fa-solid fa-volume-up" id="icon-mute"></i>
+            </button>
+
+            <div class="h-4 w-[1px] bg-slate-700"></div>
+
+            <!-- 撤销按钮 -->
+            <button onclick="undoLastAction()" id="btn-undo" disabled class="btn-console px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none text-amber-300 border border-slate-700 flex items-center gap-1 font-semibold">
+                <i class="fa-solid fa-rotate-left"></i> 撤销 <span id="undo-count" class="text-[10px] bg-slate-900 px-1 rounded">0</span>
+            </button>
+
+            <!-- 技术统计弹窗按钮 -->
+            <button onclick="openBoxScoreModal()" class="btn-console px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-table-list"></i> 技术统计表
+            </button>
+
+            <!-- 重置整场比赛 -->
+            <button onclick="openResetConfirmModal()" class="btn-console px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 hover:text-rose-300 hover:border-rose-800 text-slate-400 border border-slate-700 transition" title="重置整场比赛">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== 暂停倒计时悬浮横幅 (默认隐藏) ==================== -->
+    <div id="timeout-banner" class="hidden bg-gradient-to-r from-amber-950/90 via-amber-900/90 to-amber-950/90 border border-amber-500/80 rounded-xl px-4 py-2 flex items-center justify-between shadow-lg shrink-0">
+        <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-black tracking-wider text-xs animate-pulse">
+                TIMEOUT 暂停进行中
+            </span>
+            <span id="timeout-team-label" class="font-bold text-amber-200 text-sm">主队 请求暂停</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="led-screen px-4 py-1 rounded-lg">
+                <span id="timeout-clock-display" class="font-led text-2xl led-amber font-black tracking-widest">60.0</span>
+                <span class="text-[10px] text-amber-400 ml-1">SEC</span>
+            </div>
+            <button onclick="endActiveTimeout()" class="btn-console px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">
+                提前结束暂停
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 主工作台网格 (左：主队名单 | 中：记分牌与快捷操作台 | 右：客队名单) ==================== -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 min-h-0">
+
+        <!-- ==================== 左侧：主队 (HOME) 球员管理面板 ==================== -->
+        <section class="lg:col-span-3 bg-console-panel border border-console-border rounded-xl flex flex-col min-h-[380px] lg:min-h-0 overflow-hidden shadow-xl">
+            <!-- 球队头部信息 -->
+            <div class="p-2.5 bg-gradient-to-r from-blue-950/80 to-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2">
+                    <input type="color" id="home-color-picker" value="#3b82f6" onchange="updateTeamColor('home', this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0" title="修改主队代表色">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold px-1.5 py-0.2 bg-blue-500/20 text-blue-400 border border-blue-500/40 rounded">HOME 主队</span>
+                            <button onclick="editTeamName('home')" class="text-slate-400 hover:text-white text-[11px]" title="修改队名"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <h2 id="home-name-header" class="text-sm font-extrabold text-white tracking-wide truncate max-w-[140px]">辽宁本钢</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="openAddPlayerModal('home')" class="btn-console px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus text-blue-400"></i> 加球员
+                    </button>
+                </div>
+            </div>
+
+            <!-- 场上5人提示条 -->
+            <div class="px-3 py-1.5 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+                <span>点击球员选中计分 · 点击<i class="fa-solid fa-right-left mx-1 text-emerald-400"></i>换人</span>
+                <span id="home-oncourt-badge" class="text-emerald-400 font-mono font-bold">场上: 5/5</span>
+            </div>
+
+            <!-- 球员列表容器 -->
+            <div id="home-roster-list" class="flex-1 overflow-y-auto p-2 space-y-1.5">
+                <!-- 由 JS 动态渲染 -->
+            </div>
+        </section>
+
+        <!-- ==================== 中央核心区：LED大钟 + 双队记分牌 + 快捷技术统计操作台 + 实时日志 ==================== -->
+        <section class="lg:col-span-6 flex flex-col gap-2 min-h-0">
+
+            <!-- 1. 顶部电子记分牌与主时钟总成 -->
+            <div class="bg-console-panel border border-console-border rounded-xl p-3 shadow-2xl shrink-0">
+                <div class="grid grid-cols-12 gap-2 items-stretch">
+
+                    <!-- 主队比分与犯规/暂停区 (4列) -->
+                    <div id="home-score-card" class="col-span-4 bg-slate-900/90 border-2 border-blue-500/40 rounded-xl p-2.5 flex flex-col justify-between relative overflow-hidden">
+                        <!-- 顶部队名与球权灯 -->
+                        <div class="flex items-center justify-between gap-1">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span id="home-color-dot" class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                                <span id="home-board-name" class="font-extrabold text-sm text-white truncate">辽宁本钢</span>
+                            </div>
+                            <!-- BONUS 罚球警示灯 -->
+                            <span id="home-bonus-light" class="px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider bg-slate-800 text-slate-600 border border-slate-700 transition-all">
+                                BONUS
+                            </span>
+                        </div>
+
+                        <!-- 中央超大 LED 比分 -->
+                        <div class="my-1.5 led-screen rounded-xl py-2 px-3 flex items-center justify-between">
+                            <div class="flex flex-col gap-1">
+                                <button onclick="quickTeamScore('home', 1)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">+1</button>
+                                <button onclick="quickTeamScore('home', 2)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">+2</button>
+                                <button onclick="quickTeamScore('home', 3)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">+3</button>
+                            </div>
+                            <div id="home-score-led" class="font-led text-5xl sm:text-6xl font-black led-amber tracking-wider select-all">
+                                00
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <button onclick="quickTeamScore('home', -1)" class="px-1.5 py-0.5 bg-slate-800/80 hover:bg-rose-700 text-slate-400 hover:text-white rounded text-[10px] font-bold transition" title="主队减1分纠错">-1</button>
+                            </div>
+                        </div>
+
+                        <!-- 底部本节全队犯规 & 暂停指示器 -->
+                        <div class="space-y-1.5 pt-1">
+                            <!-- 全队犯规 (Team Fouls) -->
+                            <div class="flex items-center justify-between bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800/80">
+                                <span class="text-[11px] text-slate-400 font-semibold">本节犯规</span>
+                                <div id="home-team-foul-dots" class="flex items-center gap-1">
+                                    <!-- 5盏犯规灯 -->
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustTeamFoul('home', -1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-[10px]">-</button>
+                                    <button onclick="adjustTeamFoul('home', 1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-rose-600 text-slate-200 flex items-center justify-center text-[10px]">+</button>
+                                </div>
+                            </div>
+
+                            <!-- 剩余暂停 (Timeouts) -->
+                            <div class="flex items-center justify-between bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800/80">
+                                <span class="text-[11px] text-slate-400 font-semibold">剩余暂停</span>
+                                <div id="home-timeout-dots" class="flex items-center gap-1">
+                                    <!-- 暂停指示灯 -->
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="callTeamTimeout('home', 60)" class="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 font-bold text-[10px] transition" title="叫暂停并启动60秒倒计时">
+                                        叫暂停
+                                    </button>
+                                    <button onclick="restoreTeamTimeout('home')" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-[10px]" title="恢复1次暂停">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中央：比赛主时钟 + 节次 + 球权箭头 + 24秒进攻钟 (4列) -->
+                    <div class="col-span-4 bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                        
+                        <!-- 顶部：节次切换与球权箭头 -->
+                        <div class="flex items-center justify-between gap-1">
+                            <!-- 左侧主队球权箭头 -->
+                            <button onclick="setPossession('home')" id="poss-btn-home" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1 transition">
+                                <i id="poss-icon-home" class="fa-solid fa-caret-left text-xl text-slate-700"></i>
+                                <span class="text-[10px] text-slate-400 font-bold">球权</span>
+                            </button>
+
+                            <!-- 节次选择器 -->
+                            <div class="flex flex-col items-center">
+                                <div class="flex items-center gap-1">
+                                    <button onclick="changePeriod(-1)" class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <span id="period-badge" class="px-2.5 py-0.5 rounded bg-emerald-950 border border-emerald-500/50 font-led text-xs led-green font-bold tracking-wider">
+                                        Q1 第一节
+                                    </span>
+                                    <button onclick="changePeriod(1)" class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- 右侧客队球权箭头 -->
+                            <button onclick="setPossession('away')" id="poss-btn-away" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1 transition">
+                                <span class="text-[10px] text-slate-400 font-bold">球权</span>
+                                <i id="poss-icon-away" class="fa-solid fa-caret-right text-xl text-slate-700"></i>
+                            </button>
+                        </div>
+
+                        <!-- 比赛主时钟 (Game Clock) -->
+                        <div class="my-1.5">
+                            <div class="led-screen rounded-xl py-2 px-3 text-center relative group">
+                                <div class="text-[9px] text-slate-500 uppercase tracking-widest font-semibold flex items-center justify-between px-1">
+                                    <span>GAME CLOCK</span>
+                                    <span id="clock-status-dot" class="text-rose-500 font-mono">● STOPPED</span>
+                                </div>
+                                <div id="game-clock-led" class="font-led text-4xl sm:text-5xl font-black led-red tracking-widest my-0.5">
+                                    10:00
+                                </div>
+                                <!-- 微调时间按钮组 -->
+                                <div class="flex items-center justify-center gap-1 mt-1">
+                                    <button onclick="adjustGameClock(600)" class="px-1.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-[10px] border border-slate-800">+1分</button>
+                                    <button onclick="adjustGameClock(-600)" class="px-1.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-[10px] border border-slate-800">-1分</button>
+                                    <button onclick="adjustGameClock(10)" class="px-1.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-[10px] border border-slate-800">+1秒</button>
+                                    <button onclick="adjustGameClock(-10)" class="px-1.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-[10px] border border-slate-800">-1秒</button>
+                                    <button onclick="adjustGameClock(-1)" class="px-1.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded text-[10px] border border-slate-800">-0.1s</button>
+                                    <button onclick="openClockEditModal()" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded text-[10px] border border-slate-700" title="精确设定时间"><i class="fa-solid fa-clock"></i></button>
+                                </div>
+                            </div>
+
+                            <!-- 主时钟启停大按钮 -->
+                            <div class="grid grid-cols-3 gap-1.5 mt-1.5">
+                                <button onclick="toggleGameClock()" id="btn-main-clock" class="col-span-2 btn-console py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs tracking-wide flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-play" id="icon-main-clock"></i>
+                                    <span id="text-main-clock">启动比赛时钟 (Space)</span>
+                                </button>
+                                <button onclick="nextPeriodWithReset()" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[11px] flex items-center justify-center gap-1" title="进入下一节并重置节次时间与本节犯规">
+                                    <i class="fa-solid fa-forward-step text-amber-400"></i> 下一节
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 底部：24秒进攻计时器 (Shot Clock) -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2 flex items-center justify-between gap-2">
+                            <div class="led-screen px-3 py-1 rounded-lg text-center min-w-[82px]">
+                                <div class="text-[9px] text-slate-500 font-bold">SHOT CLOCK</div>
+                                <div id="shot-clock-led" class="font-led text-2xl sm:text-3xl font-black led-amber tracking-wider">
+                                    24.0
+                                </div>
+                            </div>
+                            <div class="flex-1 grid grid-cols-2 gap-1">
+                                <button onclick="resetShotClock(24)" class="btn-console py-1.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs">
+                                    24秒 (R)
+                                </button>
+                                <button onclick="resetShotClock(14)" class="btn-console py-1.5 rounded bg-amber-600/90 hover:bg-amber-500 text-white font-extrabold text-xs">
+                                    14秒 (T)
+                                </button>
+                                <div class="col-span-2 flex items-center gap-1">
+                                    <button onclick="toggleShotClockIndependent()" id="btn-shot-lock" class="flex-1 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[10px] font-semibold">
+                                        <i class="fa-solid fa-link text-emerald-400 mr-1"></i>联动中
+                                    </button>
+                                    <button onclick="adjustShotClock(10)" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">+1s</button>
+                                    <button onclick="adjustShotClock(-10)" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px]">-1s</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- 客队比分与犯规/暂停区 (4列) -->
+                    <div id="away-score-card" class="col-span-4 bg-slate-900/90 border-2 border-rose-500/40 rounded-xl p-2.5 flex flex-col justify-between relative overflow-hidden">
+                        <!-- 顶部队名与 BONUS 灯 -->
+                        <div class="flex items-center justify-between gap-1">
+                            <span id="away-bonus-light" class="px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider bg-slate-800 text-slate-600 border border-slate-700 transition-all">
+                                BONUS
+                            </span>
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span id="away-board-name" class="font-extrabold text-sm text-white truncate">广东宏远</span>
+                                <span id="away-color-dot" class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                            </div>
+                        </div>
+
+                        <!-- 中央超大 LED 比分 -->
+                        <div class="my-1.5 led-screen rounded-xl py-2 px-3 flex items-center justify-between">
+                            <div class="flex flex-col gap-1">
+                                <button onclick="quickTeamScore('away', -1)" class="px-1.5 py-0.5 bg-slate-800/80 hover:bg-rose-700 text-slate-400 hover:text-white rounded text-[10px] font-bold transition" title="客队减1分纠错">-1</button>
+                            </div>
+                            <div id="away-score-led" class="font-led text-5xl sm:text-6xl font-black led-amber tracking-wider select-all">
+                                00
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <button onclick="quickTeamScore('away', 1)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">+1</button>
+                                <button onclick="quickTeamScore('away', 2)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">+2</button>
+                                <button onclick="quickTeamScore('away', 3)" class="px-1.5 py-0.5 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded text-[10px] font-bold transition">+3</button>
+                            </div>
+                        </div>
+
+                        <!-- 底部本节全队犯规 & 暂停指示器 -->
+                        <div class="space-y-1.5 pt-1">
+                            <!-- 全队犯规 (Team Fouls) -->
+                            <div class="flex items-center justify-between bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800/80">
+                                <span class="text-[11px] text-slate-400 font-semibold">本节犯规</span>
+                                <div id="away-team-foul-dots" class="flex items-center gap-1">
+                                    <!-- 5盏犯规灯 -->
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustTeamFoul('away', -1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-[10px]">-</button>
+                                    <button onclick="adjustTeamFoul('away', 1)" class="w-4 h-4 rounded bg-slate-800 hover:bg-rose-600 text-slate-200 flex items-center justify-center text-[10px]">+</button>
+                                </div>
+                            </div>
+
+                            <!-- 剩余暂停 (Timeouts) -->
+                            <div class="flex items-center justify-between bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800/80">
+                                <span class="text-[11px] text-slate-400 font-semibold">剩余暂停</span>
+                                <div id="away-timeout-dots" class="flex items-center gap-1">
+                                    <!-- 暂停指示灯 -->
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="callTeamTimeout('away', 60)" class="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/40 font-bold text-[10px] transition" title="叫暂停并启动60秒倒计时">
+                                        叫暂停
+                                    </button>
+                                    <button onclick="restoreTeamTimeout('away')" class="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-[10px]" title="恢复1次暂停">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 2. 快捷球员技术统计录入台 (Quick Player Action Pad) -->
+            <div class="bg-console-panel border border-console-border rounded-xl p-3 shadow-xl shrink-0">
+                <!-- 当前选中球员状态栏 -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-800">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">当前选中球员:</span>
+                        <div id="selected-player-banner" class="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-lg border border-slate-700">
+                            <!-- 动态填充当前选中的球员信息 -->
+                        </div>
+                    </div>
+
+                    <div id="selected-player-quick-stats" class="flex items-center gap-3 text-[11px] font-mono text-slate-300 bg-slate-900/70 px-3 py-1 rounded-lg border border-slate-800">
+                        <!-- 动态填充该球员本场数据 -->
+                    </div>
+                </div>
+
+                <!-- 操作按钮矩阵 -->
+                <div class="grid grid-cols-2 sm:grid-cols-12 gap-2">
+                    <!-- 得分操作组 (5列) -->
+                    <div class="sm:col-span-5 grid grid-cols-3 gap-1.5">
+                        <button onclick="recordPlayerStat('pts1')" class="btn-console py-2.5 px-2 rounded-xl bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black flex flex-col items-center justify-center border border-emerald-400/30">
+                            <span class="text-base leading-none">+1 罚球</span>
+                            <span class="text-[10px] font-normal text-emerald-100 mt-1">FT Made</span>
+                        </button>
+                        <button onclick="recordPlayerStat('pts2')" class="btn-console py-2.5 px-2 rounded-xl bg-gradient-to-b from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-black flex flex-col items-center justify-center border border-blue-400/30">
+                            <span class="text-base leading-none">+2 二分</span>
+                            <span class="text-[10px] font-normal text-blue-100 mt-1">2PT Made</span>
+                        </button>
+                        <button onclick="recordPlayerStat('pts3')" class="btn-console py-2.5 px-2 rounded-xl bg-gradient-to-b from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black flex flex-col items-center justify-center border border-indigo-400/30">
+                            <span class="text-base leading-none">+3 三分</span>
+                            <span class="text-[10px] font-normal text-indigo-100 mt-1">3PT Made</span>
+                        </button>
+                        <button onclick="recordPlayerStat('ftMiss')" class="btn-console py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-[11px]">
+                            罚球不中
+                        </button>
+                        <button onclick="recordPlayerStat('fgMiss')" class="btn-console py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-[11px]">
+                            两分不中
+                        </button>
+                        <button onclick="recordPlayerStat('fg3Miss')" class="btn-console py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-[11px]">
+                            三分不中
+                        </button>
+                    </div>
+
+                    <!-- 犯规与违例组 (3列) -->
+                    <div class="sm:col-span-3 grid grid-cols-1 gap-1.5">
+                        <button onclick="recordPlayerStat('foul')" class="btn-console py-2 px-3 rounded-xl bg-gradient-to-b from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black flex items-center justify-between border border-rose-400/40">
+                            <div class="text-left">
+                                <div class="text-sm leading-tight">个人犯规 (FOUL)</div>
+                                <div class="text-[10px] font-normal text-rose-100">联动累计本节全队犯规</div>
+                            </div>
+                            <i class="fa-solid fa-hand text-lg"></i>
+                        </button>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="recordPlayerStat('techFoul')" class="btn-console py-1.5 rounded-lg bg-amber-950/90 hover:bg-amber-900 text-amber-300 border border-amber-700/70 font-bold text-[11px]">
+                                技术犯规 (T)
+                            </button>
+                            <button onclick="recordPlayerStat('ptsMinus1')" class="btn-console py-1.5 rounded-lg bg-slate-800 hover:bg-rose-900 text-slate-300 border border-slate-700 font-bold text-[11px]" title="扣减该球员1分">
+                                -1分 纠错
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 篮板/助攻/抢断/盖帽/失误组 (4列) -->
+                    <div class="sm:col-span-4 grid grid-cols-3 gap-1.5">
+                        <button onclick="recordPlayerStat('reb')" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-cyan-950 hover:border-cyan-500/60 text-cyan-300 border border-slate-700 font-bold flex flex-col items-center justify-center">
+                            <span>+ 篮板</span>
+                            <span class="text-[9px] text-slate-400 font-mono">REB</span>
+                        </button>
+                        <button onclick="recordPlayerStat('ast')" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-cyan-950 hover:border-cyan-500/60 text-cyan-300 border border-slate-700 font-bold flex flex-col items-center justify-center">
+                            <span>+ 助攻</span>
+                            <span class="text-[9px] text-slate-400 font-mono">AST</span>
+                        </button>
+                        <button onclick="recordPlayerStat('stl')" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-emerald-950 hover:border-emerald-500/60 text-emerald-300 border border-slate-700 font-bold flex flex-col items-center justify-center">
+                            <span>+ 抢断</span>
+                            <span class="text-[9px] text-slate-400 font-mono">STL</span>
+                        </button>
+                        <button onclick="recordPlayerStat('blk')" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-purple-950 hover:border-purple-500/60 text-purple-300 border border-slate-700 font-bold flex flex-col items-center justify-center">
+                            <span>+ 盖帽</span>
+                            <span class="text-[9px] text-slate-400 font-mono">BLK</span>
+                        </button>
+                        <button onclick="recordPlayerStat('tov')" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-orange-950 hover:border-orange-500/60 text-orange-300 border border-slate-700 font-bold flex flex-col items-center justify-center">
+                            <span>+ 失误</span>
+                            <span class="text-[9px] text-slate-400 font-mono">TOV</span>
+                        </button>
+                        <button onclick="recordJumpBall()" class="btn-console py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-bold flex flex-col items-center justify-center" title="记录争球并自动交替球权箭头">
+                            <span>争球球权</span>
+                            <span class="text-[9px] text-slate-400 font-mono">HELD BALL</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 底部实时比赛事件流水账 (Play-by-Play Log) -->
+            <div class="flex-1 bg-console-panel border border-console-border rounded-xl flex flex-col min-h-[160px] lg:min-h-0 overflow-hidden shadow-xl">
+                <div class="px-3 py-2 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-wave-square text-amber-400"></i>
+                        <span class="font-bold text-slate-200">实时比赛事件流 (Play-by-Play)</span>
+                        <span id="log-count-badge" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">0 条记录</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportLogsCSV()" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1">
+                            <i class="fa-solid fa-download"></i> 导出流水CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div id="play-by-play-container" class="flex-1 overflow-y-auto p-2 space-y-1 font-mono text-xs">
+                    <!-- 动态渲染实时比赛事件 -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== 右侧：客队 (AWAY) 球员管理面板 ==================== -->
+        <section class="lg:col-span-3 bg-console-panel border border-console-border rounded-xl flex flex-col min-h-[380px] lg:min-h-0 overflow-hidden shadow-xl">
+            <!-- 球队头部信息 -->
+            <div class="p-2.5 bg-gradient-to-l from-rose-950/80 to-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2">
+                    <input type="color" id="away-color-picker" value="#f43f5e" onchange="updateTeamColor('away', this.value)" class="w-5 h-5 rounded cursor-pointer bg-transparent border-0" title="修改客队代表色">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold px-1.5 py-0.2 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded">AWAY 客队</span>
+                            <button onclick="editTeamName('away')" class="text-slate-400 hover:text-white text-[11px]" title="修改队名"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <h2 id="away-name-header" class="text-sm font-extrabold text-white tracking-wide truncate max-w-[140px]">广东宏远</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="openAddPlayerModal('away')" class="btn-console px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus text-rose-400"></i> 加球员
+                    </button>
+                </div>
+            </div>
+
+            <!-- 场上5人提示条 -->
+            <div class="px-3 py-1.5 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+                <span>点击球员选中计分 · 点击<i class="fa-solid fa-right-left mx-1 text-emerald-400"></i>换人</span>
+                <span id="away-oncourt-badge" class="text-emerald-400 font-mono font-bold">场上: 5/5</span>
+            </div>
+
+            <!-- 球员列表容器 -->
+            <div id="away-roster-list" class="flex-1 overflow-y-auto p-2 space-y-1.5">
+                <!-- 由 JS 动态渲染 -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== 弹窗1：完整技术统计表 (Box Score Modal) ==================== -->
+    <div id="modal-boxscore" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-console-panel border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-chart-simple text-indigo-400 text-lg"></i>
+                    <h3 class="text-base font-extrabold text-white">官方比赛技术统计表 (Official Box Score)</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportBoxScoreJSON()" class="btn-console px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-code text-cyan-400"></i> 导出 JSON
+                    </button>
+                    <button onclick="exportBoxScoreCSV()" class="btn-console px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv"></i> 导出 Excel CSV
+                    </button>
+                    <button onclick="closeBoxScoreModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="boxscore-content" class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- 动态渲染主客队详细数据表 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗2：添加自定义球员 / 修改信息通用弹窗 ==================== -->
+    <div id="modal-add-player" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-console-panel border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 id="add-player-title" class="text-sm font-bold text-white">添加球员</h3>
+                <button onclick="closeAddPlayerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 my-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">球衣号码 (0 - 99)</label>
+                    <input type="number" id="input-player-number" min="0" max="99" placeholder="例如: 23" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">球员姓名</label>
+                    <input type="text" id="input-player-name" placeholder="输入姓名" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">场上位置</label>
+                    <select id="input-player-pos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+                        <option value="PG">PG 控球后卫</option>
+                        <option value="SG">SG 得分后卫</option>
+                        <option value="SF">SF 小前锋</option>
+                        <option value="PF">PF 大前锋</option>
+                        <option value="C">C 中锋</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeAddPlayerModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold">取消</button>
+                <button onclick="confirmAddPlayer()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗3：手动精确设定比赛时间 ==================== -->
+    <div id="modal-clock-edit" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-console-panel border border-slate-700 rounded-2xl max-w-sm w-full p-5 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="text-sm font-bold text-white"><i class="fa-regular fa-clock text-amber-400 mr-1.5"></i>精确设置主时钟与24秒</h3>
+                <button onclick="closeClockEditModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4 my-4">
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">分钟 (MM)</label>
+                        <input type="number" id="edit-clock-min" min="0" max="20" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-led text-center text-base">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">秒钟 (SS)</label>
+                        <input type="number" id="edit-clock-sec" min="0" max="59" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-led text-center text-base">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">0.1秒 (Tenths)</label>
+                        <input type="number" id="edit-clock-tenth" min="0" max="9" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-led text-center text-base">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">24秒进攻计时器 (秒)</label>
+                    <input type="number" id="edit-shot-sec" min="0" max="24" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-amber-400 font-led text-center text-base">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeClockEditModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold">取消</button>
+                <button onclick="saveClockEdit()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">保存时间</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗4：队名编辑与重置确认弹窗 ==================== -->
+    <div id="modal-generic" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-console-panel border border-slate-700 rounded-2xl max-w-sm w-full p-5 shadow-2xl">
+            <h3 id="generic-modal-title" class="text-sm font-bold text-white pb-2 border-b border-slate-800">提示</h3>
+            <div id="generic-modal-body" class="my-4 text-slate-300 text-xs"></div>
+            <div id="generic-modal-actions" class="flex justify-end gap-2"></div>
+        </div>
+    </div>
+
+    <!-- 顶部轻提示 Toast -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ==================== 核心业务逻辑脚本 ==================== -->
+    <script>
+        /* ============================================================================
+         * 1. Web Audio API 拟真体育馆声效合成器 (裁判哨声、终场/24秒蜂鸣声、按键反馈)
+         * ============================================================================ */
+        const SoundEngine = {
+            ctx: null,
+            muted: false,
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            // 电子记录台低频锯齿波蜂鸣器 (Buzzer Horn)
+            buzzer(duration = 1.3) {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    const now = this.ctx.currentTime;
+                    const osc1 = this.ctx.createOscillator();
+                    const osc2 = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc1.type = 'sawtooth';
+                    osc2.type = 'square';
+                    osc1.frequency.setValueAtTime(145, now);
+                    osc2.frequency.setValueAtTime(148.5, now); // 微小频差制造真实体育馆电笛共鸣感
+
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + duration);
+                    osc2.stop(now + duration);
+                } catch (e) {}
+            },
+            // 裁判高频哨音 (Referee Pea Whistle)
+            whistle() {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const lfo = this.ctx.createOscillator();
+                    const lfoGain = this.ctx.createGain();
+                    const mainGain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(2850, now);
+
+                    // 哨芯滚珠颤音调制
+                    lfo.type = 'sine';
+                    lfo.frequency.setValueAtTime(48, now);
+                    lfoGain.gain.setValueAtTime(180, now);
+
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(osc.frequency);
+
+                    mainGain.gain.setValueAtTime(0.01, now);
+                    mainGain.gain.linearRampToValueAtTime(0.3, now + 0.04);
+                    mainGain.gain.setValueAtTime(0.3, now + 0.4);
+                    mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+
+                    osc.connect(mainGain);
+                    mainGain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    lfo.start(now);
+                    osc.stop(now + 0.55);
+                    lfo.stop(now + 0.55);
+                } catch (e) {}
+            },
+            // 轻快的操作提示音
+            beep(freq = 680, duration = 0.06) {
+                if (this.muted) return;
+                try {
+                    this.init();
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + duration);
+                } catch (e) {}
+            }
+        };
+
+        function toggleMute() {
+            SoundEngine.muted = !SoundEngine.muted;
+            const btn = document.getElementById('btn-mute');
+            const icon = document.getElementById('icon-mute');
+            if (SoundEngine.muted) {
+                btn.classList.replace('text-emerald-400', 'text-rose-400');
+                icon.className = 'fa-solid fa-volume-xmark';
+                showToast('音效已静音', 'info');
+            } else {
+                btn.classList.replace('text-rose-400', 'text-emerald-400');
+                icon.className = 'fa-solid fa-volume-up';
+                SoundEngine.beep(880, 0.08);
+                showToast('记录台音效已开启', 'success');
+            }
+        }
+
+        /* ============================================================================
+         * 2. 全局状态树与默认初始数据
+         * ============================================================================ */
+        const PERIOD_LIST = [
+            { code: 'Q1', label: 'Q1 第一节', isOT: false },
+            { code: 'Q2', label: 'Q2 第二节', isOT: false },
+            { code: 'HALF', label: 'HALF 中场休息', isOT: false, isBreak: true },
+            { code: 'Q3', label: 'Q3 第三节', isOT: false },
+            { code: 'Q4', label: 'Q4 第四节', isOT: false },
+            { code: 'OT1', label: 'OT1 加时赛一', isOT: true },
+            { code: 'OT2', label: 'OT2 加时赛二', isOT: true },
+            { code: 'OT3', label: 'OT3 加时赛三', isOT: true }
+        ];
+
+        function createInitialPlayers(rosterData) {
+            return rosterData.map((p, idx) => ({
+                id: p.id,
+                number: p.number,
+                name: p.name,
+                pos: p.pos,
+                onCourt: idx < 5, // 前5名首发上场
+                pts: 0,
+                reb: 0,
+                ast: 0,
+                stl: 0,
+                blk: 0,
+                tov: 0,
+                fouls: 0,
+                fgm: 0,
+                fga: 0,
+                fg3m: 0,
+                fg3a: 0,
+                ftm: 0,
+                fta: 0
+            }));
+        }
+
+        const DEFAULT_HOME_ROSTER = [
+            { id: 'h1', number: 3, name: '赵继伟', pos: 'PG' },
+            { id: 'h2', number: 77, name: '张镇麟', pos: 'SF' },
+            { id: 'h3', number: 1, name: '付豪', pos: 'PF' },
+            { id: 'h4', number: 55, name: '韩德君', pos: 'C' },
+            { id: 'h5', number: 4, name: '弗格', pos: 'SG' },
+            { id: 'h6', number: 22, name: '李晓旭', pos: 'PF' },
+            { id: 'h7', number: 33, name: '王岚嵚', pos: 'PG' },
+            { id: 'h8', number: 10, name: '丛明晨', pos: 'SF' }
+        ];
+
+        const DEFAULT_AWAY_ROSTER = [
+            { id: 'a1', number: 2, name: '徐杰', pos: 'PG' },
+            { id: 'a2', number: 3, name: '胡明轩', pos: 'SG' },
+            { id: 'a3', number: 18, name: '杜润旺', pos: 'PF' },
+            { id: 'a4', number: 25, name: '任骏飞', pos: 'PF' },
+            { id: 'a5', number: 21, name: '徐昕', pos: 'C' },
+            { id: 'a6', number: 11, name: '黄明依', pos: 'SF' },
+            { id: 'a7', number: 5, name: '王少杰', pos: 'C' },
+            { id: 'a8', number: 9, name: '张皓嘉', pos: 'SF' }
+        ];
+
+        let state = {};
+        let historyStack = []; // 用于 Undo 撤销
+        let clockTimerId = null;
+        let timeoutTimerId = null;
+        let addPlayerTargetTeam = 'home';
+
+        function initDefaultState(ruleType = 'FIBA') {
+            const quarterMinutes = ruleType === 'NBA' ? 12 : 10;
+            const maxPersonalFouls = ruleType === 'NBA' ? 6 : 5;
+
+            state = {
+                rule: ruleType,
+                quarterTenths: quarterMinutes * 60 * 10, // 0.1秒为单位
+                otTenths: 5 * 60 * 10,
+                maxPersonalFouls: maxPersonalFouls,
+                teamFoulBonusLimit: 5,
+
+                periodIndex: 0,
+                gameClockTenths: quarterMinutes * 60 * 10,
+                shotClockTenths: 240, // 24.0秒
+                isRunning: false,
+                shotClockLinked: true,
+                possession: 'home', // 'home' | 'away'
+
+                activeTimeout: {
+                    active: false,
+                    team: null,
+                    tenthsRemaining: 600
+                },
+
+                selectedPlayer: {
+                    team: 'home',
+                    playerId: 'h1'
+                },
+
+                teams: {
+                    home: {
+                        name: '辽宁本钢',
+                        color: '#3b82f6',
+                        score: 0,
+                        teamFouls: 0,
+                        timeoutsLeft: 2,
+                        maxTimeouts: 3,
+                        players: createInitialPlayers(DEFAULT_HOME_ROSTER)
+                    },
+                    away: {
+                        name: '广东宏远',
+                        color: '#f43f5e',
+                        score: 0,
+                        teamFouls: 0,
+                        timeoutsLeft: 2,
+                        maxTimeouts: 3,
+                        players: createInitialPlayers(DEFAULT_AWAY_ROSTER)
+                    }
+                },
+
+                logs: []
+            };
+            historyStack = [];
+        }
+
+        /* ============================================================================
+         * 3. 历史快照与撤销 (Undo) 机制
+         * ============================================================================ */
+        function saveSnapshot() {
+            const snapshot = JSON.parse(JSON.stringify({
+                periodIndex: state.periodIndex,
+                gameClockTenths: state.gameClockTenths,
+                shotClockTenths: state.shotClockTenths,
+                possession: state.possession,
+                selectedPlayer: state.selectedPlayer,
+                teams: state.teams,
+                logs: state.logs
+            }));
+            historyStack.push(snapshot);
+            if (historyStack.length > 40) historyStack.shift();
+            updateUndoButtonUI();
+        }
+
+        function undoLastAction() {
+            if (historyStack.length === 0) return;
+            const prev = historyStack.pop();
+            state.periodIndex = prev.periodIndex;
+            state.gameClockTenths = prev.gameClockTenths;
+            state.shotClockTenths = prev.shotClockTenths;
+            state.possession = prev.possession;
+            state.selectedPlayer = prev.selectedPlayer;
+            state.teams = prev.teams;
+            state.logs = prev.logs;
+
+            SoundEngine.beep(420, 0.08);
+            renderAll();
+            updateUndoButtonUI();
+            showToast('已撤销上一步操作', 'amber');
+        }
+
+        function updateUndoButtonUI() {
+            const btn = document.getElementById('btn-undo');
+            const countEl = document.getElementById('undo-count');
+            btn.disabled = historyStack.length === 0;
+            countEl.textContent = historyStack.length;
+        }
+
+        /* ============================================================================
+         * 4. 核心时钟与 24 秒进攻计时器引擎
+         * ============================================================================ */
+        function formatGameClock(tenths) {
+            const t = Math.max(0, tenths);
+            if (t < 600) {
+                // 最后1分钟显示 SS.d (精确到 0.1 秒)
+                const secs = Math.floor(t / 10);
+                const remTenths = t % 10;
+                return `${String(secs).padStart(2, '0')}.${remTenths}`;
+            } else {
+                const totalSecs = Math.ceil(t / 10);
+                const mins = Math.floor(totalSecs / 60);
+                const secs = totalSecs % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        }
+
+        function formatShotClock(tenths) {
+            const t = Math.max(0, tenths);
+            if (t < 50) {
+                // 24秒钟小于5秒显示 0.1 秒
+                return (t / 10).toFixed(1);
+            }
+            return Math.ceil(t / 10).toString().padStart(2, '0');
+        }
+
+        function toggleGameClock() {
+            if (state.isRunning) {
+                stopGameClock();
+            } else {
+                startGameClock();
+            }
+        }
+
+        function startGameClock() {
+            if (state.gameClockTenths <= 0) {
+                showToast('本节时间已走完，请切换下一节或重置时间', 'rose');
+                return;
+            }
+            if (state.activeTimeout.active) {
+                endActiveTimeout();
+            }
+            state.isRunning = true;
+            SoundEngine.beep(880, 0.07);
+            updateClockControlUI();
+
+            if (clockTimerId) clearInterval(clockTimerId);
+            clockTimerId = setInterval(() => {
+                if (!state.isRunning) return;
+
+                if (state.gameClockTenths > 0) {
+                    state.gameClockTenths--;
+                }
+
+                // 24秒联动扣减
+                if (state.shotClockLinked && state.shotClockTenths > 0) {
+                    // 当全节剩余时间少于24秒时，通常24秒等于或熄灭，这里保持同步递减
+                    state.shotClockTenths--;
+                    if (state.shotClockTenths === 0 && state.gameClockTenths > 0) {
+                        // 24秒违例自动停表并鸣笛
+                        stopGameClock();
+                        SoundEngine.buzzer(1.4);
+                        addLog('SYSTEM', '🚨 24秒进攻违例！(Shot Clock Violation)');
+                        showToast('🚨 24秒进攻时间到！自动停表', 'rose');
+                    }
+                }
+
+                // 节末时间到自动停表并长鸣终场蜂鸣器
+                if (state.gameClockTenths === 0) {
+                    stopGameClock();
+                    SoundEngine.buzzer(2.0);
+                    const curPeriod = PERIOD_LIST[state.periodIndex];
+                    addLog('SYSTEM', `🔔 ${curPeriod.label} 比赛时间结束！`);
+                    showToast(`🔔 ${curPeriod.label} 时间结束！`, 'amber');
+                }
+
+                renderClocks();
+            }, 100);
+        }
+
+        function stopGameClock() {
+            state.isRunning = false;
+            if (clockTimerId) {
+                clearInterval(clockTimerId);
+                clockTimerId = null;
+            }
+            SoundEngine.beep(520, 0.07);
+            updateClockControlUI();
+            renderClocks();
+        }
+
+        function updateClockControlUI() {
+            const btn = document.getElementById('btn-main-clock');
+            const icon = document.getElementById('icon-main-clock');
+            const text = document.getElementById('text-main-clock');
+            const statusDot = document.getElementById('clock-status-dot');
+
+            if (state.isRunning) {
+                btn.className = 'col-span-2 btn-console py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-black text-xs tracking-wide flex items-center justify-center gap-1.5';
+                icon.className = 'fa-solid fa-pause';
+                text.textContent = '暂停比赛时钟 (Space)';
+                statusDot.textContent = '● RUNNING';
+                statusDot.className = 'text-emerald-400 font-mono animate-pulse';
+            } else {
+                btn.className = 'col-span-2 btn-console py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs tracking-wide flex items-center justify-center gap-1.5';
+                icon.className = 'fa-solid fa-play';
+                text.textContent = '启动比赛时钟 (Space)';
+                statusDot.textContent = '● STOPPED';
+                statusDot.className = 'text-rose-500 font-mono';
+            }
+        }
+
+        function resetShotClock(seconds = 24) {
+            state.shotClockTenths = seconds * 10;
+            SoundEngine.beep(760, 0.05);
+            renderClocks();
+        }
+
+        function toggleShotClockIndependent() {
+            state.shotClockLinked = !state.shotClockLinked;
+            const btn = document.getElementById('btn-shot-lock');
+            if (state.shotClockLinked) {
+                btn.innerHTML = '<i class="fa-solid fa-link text-emerald-400 mr-1"></i>联动中';
+                showToast('24秒已与主时钟恢复联动', 'success');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-link-slash text-amber-400 mr-1"></i>24秒已暂停';
+                showToast('24秒已独立挂起，不随主钟走表', 'amber');
+            }
+        }
+
+        function adjustGameClock(deltaTenths) {
+            state.gameClockTenths = Math.max(0, state.gameClockTenths + deltaTenths);
+            renderClocks();
+        }
+
+        function adjustShotClock(deltaTenths) {
+            state.shotClockTenths = Math.max(0, Math.min(240, state.shotClockTenths + deltaTenths));
+            renderClocks();
+        }
+
+        /* ============================================================================
+         * 5. 节次切换与规则预设管理
+         * ============================================================================ */
+        function changePeriod(delta) {
+            const nextIdx = state.periodIndex + delta;
+            if (nextIdx < 0 || nextIdx >= PERIOD_LIST.length) return;
+            saveSnapshot();
+            stopGameClock();
+            state.periodIndex = nextIdx;
+            renderAll();
+        }
+
+        function nextPeriodWithReset() {
+            if (state.periodIndex >= PERIOD_LIST.length - 1) return;
+            saveSnapshot();
+            stopGameClock();
+            state.periodIndex++;
+            const cur = PERIOD_LIST[state.periodIndex];
+
+            if (cur.isBreak) {
+                // 中场休息 15 分钟
+                state.gameClockTenths = 15 * 60 * 10;
+                state.shotClockTenths = 240;
+            } else if (cur.isOT) {
+                state.gameClockTenths = state.otTenths;
+                state.shotClockTenths = 240;
+                state.teams.home.teamFouls = 0;
+                state.teams.away.teamFouls = 0;
+                state.teams.home.timeoutsLeft = 1;
+                state.teams.away.timeoutsLeft = 1;
+            } else {
+                state.gameClockTenths = state.quarterTenths;
+                state.shotClockTenths = 240;
+                state.teams.home.teamFouls = 0;
+                state.teams.away.teamFouls = 0;
+                // 下半场 (Q3) 更新暂停次数为 3 次
+                if (cur.code === 'Q3') {
+                    state.teams.home.timeoutsLeft = 3;
+                    state.teams.away.timeoutsLeft = 3;
+                }
+            }
+
+            addLog('SYSTEM', `⏭️ 切换至 ${cur.label}，本节全队犯规已清零`);
+            renderAll();
+            showToast(`已进入 ${cur.label}`, 'info');
+        }
+
+        function applyRulePreset(ruleType) {
+            stopGameClock();
+            state.rule = ruleType;
+            const isNBA = ruleType === 'NBA';
+            state.quarterTenths = (isNBA ? 12 : 10) * 60 * 10;
+            state.maxPersonalFouls = isNBA ? 6 : 5;
+            state.gameClockTenths = state.quarterTenths;
+            state.shotClockTenths = 240;
+
+            document.getElementById('rule-FIBA').className = !isNBA
+                ? 'px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500 text-slate-950 transition'
+                : 'px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition';
+            document.getElementById('rule-NBA').className = isNBA
+                ? 'px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500 text-slate-950 transition'
+                : 'px-2 py-0.5 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition';
+
+            addLog('SYSTEM', `⚙️ 切换赛制规则为 ${ruleType} (单节${isNBA ? 12 : 10}分钟 / 满${state.maxPersonalFouls}次犯规罚下)`);
+            renderAll();
+            showToast(`已切换为 ${ruleType} 规则`, 'success');
+        }
+
+        /* ============================================================================
+         * 6. 球权转换、本节全队犯规与暂停管理
+         * ============================================================================ */
+        function setPossession(teamKey) {
+            saveSnapshot();
+            state.possession = teamKey;
+            SoundEngine.beep(620, 0.05);
+            const tName = state.teams[teamKey].name;
+            addLog(teamKey, `🔄 交替拥有球权箭头指向 -> ${tName}`);
+            renderPossession();
+        }
+
+        function togglePossession() {
+            setPossession(state.possession === 'home' ? 'away' : 'home');
+        }
+
+        function recordJumpBall() {
+            const nextTeam = state.possession === 'home' ? 'away' : 'home';
+            saveSnapshot();
+            state.possession = nextTeam;
+            SoundEngine.whistle();
+            addLog(nextTeam, `🏀 争球情况 (Held Ball)，球权箭头转换至 ${state.teams[nextTeam].name}`);
+            renderPossession();
+            showToast(`争球！球权转换至 ${state.teams[nextTeam].name}`, 'amber');
+        }
+
+        function adjustTeamFoul(teamKey, delta) {
+            saveSnapshot();
+            const team = state.teams[teamKey];
+            team.teamFouls = Math.max(0, Math.min(9, team.teamFouls + delta));
+            renderScoreboard();
+        }
+
+        function callTeamTimeout(teamKey, durationSec = 60) {
+            const team = state.teams[teamKey];
+            if (team.timeoutsLeft <= 0) {
+                showToast(`${team.name} 剩余暂停次数已用尽！`, 'rose');
+                return;
+            }
+            saveSnapshot();
+            stopGameClock();
+            team.timeoutsLeft--;
+            SoundEngine.buzzer(0.8);
+            addLog(teamKey, `⏸️ ${team.name} 请求暂停 (${durationSec}秒)，剩余暂停: ${team.timeoutsLeft}`);
+
+            // 启动暂停倒计时横幅
+            state.activeTimeout = {
+                active: true,
+                team: teamKey,
+                tenthsRemaining: durationSec * 10
+            };
+            const banner = document.getElementById('timeout-banner');
+            const label = document.getElementById('timeout-team-label');
+            banner.classList.remove('hidden');
+            label.textContent = `${team.name} 暂停倒计时`;
+
+            if (timeoutTimerId) clearInterval(timeoutTimerId);
+            timeoutTimerId = setInterval(() => {
+                if (!state.activeTimeout.active) return;
+                state.activeTimeout.tenthsRemaining--;
+                const disp = document.getElementById('timeout-clock-display');
+                disp.textContent = (Math.max(0, state.activeTimeout.tenthsRemaining) / 10).toFixed(1);
+
+                // 剩余10秒提示哨音，0秒结束蜂鸣
+                if (state.activeTimeout.tenthsRemaining === 100) {
+                    SoundEngine.whistle();
+                    showToast('暂停还剩最后 10 秒，请催促球员返场！', 'amber');
+                }
+                if (state.activeTimeout.tenthsRemaining <= 0) {
+                    SoundEngine.buzzer(1.2);
+                    endActiveTimeout();
+                    showToast('暂停时间结束！', 'success');
+                }
+            }, 100);
+
+            renderScoreboard();
+        }
+
+        function endActiveTimeout() {
+            state.activeTimeout.active = false;
+            if (timeoutTimerId) {
+                clearInterval(timeoutTimerId);
+                timeoutTimerId = null;
+            }
+            document.getElementById('timeout-banner').classList.add('hidden');
+        }
+
+        function restoreTeamTimeout(teamKey) {
+            saveSnapshot();
+            const team = state.teams[teamKey];
+            team.timeoutsLeft = Math.min(3, team.timeoutsLeft + 1);
+            renderScoreboard();
+        }
+
+        /* ============================================================================
+         * 7. 球员快捷技术统计与快速加减分逻辑
+         * ============================================================================ */
+        function selectPlayer(teamKey, playerId) {
+            state.selectedPlayer = { team: teamKey, playerId: playerId };
+            SoundEngine.beep(920, 0.03);
+            renderRosters();
+            renderSelectedPlayerBanner();
+        }
+
+        function toggleSubstitution(teamKey, playerId, event) {
+            if (event) event.stopPropagation();
+            const team = state.teams[teamKey];
+            const player = team.players.find(p => p.id === playerId);
+            if (!player) return;
+
+            const onCourtCount = team.players.filter(p => p.onCourt).length;
+            if (!player.onCourt && onCourtCount >= 5) {
+                showToast(`${team.name} 场上已有5名球员，请先换下一名场上球员！`, 'amber');
+                return;
+            }
+            if (!player.onCourt && player.fouls >= state.maxPersonalFouls) {
+                showToast(`#${player.number} ${player.name} 已满${state.maxPersonalFouls}次犯规罚下，无法上场！`, 'rose');
+                return;
+            }
+
+            saveSnapshot();
+            player.onCourt = !player.onCourt;
+            addLog(teamKey, `🔄 换人调整：#${player.number} ${player.name} ${player.onCourt ? '替换上场' : '替换下场休息'}`);
+            renderRosters();
+            renderSelectedPlayerBanner();
+        }
+
+        // 不指定球员直接给球队加减分
+        function quickTeamScore(teamKey, points) {
+            saveSnapshot();
+            const team = state.teams[teamKey];
+            team.score = Math.max(0, team.score + points);
+            SoundEngine.beep(points > 0 ? 820 : 400, 0.07);
+            const sign = points > 0 ? `+${points}` : `${points}`;
+            addLog(teamKey, `⚡ [${team.name}] 快速比分调整 ${sign}分 (当前 ${state.teams.home.score}:${state.teams.away.score})`);
+            renderScoreboard();
+        }
+
+        // 记录当前选中球员的各项技术统计
+        function recordPlayerStat(statType) {
+            const { team: teamKey, playerId } = state.selectedPlayer;
+            const team = state.teams[teamKey];
+            const player = team.players.find(p => p.id === playerId);
+            if (!player) {
+                showToast('请先在左右列表中点击选择一名球员', 'amber');
+                return;
+            }
+
+            saveSnapshot();
+            const pTag = `[${team.name}] #${player.number} ${player.name}`;
+
+            switch (statType) {
+                case 'pts1':
+                    player.pts += 1;
+                    player.ftm += 1;
+                    player.fta += 1;
+                    team.score += 1;
+                    SoundEngine.beep(880, 0.08);
+                    addLog(teamKey, `🎯 ${pTag} 罚球命中 +1分 (${state.teams.home.score}:${state.teams.away.score})`);
+                    break;
+
+                case 'pts2':
+                    player.pts += 2;
+                    player.fgm += 1;
+                    player.fga += 1;
+                    team.score += 2;
+                    resetShotClock(24);
+                    SoundEngine.beep(980, 0.09);
+                    addLog(teamKey, `🏀 ${pTag} 二分投篮命中 +2分 (${state.teams.home.score}:${state.teams.away.score})`);
+                    break;
+
+                case 'pts3':
+                    player.pts += 3;
+                    player.fgm += 1;
+                    player.fga += 1;
+                    player.fg3m += 1;
+                    player.fg3a += 1;
+                    team.score += 3;
+                    resetShotClock(24);
+                    SoundEngine.beep(1120, 0.11);
+                    addLog(teamKey, `🔥 ${pTag} 三分远投命中 +3分！ (${state.teams.home.score}:${state.teams.away.score})`);
+                    break;
+
+                case 'ptsMinus1':
+                    if (player.pts > 0 && team.score > 0) {
+                        player.pts -= 1;
+                        team.score -= 1;
+                        addLog(teamKey, `🔧 ${pTag} 比分纠错 -1分`);
+                    }
+                    break;
+
+                case 'ftMiss':
+                    player.fta += 1;
+                    addLog(teamKey, `❌ ${pTag} 罚球不中`);
+                    break;
+
+                case 'fgMiss':
+                    player.fga += 1;
+                    addLog(teamKey, `❌ ${pTag} 二分投篮不中`);
+                    break;
+
+                case 'fg3Miss':
+                    player.fga += 1;
+                    player.fg3a += 1;
+                    addLog(teamKey, `❌ ${pTag} 三分投篮不中`);
+                    break;
+
+                case 'foul':
+                    stopGameClock();
+                    SoundEngine.whistle();
+                    player.fouls += 1;
+                    team.teamFouls += 1;
+                    const isFoulOut = player.fouls >= state.maxPersonalFouls;
+                    const isBonus = team.teamFouls >= state.teamFoulBonusLimit;
+                    let foulMsg = `⚠️ ${pTag} 个人犯规 (个人第${player.fouls}犯 / 本节全队第${team.teamFouls}犯)`;
+                    if (isBonus) foulMsg += ' [已满犯规进入罚球BONUS]';
+                    if (isFoulOut) {
+                        foulMsg += ` 🚨 [满${state.maxPersonalFouls}犯被罚下场!]`;
+                        showToast(`🚨 #${player.number} ${player.name} 已满 ${state.maxPersonalFouls} 次犯规被罚下！请立即换人`, 'rose');
+                    }
+                    addLog(teamKey, foulMsg);
+                    break;
+
+                case 'techFoul':
+                    stopGameClock();
+                    SoundEngine.whistle();
+                    player.fouls += 1;
+                    addLog(teamKey, `🟨 ${pTag} 被判罚技术犯规 (Technical Foul, 个人第${player.fouls}犯)`);
+                    showToast(`${pTag} 被判技术犯规`, 'amber');
+                    break;
+
+                case 'reb':
+                    player.reb += 1;
+                    SoundEngine.beep(720, 0.05);
+                    addLog(teamKey, `🛡️ ${pTag} 抢下篮板球 (本场 ${player.reb} 篮板)`);
+                    break;
+
+                case 'ast':
+                    player.ast += 1;
+                    SoundEngine.beep(760, 0.05);
+                    addLog(teamKey, `👟 ${pTag} 送出助攻 (本场 ${player.ast} 助攻)`);
+                    break;
+
+                case 'stl':
+                    player.stl += 1;
+                    SoundEngine.beep(800, 0.05);
+                    addLog(teamKey, `⚡ ${pTag} 完成抢断 (本场 ${player.stl} 抢断)`);
+                    break;
+
+                case 'blk':
+                    player.blk += 1;
+                    SoundEngine.beep(840, 0.05);
+                    addLog(teamKey, `✋ ${pTag} 送出封盖盖帽 (本场 ${player.blk} 盖帽)`);
+                    break;
+
+                case 'tov':
+                    player.tov += 1;
+                    SoundEngine.beep(480, 0.06);
+                    addLog(teamKey, `💨 ${pTag} 发生失误 (本场 ${player.tov} 失误)`);
+                    break;
+            }
+
+            renderAll();
+        }
+
+        /* ============================================================================
+         * 8. 比赛事件日志 (Play-by-Play Log)
+         * ============================================================================ */
+        function addLog(teamOrType, text) {
+            const periodCode = PERIOD_LIST[state.periodIndex].code;
+            const clockStr = formatGameClock(state.gameClockTenths);
+            state.logs.unshift({
+                id: Date.now() + Math.random(),
+                period: periodCode,
+                clock: clockStr,
+                type: teamOrType,
+                scoreSnap: `${state.teams.home.score}-${state.teams.away.score}`,
+                text: text
+            });
+            renderLogs();
+        }
+
+        /* ============================================================================
+         * 9. 视图渲染总成 (DOM Render Functions)
+         * ============================================================================ */
+        function renderAll() {
+            renderClocks();
+            renderPossession();
+            renderScoreboard();
+            renderRosters();
+            renderSelectedPlayerBanner();
+            renderLogs();
+            updateUndoButtonUI();
+        }
+
+        function renderClocks() {
+            const gameClockEl = document.getElementById('game-clock-led');
+            const shotClockEl = document.getElementById('shot-clock-led');
+            const periodBadge = document.getElementById('period-badge');
+
+            gameClockEl.textContent = formatGameClock(state.gameClockTenths);
+            shotClockEl.textContent = formatShotClock(state.shotClockTenths);
+
+            // 24秒少于5秒闪烁红色高亮
+            if (state.shotClockTenths <= 50) {
+                shotClockEl.className = 'font-led text-2xl sm:text-3xl font-black led-red tracking-wider';
+            } else {
+                shotClockEl.className = 'font-led text-2xl sm:text-3xl font-black led-amber tracking-wider';
+            }
+
+            const curPeriod = PERIOD_LIST[state.periodIndex];
+            periodBadge.textContent = curPeriod.label;
+        }
+
+        function renderPossession() {
+            const homeBtn = document.getElementById('poss-btn-home');
+            const awayBtn = document.getElementById('poss-btn-away');
+            const homeIcon = document.getElementById('poss-icon-home');
+            const awayIcon = document.getElementById('poss-icon-away');
+
+            if (state.possession === 'home') {
+                homeBtn.className = 'px-2 py-1 rounded-lg bg-red-950/80 border border-red-500/80 flex items-center gap-1 transition shadow-[0_0_10px_rgba(239,68,68,0.4)]';
+                homeIcon.className = 'fa-solid fa-caret-left text-xl led-red';
+                awayBtn.className = 'px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1 transition opacity-50';
+                awayIcon.className = 'fa-solid fa-caret-right text-xl text-slate-700';
+            } else {
+                awayBtn.className = 'px-2 py-1 rounded-lg bg-red-950/80 border border-red-500/80 flex items-center gap-1 transition shadow-[0_0_10px_rgba(239,68,68,0.4)]';
+                awayIcon.className = 'fa-solid fa-caret-right text-xl led-red';
+                homeBtn.className = 'px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1 transition opacity-50';
+                homeIcon.className = 'fa-solid fa-caret-left text-xl text-slate-700';
+            }
+        }
+
+        function renderScoreboard() {
+            ['home', 'away'].forEach(teamKey => {
+                const team = state.teams[teamKey];
+                document.getElementById(`${teamKey}-name-header`).textContent = team.name;
+                document.getElementById(`${teamKey}-board-name`).textContent = team.name;
+                document.getElementById(`${teamKey}-score-led`).textContent = String(team.score).padStart(2, '0');
+                document.getElementById(`${teamKey}-color-dot`).style.backgroundColor = team.color;
+                document.getElementById(`${teamKey}-score-card`).style.borderColor = `${team.color}66`;
+
+                // 渲染 5 盏本节全队犯规指示灯
+                const foulDotsEl = document.getElementById(`${teamKey}-team-foul-dots`);
+                let foulHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    const active = team.teamFouls >= i;
+                    const colorClass = i === 5
+                        ? (active ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-slate-800')
+                        : (active ? 'bg-amber-400 shadow-[0_0_6px_#fbbf24]' : 'bg-slate-800');
+                    foulHtml += `<span class="w-2.5 h-3.5 rounded-sm ${colorClass} border border-slate-700 inline-block"></span>`;
+                }
+                foulDotsEl.innerHTML = foulHtml;
+
+                // BONUS 罚球红灯
+                const bonusEl = document.getElementById(`${teamKey}-bonus-light`);
+                if (team.teamFouls >= state.teamFoulBonusLimit) {
+                    bonusEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider bg-red-600 text-white border border-red-400 shadow-[0_0_12px_#ef4444] animate-pulse';
+                } else {
+                    bonusEl.className = 'px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider bg-slate-800 text-slate-600 border border-slate-700';
+                }
+
+                // 剩余暂停指示灯
+                const timeoutDotsEl = document.getElementById(`${teamKey}-timeout-dots`);
+                let toHtml = '';
+                for (let i = 1; i <= 3; i++) {
+                    const has = i <= team.timeoutsLeft;
+                    toHtml += `<span class="w-3 h-2 rounded-full ${has ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-800'} border border-slate-700 inline-block"></span>`;
+                }
+                timeoutDotsEl.innerHTML = toHtml;
+            });
+        }
+
+        function renderRosters() {
+            ['home', 'away'].forEach(teamKey => {
+                const team = state.teams[teamKey];
+                const container = document.getElementById(`${teamKey}-roster-list`);
+                const onCourtCount = team.players.filter(p => p.onCourt).length;
+                const badge = document.getElementById(`${teamKey}-oncourt-badge`);
+                badge.textContent = `场上: ${onCourtCount}/5`;
+                badge.className = onCourtCount === 5 ? 'text-emerald-400 font-mono font-bold' : 'text-amber-400 font-mono font-bold';
+
+                // 场上球员排前面，替补排后面
+                const sortedPlayers = [...team.players].sort((a, b) => {
+                    if (a.onCourt !== b.onCourt) return a.onCourt ? -1 : 1;
+                    return a.number - b.number;
+                });
+
+                container.innerHTML = sortedPlayers.map(p => {
+                    const isSelected = state.selectedPlayer.team === teamKey && state.selectedPlayer.playerId === p.id;
+                    const isFoulOut = p.fouls >= state.maxPersonalFouls;
+
+                    // 个人犯规5/6格指示灯
+                    let pFoulDots = '';
+                    for (let i = 1; i <= state.maxPersonalFouls; i++) {
+                        const lit = p.fouls >= i;
+                        const dotColor = i === state.maxPersonalFouls
+                            ? (lit ? 'bg-red-500 shadow-[0_0_6px_#ef4444]' : 'bg-slate-800')
+                            : (lit ? 'bg-amber-400' : 'bg-slate-800');
+                        pFoulDots += `<span class="w-1.5 h-2.5 rounded-sm ${dotColor}"></span>`;
+                    }
+
+                    const borderClass = isSelected
+                        ? 'border-amber-400 bg-slate-800/95 shadow-[0_0_12px_rgba(251,191,36,0.2)]'
+                        : (p.onCourt ? 'border-slate-700/90 bg-slate-900/90 hover:border-slate-600' : 'border-slate-800/60 bg-slate-950/60 opacity-70 hover:opacity-100');
+
+                    return `
+                        <div onclick="selectPlayer('${teamKey}', '${p.id}')" 
+                             class="p-2 rounded-xl border-2 ${borderClass} cursor-pointer transition flex items-center justify-between gap-2 ${isFoulOut ? 'animate-foul-out border-red-600/80' : ''}">
+                            
+                            <div class="flex items-center gap-2 min-w-0">
+                                <!-- 球衣号码 -->
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center font-led font-black text-sm shrink-0 border"
+                                     style="background-color: ${team.color}22; border-color: ${team.color}66; color: ${team.color}">
+                                    ${p.number}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-bold text-slate-100 truncate">${p.name}</span>
+                                        <span class="text-[10px] text-slate-500 font-mono">${p.pos}</span>
+                                        ${p.onCourt ? '<span class="px-1 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] font-bold">场上</span>' : '<span class="text-[9px] text-slate-500">替补</span>'}
+                                        ${isFoulOut ? '<span class="px-1 py-0.2 bg-red-600 text-white rounded text-[9px] font-black">罚下</span>' : ''}
+                                    </div>
+                                    <!-- 个人犯规格与数据简报 -->
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="flex items-center gap-0.5" title="个人犯规: ${p.fouls}次">
+                                            ${pFoulDots}
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-mono">
+                                            ${p.reb}板 · ${p.ast}助 · ${p.fouls}犯
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 右侧个人得分与换人按钮 -->
+                            <div class="flex items-center gap-2 shrink-0">
+                                <div class="text-right">
+                                    <div class="font-led text-base font-bold text-amber-400 leading-none">${p.pts}</div>
+                                    <div class="text-[9px] text-slate-500 font-mono">PTS</div>
+                                </div>
+                                <button onclick="toggleSubstitution('${teamKey}', '${p.id}', event)" 
+                                        class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400 transition"
+                                        title="${p.onCourt ? '换下休息' : '替换上场'}">
+                                    <i class="fa-solid fa-right-left text-[11px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        function renderSelectedPlayerBanner() {
+            const { team: teamKey, playerId } = state.selectedPlayer;
+            const team = state.teams[teamKey];
+            const player = team.players.find(p => p.id === playerId) || team.players[0];
+            if (!player) return;
+
+            const bannerEl = document.getElementById('selected-player-banner');
+            const statsEl = document.getElementById('selected-player-quick-stats');
+
+            bannerEl.innerHTML = `
+                <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${team.color}"></span>
+                <span class="text-xs font-bold text-slate-300">${team.name}</span>
+                <span class="font-led font-black text-amber-400 text-sm">#${player.number}</span>
+                <span class="font-extrabold text-white text-sm">${player.name}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">${player.pos}</span>
+            `;
+
+            statsEl.innerHTML = `
+                <span>得分: <strong class="text-amber-400">${player.pts}</strong></span>
+                <span>篮板: <strong class="text-cyan-400">${player.reb}</strong></span>
+                <span>助攻: <strong class="text-cyan-400">${player.ast}</strong></span>
+                <span>抢断: <strong class="text-emerald-400">${player.stl}</strong></span>
+                <span>盖帽: <strong class="text-purple-400">${player.blk}</strong></span>
+                <span>失误: <strong class="text-orange-400">${player.tov}</strong></span>
+                <span>犯规: <strong class="${player.fouls >= state.maxPersonalFouls - 1 ? 'text-rose-400' : 'text-slate-200'}">${player.fouls}/${state.maxPersonalFouls}</strong></span>
+            `;
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('play-by-play-container');
+            const badge = document.getElementById('log-count-badge');
+            badge.textContent = `${state.logs.length} 条记录`;
+
+            if (state.logs.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex items-center justify-center text-slate-600 text-xs">
+                        暂无比赛事件，开始比赛或点击上方按钮记录数据...
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.logs.map(item => {
+                let badgeColor = 'bg-slate-800 text-slate-300';
+                if (item.type === 'home') badgeColor = 'bg-blue-950 text-blue-300 border border-blue-800';
+                if (item.type === 'away') badgeColor = 'bg-rose-950 text-rose-300 border border-rose-800';
+                if (item.type === 'SYSTEM') badgeColor = 'bg-amber-950/80 text-amber-300 border border-amber-800/80';
+
+                return `
+                    <div class="px-2.5 py-1.5 rounded-lg bg-slate-900/70 border border-slate-800/80 flex items-center justify-between gap-2 hover:bg-slate-900 transition">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 ${badgeColor}">${item.period} ${item.clock}</span>
+                            <span class="text-slate-200 truncate">${item.text}</span>
+                        </div>
+                        <span class="text-[11px] font-led text-slate-400 shrink-0">${item.scoreSnap}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ============================================================================
+         * 10. 弹窗交互：添加球员、编辑队名、精确修改时间、Box Score 统计表与导出
+         * ============================================================================ */
+        function updateTeamColor(teamKey, hexColor) {
+            state.teams[teamKey].color = hexColor;
+            renderScoreboard();
+            renderRosters();
+            renderSelectedPlayerBanner();
+        }
+
+        function editTeamName(teamKey) {
+            const team = state.teams[teamKey];
+            const modal = document.getElementById('modal-generic');
+            document.getElementById('generic-modal-title').textContent = `修改${teamKey === 'home' ? '主队' : '客队'}名称`;
+            document.getElementById('generic-modal-body').innerHTML = `
+                <input type="text" id="edit-team-name-input" value="${team.name}" 
+                       class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-500">
+            `;
+            document.getElementById('generic-modal-actions').innerHTML = `
+                <button onclick="closeGenericModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 text-slate-300">取消</button>
+                <button onclick="confirmEditTeamName('${teamKey}')" class="px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold">保存</button>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function confirmEditTeamName(teamKey) {
+            const val = document.getElementById('edit-team-name-input').value.trim();
+            if (val) {
+                saveSnapshot();
+                state.teams[teamKey].name = val;
+                renderAll();
+            }
+            closeGenericModal();
+        }
+
+        function closeGenericModal() {
+            document.getElementById('modal-generic').classList.add('hidden');
+        }
+
+        function openResetConfirmModal() {
+            const modal = document.getElementById('modal-generic');
+            document.getElementById('generic-modal-title').textContent = '重置整场比赛确认';
+            document.getElementById('generic-modal-body').innerHTML = `
+                <p class="text-slate-300 leading-relaxed">确定要将整场比赛的比分、时间、球员技术统计以及事件流水全部清零重置吗？</p>
+            `;
+            document.getElementById('generic-modal-actions').innerHTML = `
+                <button onclick="closeGenericModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 text-slate-300">取消</button>
+                <button onclick="confirmFullReset()" class="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold">确认重置</button>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function confirmFullReset() {
+            stopGameClock();
+            endActiveTimeout();
+            initDefaultState(state.rule);
+            closeGenericModal();
+            renderAll();
+            showToast('整场比赛数据已重置归零', 'info');
+        }
+
+        function openAddPlayerModal(teamKey) {
+            addPlayerTargetTeam = teamKey;
+            const team = state.teams[teamKey];
+            document.getElementById('add-player-title').textContent = `添加球员至 ${team.name}`;
+            document.getElementById('input-player-number').value = '';
+            document.getElementById('input-player-name').value = '';
+            document.getElementById('modal-add-player').classList.remove('hidden');
+        }
+
+        function closeAddPlayerModal() {
+            document.getElementById('modal-add-player').classList.add('hidden');
+        }
+
+        function confirmAddPlayer() {
+            const num = parseInt(document.getElementById('input-player-number').value, 10);
+            const name = document.getElementById('input-player-name').value.trim();
+            const pos = document.getElementById('input-player-pos').value;
+
+            if (isNaN(num) || num < 0 || num > 99 || !name) {
+                showToast('请填写有效的球衣号码(0-99)和球员姓名', 'rose');
+                return;
+            }
+
+            saveSnapshot();
+            const team = state.teams[addPlayerTargetTeam];
+            const newId = `${addPlayerTargetTeam}_${Date.now()}`;
+            team.players.push({
+                id: newId,
+                number: num,
+                name: name,
+                pos: pos,
+                onCourt: team.players.filter(p => p.onCourt).length < 5,
+                pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0, fouls: 0,
+                fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0
+            });
+
+            addLog(addPlayerTargetTeam, `➕ 新增报名球员：#${num} ${name} (${pos})`);
+            closeAddPlayerModal();
+            renderRosters();
+            showToast(`已添加 #${num} ${name}`, 'success');
+        }
+
+        // 手动精确设定时钟弹窗
+        function openClockEditModal() {
+            stopGameClock();
+            const totalTenths = state.gameClockTenths;
+            const mins = Math.floor(totalTenths / 600);
+            const secs = Math.floor((totalTenths % 600) / 10);
+            const tenths = totalTenths % 10;
+
+            document.getElementById('edit-clock-min').value = mins;
+            document.getElementById('edit-clock-sec').value = secs;
+            document.getElementById('edit-clock-tenth').value = tenths;
+            document.getElementById('edit-shot-sec').value = (state.shotClockTenths / 10).toFixed(1);
+            document.getElementById('modal-clock-edit').classList.remove('hidden');
+        }
+
+        function closeClockEditModal() {
+            document.getElementById('modal-clock-edit').classList.add('hidden');
+        }
+
+        function saveClockEdit() {
+            const mins = Math.max(0, parseInt(document.getElementById('edit-clock-min').value, 10) || 0);
+            const secs = Math.max(0, Math.min(59, parseInt(document.getElementById('edit-clock-sec').value, 10) || 0));
+            const tenths = Math.max(0, Math.min(9, parseInt(document.getElementById('edit-clock-tenth').value, 10) || 0));
+            const shotSec = Math.max(0, Math.min(24, parseFloat(document.getElementById('edit-shot-sec').value) || 0));
+
+            saveSnapshot();
+            state.gameClockTenths = mins * 600 + secs * 10 + tenths;
+            state.shotClockTenths = Math.round(shotSec * 10);
+
+            addLog('SYSTEM', `⏱️ 记录台手动校准时钟为 ${formatGameClock(state.gameClockTenths)} (24秒钟: ${shotSec.toFixed(1)}s)`);
+            closeClockEditModal();
+            renderClocks();
+            showToast('比赛时间已校准更新', 'success');
+        }
+
+        // 技术统计表 (Box Score) 渲染与导出
+        function openBoxScoreModal() {
+            const container = document.getElementById('boxscore-content');
+            container.innerHTML = ['home', 'away'].map(teamKey => {
+                const team = state.teams[teamKey];
+                let totPts = 0, totReb = 0, totAst = 0, totStl = 0, totBlk = 0, totTov = 0, totFouls = 0;
+                let totFgm = 0, totFga = 0, totFg3m = 0, totFg3a = 0, totFtm = 0, totFta = 0;
+
+                const rows = team.players.map(p => {
+                    totPts += p.pts; totReb += p.reb; totAst += p.ast; totStl += p.stl;
+                    totBlk += p.blk; totTov += p.tov; totFouls += p.fouls;
+                    totFgm += p.fgm; totFga += p.fga; totFg3m += p.fg3m; totFg3a += p.fg3a;
+                    totFtm += p.ftm; totFta += p.fta;
+
+                    return `
+                        <tr class="border-b border-slate-800/80 hover:bg-slate-800/40 font-mono text-xs">
+                            <td class="py-2 px-3 font-bold text-amber-400">#${p.number}</td>
+                            <td class="py-2 px-3 font-sans font-bold text-white">${p.name} ${p.onCourt ? '<span class="text-[10px] text-emerald-400 ml-1">●</span>' : ''}</td>
+                            <td class="py-2 px-3 text-slate-400">${p.pos}</td>
+                            <td class="py-2 px-3 font-bold text-amber-300 text-center">${p.pts}</td>
+                            <td class="py-2 px-3 text-center">${p.fgm}/${p.fga}</td>
+                            <td class="py-2 px-3 text-center">${p.fg3m}/${p.fg3a}</td>
+                            <td class="py-2 px-3 text-center">${p.ftm}/${p.fta}</td>
+                            <td class="py-2 px-3 text-center text-cyan-300">${p.reb}</td>
+                            <td class="py-2 px-3 text-center text-cyan-300">${p.ast}</td>
+                            <td class="py-2 px-3 text-center text-emerald-300">${p.stl}</td>
+                            <td class="py-2 px-3 text-center text-purple-300">${p.blk}</td>
+                            <td class="py-2 px-3 text-center text-orange-300">${p.tov}</td>
+                            <td class="py-2 px-3 text-center ${p.fouls >= state.maxPersonalFouls ? 'text-rose-500 font-black' : ''}">${p.fouls}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+                        <div class="px-4 py-2.5 bg-slate-950 flex items-center justify-between border-b border-slate-800">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full" style="background-color: ${team.color}"></span>
+                                <h4 class="font-extrabold text-sm text-white">${team.name} (${teamKey === 'home' ? '主队' : '客队'})</h4>
+                            </div>
+                            <span class="font-led text-xl text-amber-400 font-black">总分: ${team.score}</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-slate-400 text-[11px] border-b border-slate-800">
+                                        <th class="py-2 px-3">号码</th>
+                                        <th class="py-2 px-3">姓名</th>
+                                        <th class="py-2 px-3">位置</th>
+                                        <th class="py-2 px-3 text-center">得分 PTS</th>
+                                        <th class="py-2 px-3 text-center">投篮 FG</th>
+                                        <th class="py-2 px-3 text-center">三分 3PT</th>
+                                        <th class="py-2 px-3 text-center">罚球 FT</th>
+                                        <th class="py-2 px-3 text-center">篮板 REB</th>
+                                        <th class="py-2 px-3 text-center">助攻 AST</th>
+                                        <th class="py-2 px-3 text-center">抢断 STL</th>
+                                        <th class="py-2 px-3 text-center">盖帽 BLK</th>
+                                        <th class="py-2 px-3 text-center">失误 TOV</th>
+                                        <th class="py-2 px-3 text-center">犯规 PF</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows}
+                                    <tr class="bg-slate-950 font-mono font-bold text-xs text-white">
+                                        <td colspan="3" class="py-2.5 px-3 text-right font-sans">全队统计汇总</td>
+                                        <td class="py-2.5 px-3 text-center text-amber-400">${totPts}</td>
+                                        <td class="py-2.5 px-3 text-center">${totFgm}/${totFga}</td>
+                                        <td class="py-2.5 px-3 text-center">${totFg3m}/${totFg3a}</td>
+                                        <td class="py-2.5 px-3 text-center">${totFtm}/${totFta}</td>
+                                        <td class="py-2.5 px-3 text-center">${totReb}</td>
+                                        <td class="py-2.5 px-3 text-center">${totAst}</td>
+                                        <td class="py-2.5 px-3 text-center">${totStl}</td>
+                                        <td class="py-2.5 px-3 text-center">${totBlk}</td>
+                                        <td class="py-2.5 px-3 text-center">${totTov}</td>
+                                        <td class="py-2.5 px-3 text-center">${totFouls}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('modal-boxscore').classList.remove('hidden');
+        }
+
+        function closeBoxScoreModal() {
+            document.getElementById('modal-boxscore').classList.add('hidden');
+        }
+
+        function downloadFile(filename, content, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportBoxScoreCSV() {
+            let csv = '\uFEFF球队,号码,姓名,位置,场上状态,得分,投篮命中,投篮出手,三分命中,三分出手,罚球命中,罚球出手,篮板,助攻,抢断,盖帽,失误,个人犯规\n';
+            ['home', 'away'].forEach(tKey => {
+                const t = state.teams[tKey];
+                t.players.forEach(p => {
+                    csv += `"${t.name}",${p.number},"${p.name}",${p.pos},${p.onCourt ? '场上' : '替补'},${p.pts},${p.fgm},${p.fga},${p.fg3m},${p.fg3a},${p.ftm},${p.fta},${p.reb},${p.ast},${p.stl},${p.blk},${p.tov},${p.fouls}\n`;
+                });
+            });
+            downloadFile(`篮球技术统计表_${state.teams.home.name}_vs_${state.teams.away.name}.csv`, csv, 'text/csv;charset=utf-8;');
+            showToast('技术统计 CSV 已导出下载', 'success');
+        }
+
+        function exportBoxScoreJSON() {
+            const jsonStr = JSON.stringify(state, null, 2);
+            downloadFile(`basketball_match_data_${Date.now()}.json`, jsonStr, 'application/json');
+            showToast('完整比赛 JSON 数据已导出', 'success');
+        }
+
+        function exportLogsCSV() {
+            let csv = '\uFEFF节次,剩余时间,比分,事件详情\n';
+            state.logs.forEach(l => {
+                csv += `"${l.period}","${l.clock}","${l.scoreSnap}","${l.text.replace(/"/g, '""')}"\n`;
+            });
+            downloadFile(`比赛实时事件流水_${Date.now()}.csv`, csv, 'text/csv;charset=utf-8;');
+            showToast('事件流水账 CSV 已导出', 'success');
+        }
+
+        /* ============================================================================
+         * 11. 轻提示 Toast 与全局键盘快捷键绑定
+         * ============================================================================ */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            let colorStyle = 'bg-slate-900 border-slate-700 text-slate-100';
+            if (type === 'success') colorStyle = 'bg-emerald-950/95 border-emerald-500/80 text-emerald-200';
+            if (type === 'amber') colorStyle = 'bg-amber-950/95 border-amber-500/80 text-amber-200';
+            if (type === 'rose') colorStyle = 'bg-rose-950/95 border-rose-500/80 text-rose-200';
+
+            el.className = `px-3.5 py-2 rounded-xl border shadow-xl text-xs font-bold flex items-center gap-2 transition-all duration-200 ${colorStyle}`;
+            el.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+            container.appendChild(el);
+
+            setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(8px)';
+                setTimeout(() => el.remove(), 220);
+            }, 2600);
+        }
+
+        // 全局键盘快捷键监听
+        window.addEventListener('keydown', (e) => {
+            // 如果焦点在输入框中则忽略快捷键
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleGameClock();
+            } else if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                resetShotClock(24);
+            } else if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                resetShotClock(14);
+            } else if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                togglePossession();
+            } else if (e.key === 'h' || e.key === 'H') {
+                e.preventDefault();
+                SoundEngine.buzzer();
+            } else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+                e.preventDefault();
+                undoLastAction();
+            }
+        });
+
+        // 页面加载初始化
+        window.onload = function () {
+            initDefaultState('FIBA');
+            addLog('SYSTEM', '🏀 FIBA Pro 篮球记录台终端已就绪，点击球员或使用快捷键开始记录比赛。');
+            renderAll();
+        };
+    </script>
+</body>
+</html>

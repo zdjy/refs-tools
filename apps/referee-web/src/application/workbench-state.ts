@@ -1,8 +1,11 @@
 import { computed, onScopeDispose, ref } from 'vue'
-import { addFoul, createSession, type ClockKind, type FoulCount, type RuleSet, type WorkbenchSession } from '../domain/workbench'
+import { createSession, type ClockKind, type FoulCount, type RuleSet, type WorkbenchSession } from '../domain/workbench'
 import {
   advancePeriod, changeSessionClock, setShotPreset, shotPresets,
 } from '../domain/workbench-commands'
+import { adjustFoul, correctScore, recordTeamStat, renameTeam, scorerEvent, setPossession, type TeamSide, type TeamStat } from '../domain/scorer'
+import { callTimeout, editClock, endTimeout, restoreTimeout, settleClocks, toggleGame, toggleLink } from '../domain/scorer-clocks'
+import { pauseSession } from './workbench-undo'
 import type { WorkbenchPorts } from './workbench-ports'
 
 /**
@@ -16,6 +19,9 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
   const storageError = ref('')
   const sessionNotice = ref('')
   const restoreFailed = ref(false)
+  const commandError = ref('')
+  const history = ref<Record<string, WorkbenchSession[]>>({})
+  const undoCount = computed(() => history.value[activeId.value]?.length ?? 0)
   let ticker: ReturnType<typeof setInterval> | undefined
   const activeSession = computed(() => sessions.value.find((session) => session.id === activeId.value) ?? null)
   const presets = computed(() => activeSession.value ? shotPresets(activeSession.value.rules) : [])
@@ -37,7 +43,8 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
   function initialize() {
     restore()
     now.value = Date.now()
-    if (!ticker) ticker = setInterval(() => { now.value = Date.now() }, 100)
+    settle()
+    if (!ticker) ticker = setInterval(settle, 100)
   }
 
   function persist(): boolean {
@@ -52,12 +59,44 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     }
   }
 
+  function settle() {
+    const at = Date.now()
+    now.value = at
+    let changed = false
+    sessions.value = sessions.value.map((session) => {
+      const next = settleClocks(session, at)
+      if (next !== session) changed = true
+      return next
+    })
+    if (changed) persist()
+  }
+
   function updateSession(updater: (session: WorkbenchSession, at: number) => WorkbenchSession) {
+    settle()
     if (!activeSession.value) return
     const at = Date.now()
-    const updated = updater(activeSession.value, at)
-    now.value = at
-    sessions.value = sessions.value.map((session) => session.id === activeId.value ? updated : session)
+    const previous = activeSession.value
+    try {
+      const updated = updater(previous, at)
+      if (updated === previous) return
+      history.value[previous.id] = [...(history.value[previous.id] ?? []), pauseSession(previous, at)].slice(-40)
+      sessions.value = sessions.value.map((session) => session.id === previous.id ? updated : session)
+      commandError.value = ''
+      persist()
+    } catch (error) {
+      commandError.value = error instanceof Error ? error.message : '操作失败，请重试。'
+    }
+  }
+
+  function undo() {
+    const snapshots = history.value[activeId.value]
+    const snapshot = snapshots?.pop()
+    if (!snapshot) return
+    const at = Date.now()
+    const restored = { ...pauseSession(snapshot, at), updatedAt: at }
+    sessions.value = sessions.value.map((session) => session.id === activeId.value ? restored : session)
+    sessionNotice.value = '已撤销上一步，计时器保持暂停，请核对后手动恢复。'
+    commandError.value = ''
     persist()
   }
 
@@ -77,6 +116,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     if (!sessions.value.some((session) => session.id === id)) return
     activeId.value = id
     sessionNotice.value = ''
+    commandError.value = ''
     persist()
   }
 
@@ -85,6 +125,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     const nextId = next.some((session) => session.id === activeId.value) ? activeId.value : next[0]?.id ?? ''
     try {
       ports.save({ sessions: next, activeId: nextId })
+      for (const id of ids) delete history.value[id]
       sessions.value = next
       activeId.value = nextId
       restoreFailed.value = false
@@ -112,14 +153,30 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
 
   return {
     sessions, activeId, now, activeSession, presets, storageError, sessionNotice,
-    restoreFailed, initialize, startSession, selectSession, exportSession,
+    restoreFailed, commandError, undoCount, undo, initialize, startSession, selectSession, exportSession,
+    recordStat: (side: TeamSide, stat: TeamStat) => updateSession((session, at) => recordTeamStat(session, side, stat, at)),
+    correctScore: (side: TeamSide, delta: number) => updateSession((session, at) => correctScore(session, side, delta, at)),
+    renameTeam: (side: TeamSide, name: string) => updateSession((session, at) => renameTeam(session, side, name, at)),
+    adjustFoul: (side: TeamSide, delta: number) => updateSession((session, at) => adjustFoul(session, side, delta, at)),
+    setPossession: (side: TeamSide, held = false) => updateSession((session, at) => setPossession(session, side, at, held)),
+    callTimeout: (side: TeamSide) => updateSession((session, at) => callTimeout(session, side, at)),
+    endTimeout: () => updateSession(endTimeout),
+    restoreTimeout: (side: TeamSide) => updateSession((session, at) => restoreTimeout(session, side, at)),
+    toggleLink: () => updateSession(toggleLink),
+    editClock: (kind: ClockKind, seconds: number) => updateSession((session, at) => editClock(session, kind, seconds, at)),
     retryStorage: () => restoreFailed.value ? restore() : persist(),
     removeSession: (id: string) => deleteSessions([id]),
     clearAll: () => deleteSessions(sessions.value.map((session) => session.id)),
+    resetMatch: () => updateSession((session, at) => {
+      const empty = createSession(at, { ...session.rules, scorerRules: session.scorer.rules })
+      empty.scorer.teams.home.name = session.scorer.teams.home.name
+      empty.scorer.teams.away.name = session.scorer.teams.away.name
+      return scorerEvent({ ...empty, id: session.id, title: session.title, createdAt: session.createdAt, events: [] }, '重置整场比赛', at)
+    }),
     switchPeriod: () => updateSession(advancePeriod),
-    onFoul: (team: keyof FoulCount) => updateSession((session, at) => addFoul(session, team, at)),
+    onFoul: (team: keyof FoulCount) => updateSession((session, at) => adjustFoul(session, team, 1, at)),
     applyPreset: (seconds: number) => updateSession((session, at) => setShotPreset(session, seconds, at)),
-    toggleClock: (kind: ClockKind) => updateSession((session, at) => changeSessionClock(session, kind, 'toggle', at)),
+    toggleClock: (kind: ClockKind) => updateSession((session, at) => kind === 'game' ? toggleGame(session, at) : changeSessionClock(session, kind, 'toggle', at)),
     resetClock: (kind: ClockKind) => updateSession((session, at) => changeSessionClock(session, kind, 'reset', at)),
     clearEventLog: () => updateSession((session, at) => ({ ...session, events: [], updatedAt: at })),
   }

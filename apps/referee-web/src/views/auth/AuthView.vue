@@ -15,13 +15,19 @@ const auth = useAuthStore()
 const { status, error } = storeToRefs(auth)
 const { mode, fields, errors, challenge, busy, sendCode, submit } = useAuth(auth, props.initialMode)
 const { sending, remaining, notice, error: challengeError, expired } = challenge
+const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)
 watch(() => props.initialMode, (value) => { mode.value = value === 'register' ? 'register' : 'code' })
 watch(status, (value) => { if (value === 'authenticated') void router.replace('/account') })
 onMounted(() => { void auth.restore() })
 async function onSubmit() {
   if (await submit()) await router.replace('/account')
-  else { await nextTick(); summary.value?.focus() }
+  else {
+    await nextTick()
+    const invalidInput = form.value?.querySelector<HTMLElement>('input[aria-invalid="true"]')
+    if (invalidInput) invalidInput.focus()
+    else summary.value?.focus()
+  }
 }
 </script>
 
@@ -46,12 +52,9 @@ async function onSubmit() {
           <n-button :type="mode === 'code' ? 'primary' : 'default'" :bordered="false" :aria-pressed="mode === 'code'" :disabled="busy" @click="mode = 'code'">验证码登录</n-button>
           <n-button :type="mode === 'password' ? 'primary' : 'default'" :bordered="false" :aria-pressed="mode === 'password'" :disabled="busy" @click="mode = 'password'">密码登录</n-button>
         </div>
-        <form novalidate :aria-busy="busy" @submit.prevent="onSubmit">
-          <div v-if="Object.keys(errors).length || error" ref="summary" class="auth-error-summary" role="alert" tabindex="-1">
-            {{ error || '请检查以下输入后再试。' }}
-            <ul v-if="Object.keys(errors).length">
-              <li v-for="(message, field) in errors" :key="field"><a :href="`#auth-${field === 'displayName' ? 'name' : field}`">{{ message }}</a></li>
-            </ul>
+        <form ref="form" novalidate :aria-busy="busy" @submit.prevent="onSubmit">
+          <div v-if="error" ref="summary" class="auth-error-summary" role="alert" tabindex="-1">
+            {{ error }}
           </div>
           <AuthFields v-model:fields="fields" :mode="mode" :errors="errors" :busy="busy" :sending="sending" :remaining="remaining" @send="sendCode" />
           <p v-if="challengeError" class="auth-field-error" role="alert">{{ challengeError }}</p>

@@ -32,6 +32,20 @@ describe('工作台存储适配', () => {
     expect(() => loadWorkbench(storage)).toThrow()
   })
 
+  it('旧会话只读补齐空队伍，不把损坏的新记录当作旧记录重置', () => {
+    const storage = memoryStorage()
+    const { scorer: _, ...legacy } = createSession(42)
+    const raw = JSON.stringify([legacy])
+    storage.setItem(STORAGE_KEY, raw)
+    expect(loadWorkbench(storage).sessions[0]?.scorer.teams.home.score).toBe(0)
+    expect(loadWorkbench(storage).sessions[0]?.rules.id).toBe(legacy.rules.id)
+    expect(storage.getItem(STORAGE_KEY)).toBe(raw)
+    for (const scorer of [null, {}, { ...createSession(0).scorer, teams: {} }]) {
+      storage.setItem(STORAGE_KEY, JSON.stringify([{ ...legacy, scorer }]))
+      expect(() => loadWorkbench(storage)).toThrow()
+    }
+  })
+
   it('清空时移除两份存储键，并向调用者传播存储失败', () => {
     const storage = memoryStorage()
     const session = createSession()

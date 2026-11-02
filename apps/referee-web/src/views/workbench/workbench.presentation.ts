@@ -11,6 +11,10 @@ export const ruleFields = [
   { key: 'periodMinutes', label: '每节分钟', max: 60 },
   { key: 'shotSeconds', label: '进攻计时（秒）', max: 60 },
   { key: 'shortShotSeconds', label: '短进攻计时（秒）', max: 60 },
+  { key: 'overtimeMinutes', label: '加时时长（分钟）', max: 60 },
+  { key: 'timeoutSeconds', label: '暂停时长（秒）', max: 300 },
+  { key: 'timeoutsPerPeriod', label: '每节暂停配额', max: 20 },
+  { key: 'foulWarningLimit', label: '球队犯规提示阈值', max: 20 },
 ] as const
 
 /**
