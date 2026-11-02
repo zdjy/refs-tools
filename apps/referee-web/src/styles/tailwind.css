@@ -12,8 +12,12 @@
   --breakpoint-*: initial;
   --breakpoint-xs: 375px;
   --breakpoint-sm: 480px;
+  --breakpoint-compact: 640px;
   --breakpoint-md: 768px;
+  --breakpoint-tablet: 960px;
   --breakpoint-lg: 1100px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
   --radius-*: initial;
   --radius-xl: 12px;
   --radius-2xl: 16px;

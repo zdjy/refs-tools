@@ -1,6 +1,6 @@
 # ADR 0014：实时作用域授权与追加式审计基础
 
-- 状态：已接受
+- 状态：已接受；第 3、9 项的引擎实现与第三方依赖限制由 [ADR 0015](0015-casbin-authorization-engine.md) 部分替代
 - 范围：FS-0002 Task 4、ticket 02
 - 关联：[ADR 0003](0003-scoped-rbac-and-assignment-workflow.md)、[ADR 0009](0009-database-infrastructure-and-transactions.md)、[ADR 0010](0010-email-auth-and-session-security.md)
 
@@ -12,13 +12,13 @@ Task 4 早于组织和赛事实现，但真实 scope resolver 必须查询数据
 
 1. 在 `0003_rbac_audit.sql` 提前创建 `organizations`、`organization_memberships`、`events`、`matches` 的最小归属/状态骨架，不提供相应业务接口。此实施顺序已由需求方确认。组织与成员的业务所有权仍归 Task 7 的 organizations 模块；赛事与比赛归 Task 15 的赛事/选派模块。后续迁移使用 `ALTER TABLE` 补充业务字段、状态及约束，禁止重新建表或改写已应用迁移。
 2. 使用一张 `role_bindings` 表承载平台和组织/赛事/比赛角色，不另建同构的 `platform_role_bindings`。CHECK 约束固定角色/范围组合；平台角色只绑定 platform，裁判长只绑定 event/match。普通裁判的 self 权限从当前账号及资源所有权派生，不保存“注册裁判”绑定。资质不进入权限绑定。
-3. 纯 policy 位于 `packages/domain`，只接受可信的归属、当前绑定与成员状态。权限还限制目标种类：平台角色不是组织业务的超级用户；一个绑定须同时满足角色与范围，不跨绑定拼接权限。组织非 active 不允许运营，frozen/dissolved 仅保留当前负责人审计读取；父赛事或比赛终态禁止新运营操作。更细的状态机、自审回避、考试授权及资格判定仍由后续业务用例实现。
+3. 初始实现的纯 policy 位于 `packages/domain`，只接受可信的归属、当前绑定与成员状态；当前按 ADR 0015 将角色/权限/目标矩阵及匹配交给 API 内的 Casbin，domain 保留纯领域约束。权限还限制目标种类：平台角色不是组织业务的超级用户；一个绑定须同时满足角色与范围，不跨绑定拼接权限。组织非 active 不允许运营，frozen/dissolved 仅保留当前负责人审计读取；父赛事或比赛终态禁止新运营操作。更细的状态机、自审回避、考试授权及资格判定仍由后续业务用例实现。
 4. scope resolver 沿外键解析组织 → 赛事 → 比赛，每次重读绑定和 active membership。事务内对授权依据使用行锁，阻止成功授权与提交之间既有依据被并发撤销；撤权/退出/冻结提交后的新请求立即拒绝。调用方从当前 Cookie 会话获取 subject，不能接收客户端声明的 actor。写用例在自己的事务中使用 `requirePermission`，不先执行独立只读授权再另开事务写入。
 5. `RoleBindingService` 提供内部授予/撤销用例，变更和安全投影审计共用事务连接。授予要求目标账号有效，组织范围还需目标当前成员关系。owner 的首次创建和移交不通过通用授予接口，留给组织专用流程。未撤销的相同角色/范围只保留一条，过期后续授予需先撤销旧绑定；重复撤销不再追加变更审计。Task 7 再接入组织角色 HTTP 管理。
 6. 审计用追加式表和独立端口，拒绝 UPDATE/DELETE/TRUNCATE；运行账号仅有该表 SELECT/INSERT，不能拥有表、DDL 或超级用户权限。触发器是纵深保护，不声称能防止数据库超级用户或迁移所有者主动关闭保护。`actor_user_id` 不建立用户外键，以便未来匿名化/留存处理不删除审计。
 7. before/after 只接收白名单的状态、版本、角色和关联 UUID，拒绝任意嵌套对象。reason 限长并拒绝 URL/明显凭据标记；这不是通用 DLP，调用方不得复制用户原始材料、验证码或异常体。日志不得记录查询体、会话或快照。审计留存/脱敏审批暂不自动执行清理。
 8. 审计保存服务端解析的 `organization_id` 作为不可变查询归属，使组织负责人可读取组织及下属赛事/比赛的日志。摘要不返回 before/after。平台与组织查询均在实时授权后读取，成功查询本身也在同事务追加审计；写入失败则不返回查询结果。平台接口与组织接口权限独立，禁止用平台身份假冒负责人。
-9. 审计查询使用 UUID 游标定位 `(created_at,id)`，limit 默认 50、最大 100。组织游标锚点也受组织约束。响应禁止缓存。既有会话认证不修改，不引入角色缓存、JWT、ORM、额外服务或新第三方库；API 复用已采用的 TypeBox 作为显式直接依赖。
+9. 审计查询使用 UUID 游标定位 `(created_at,id)`，limit 默认 50、最大 100。组织游标锚点也受组织约束。响应禁止缓存。既有会话认证不修改，不引入角色缓存、JWT、ORM 或额外服务；初始实现不新增第三方库，当前按 ADR 0015 允许 API 引入 Casbin。API 复用已采用的 TypeBox 作为显式直接依赖。
 10. API 首次依赖纯 domain 包，因此为 domain 增加独立构建产物与 development 条件导出；生产容器复制其 dist，不在生产加载 TypeScript 源文件。
 
 ## 备选方案

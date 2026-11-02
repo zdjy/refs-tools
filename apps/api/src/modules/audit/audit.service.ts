@@ -40,7 +40,7 @@ export class AuditService {
     if (!Value.Check(AuditQuerySchema, query)) throw new DomainError('INVALID_REQUEST', '查询参数不符合要求', 400)
     const now = this.dependencies.now()
     return this.dependencies.transaction.run(async ({ authorization, audit }) => {
-      const scope = await requirePermission(authorization, { subjectUserId: actor, permission: 'audit.read', resource: reference }, now)
+      const scope = await requirePermission(authorization, { subjectUserId: actor, permission: 'audit.read', resource: reference }, now, this.dependencies.permissions)
       const result = await audit.list({ ...query, limit: Number(query.limit ?? '50'),
         ...(scope.organizationId === null ? {} : { organizationId: scope.organizationId }) })
       await appendAudit(audit, { actorUserId: actor, action: 'audit.queried', resourceType: 'audit_log',

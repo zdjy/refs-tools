@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { permissions } from '../helpers/permissions.js'
 import { AuthorizationService } from '../../src/modules/authorization/authorization.service.js'
 import type { AuthorizationRepository } from '../../src/modules/authorization/authorization.types.js'
 import type { ScopedRoleBinding } from '@refs-tools/contracts/authorization'
@@ -22,7 +23,7 @@ function harness() {
     async insertBinding() { return true }, async findBinding() { return null }, async revokeBinding() { return false },
   }
   const service = new AuthorizationService({
-    transaction: { run: (work) => work({ authorization: repository, audit: {
+    permissions, transaction: { run: (work) => work({ authorization: repository, audit: {
       async append() {}, async list() { return { items: [], nextCursor: null } },
     } }) }, now: () => new Date('2026-11-02T12:00:00.000Z'),
   })

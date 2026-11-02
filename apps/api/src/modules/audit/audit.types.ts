@@ -1,6 +1,6 @@
 import type { AuditEvent, AuditList, AuditQuery } from '@refs-tools/contracts/audit'
 import type { TransactionRunner } from '../../application/transaction.js'
-import type { AuthorizationRepository } from '../authorization/authorization.types.js'
+import type { AuthorizationRepository, PermissionEvaluator } from '../authorization/authorization.types.js'
 
 export type AuditFilter = Omit<AuditQuery, 'limit'> & { organizationId?: string; limit: number }
 export interface AuditRepository {
@@ -8,5 +8,5 @@ export interface AuditRepository {
   list(filter: AuditFilter): Promise<AuditList>
 }
 export type AuditRepositories = { audit: AuditRepository; authorization: AuthorizationRepository }
-export type AuditDependencies = { transaction: TransactionRunner<AuditRepositories>; now: () => Date }
+export type AuditDependencies = { transaction: TransactionRunner<AuditRepositories>; now: () => Date; permissions: PermissionEvaluator }
 export type NewAuditEvent = Omit<AuditEvent, 'id' | 'createdAt'> & { organizationId: string | null }

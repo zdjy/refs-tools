@@ -1,12 +1,18 @@
 # 作用域授权与审计部署/接入
 
-范围为 [FS-0002 Task 4](../../../docs/specs/0002-mvp-platform-feature.md#task-4作用域-rbac-与审计基础设施)，取舍见 [ADR 0014](../../../docs/decisions/0014-scoped-authorization-and-audit-foundation.md)。本次不包含 Task 7/15 的组织、成员或赛事管理接口。
+范围为 [FS-0002 Task 4](../../../docs/specs/0002-mvp-platform-feature.md#task-4作用域-rbac-与审计基础设施)，取舍见 [ADR 0014](../../../docs/decisions/0014-scoped-authorization-and-audit-foundation.md) 和 [ADR 0015](../../../docs/decisions/0015-casbin-authorization-engine.md)。本次不包含 Task 7/15 的组织、成员或赛事管理接口。
 
 ## 迁移与后续表扩展
 
 执行 `pnpm --filter @refs-tools/api db:migrate` 应用 `0003`。它建立角色、审计，以及组织/成员/赛事/比赛的归属和状态骨架。Task 7/15 用新增迁移补齐业务字段，不改写本迁移、不重复建表。当前不能把骨架当作可运营业务模块。
 
 `db:rollback` 的 down 会销毁本任务的数据和骨架，只适用于未投产环境或经批准的恢复流程；投产后需先按部署留存策略备份和审批，不能以回滚代替审计清理。
+
+## Casbin 引擎接入
+
+API 直接依赖 `casbin`，不部署独立服务、不使用 Casbin 数据库 adapter，也不新增环境变量或数据库迁移。固定矩阵位于 `src/modules/authorization/authorization.policy.ts`，基础设施适配位于 `src/infrastructure/authorization/casbin.ts`；domain 仅保留纯领域约束。统一开发规则见[后端授权规约](../../../docs/agents/coding-standards/backend.md#4-授权引擎与策略边界)。
+
+生产装配在接受请求前调用 `createCasbinPermissionEvaluator()`，将返回的 `permissions` 注入 `AuthorizationService`、`AuditService`、`RoleBindingService` 等用例。初始化失败阻止启动，匹配异常终止当前用例，不降级到旧引擎。共享 Enforcer 仅持固定策略；角色绑定、组织成员与资源状态每次从同事务数据库读取，不缓存授权结果。修改固定矩阵需重新部署；撤销数据库绑定无需重启，下一请求立即失效。前端无 Casbin 依赖或权威决策。
 
 ## 运行凭据最小权限
 
@@ -56,7 +62,7 @@ COMMIT;
 ## 后续用例接入
 
 - 业务端点先从现有服务端会话取得 user ID；需要邮箱验证的写操作沿用 `requireVerifiedSession`，不可接受客户端声明 actor、角色或父级归属。
-- 在业务事务的同一 Repository 集合中注入 `authorization` 和 `audit`。使用 `requirePermission` 检查服务端资源归属，再执行业务状态机和版本检查、写业务数据、调用 `appendAudit`。
+- 在业务事务的同一 Repository 集合中注入 `authorization` 和 `audit`。使用 `requirePermission(authorization, check, now, permissions)` 检查服务端资源归属；`permissions` 是装配入口注入的 evaluator，不能在请求或事务内初始化引擎。随后执行业务状态机和版本检查、写业务数据、调用 `appendAudit`。
 - 独立 `AuthorizationService.require` 仅用于只读门禁。不得在事务外先授权，再另开事务修改。也不得在已有事务内调用会另开事务的 `RoleBindingService`；跨模块创建 owner 等原子用例需显式复用当前上下文。
 - `appendAudit` 只接受受限状态/版本/角色/UUID 投影。不传整行、用户材料、媒体内容、请求/异常对象或 URL。reason 应为最小化的操作说明；标记拦截并不能识别所有自由文本秘密。
 - 通用角色授予支持平台角色、organization-scoped organizer/certifier、event/match-scoped head_referee。scope/角色不合法返回 422，已有未撤销相同绑定返回 409（即使已过期也要先撤销），重复撤销幂等。组织者仅能委派 head_referee，不能授予其他组织角色。
@@ -64,6 +70,6 @@ COMMIT;
 
 ## 测试
 
-`pnpm test` 执行纯 policy、Service 与现有快测；显式设置独立 `TEST_DATABASE_URL` 后执行 `pnpm test:db`，验证真实 scope 查询、并发授予、审计原子回滚、不可变限制、分页及真实 Cookie HTTP。
+`pnpm test` 执行纯领域约束、Casbin 完整矩阵/隔离/启动失败、Service 与现有快测；显式设置独立 `TEST_DATABASE_URL` 后执行 `pnpm test:db`，验证真实 scope 查询、并发授予、审计原子回滚、不可变限制、分页及真实 Cookie HTTP。
 
 审计最小权限验证会创建一个随机 NOLOGIN 测试角色、授予当前隔离 schema 的 SELECT/INSERT，并在 finally 中清除；因此完整数据库验收账号除创建 schema 外还需 CREATEROLE 和 SET ROLE 能力，仅用于专用测试数据库（本机 Compose `test-db` 满足），不要赋予生产 API 账号这些能力。

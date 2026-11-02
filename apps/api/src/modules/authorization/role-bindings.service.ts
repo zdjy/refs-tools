@@ -5,7 +5,7 @@ import { DomainError } from '../../application/errors.js'
 import { appendAudit } from '../audit/audit.service.js'
 import type { AuditRepository } from '../audit/audit.types.js'
 import { requirePermission } from './authorization.service.js'
-import type { AuthorizationDependencies, AuthorizationRepository, NewRoleBinding } from './authorization.types.js'
+import type { AuthorizationDependencies, AuthorizationRepository, NewRoleBinding, PermissionEvaluator } from './authorization.types.js'
 
 function validateGrant(input: NewRoleBinding, now: Date): void {
   if (!isValidRoleScope(input.role, input.scope.type, input.scope.id) || input.role === 'owner'
@@ -24,9 +24,10 @@ async function auditBinding(audit: AuditRepository, actor: string, binding: Scop
     after: { ...snapshot, status: revoked ? 'revoked' : 'active' } }, now)
 }
 
-async function requireGrantAuthority(authorization: AuthorizationRepository, actor: string, input: NewRoleBinding, now: Date) {
+async function requireGrantAuthority(authorization: AuthorizationRepository, actor: string, input: NewRoleBinding, now: Date,
+  permissions: PermissionEvaluator) {
   return requirePermission(authorization, { subjectUserId: actor,
-    permission: input.role === 'head_referee' ? 'role.delegate' : 'role.manage', resource: input.scope }, now)
+    permission: input.role === 'head_referee' ? 'role.delegate' : 'role.manage', resource: input.scope }, now, permissions)
 }
 
 /** 内部角色用例；变更与审计同事务，owner 的创建/移交只允许未来组织所有权专用流程处理。 */
@@ -37,7 +38,7 @@ export class RoleBindingService {
     const now = this.dependencies.now()
     validateGrant(input, now)
     return this.dependencies.transaction.run(async ({ authorization, audit }) => {
-      const scope = await requireGrantAuthority(authorization, actor, input, now)
+      const scope = await requireGrantAuthority(authorization, actor, input, now, this.dependencies.permissions)
       const target = await authorization.resolveScope({ type: 'self', id: input.subjectUserId })
       if (!target || (scope.organizationId && !await authorization.isActiveMember(input.subjectUserId, scope.organizationId))) {
         throw new DomainError('TARGET_NOT_MEMBER', '目标用户必须有效且属于当前组织', 422)
@@ -57,7 +58,7 @@ export class RoleBindingService {
       const binding = await authorization.findBinding(id)
       if (!binding || binding.role === 'owner') throw new DomainError('NOT_FOUND', '请求的资源不存在', 404)
       const scope = await requireGrantAuthority(authorization, actor, { subjectUserId: binding.subjectUserId, role: binding.role,
-        scope: { type: binding.scopeType, id: binding.scopeId }, expiresAt: binding.expiresAt }, now)
+        scope: { type: binding.scopeType, id: binding.scopeId }, expiresAt: binding.expiresAt }, now, this.dependencies.permissions)
       if (await authorization.revokeBinding(id, now.toISOString())) await auditBinding(audit, actor, binding, scope.organizationId, true, now)
       return { revoked: true }
     })

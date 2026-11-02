@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { permissions } from './permissions.js'
 import type { Pool } from 'pg'
 import { PgAuthorizationRepository } from '../../src/modules/authorization/authorization.repository.js'
 import { PgAuditRepository } from '../../src/modules/audit/audit.repository.js'
@@ -27,5 +28,5 @@ export async function seedAuthorization(pool: Pool) {
   const transaction = createTransactionRunner(pool, (client) => ({
     authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
   }))
-  return { ids, transaction, now: () => new Date('2026-11-02T12:00:00.000Z') }
+  return { ids, transaction, permissions, now: () => new Date('2026-11-02T12:00:00.000Z') }
 }

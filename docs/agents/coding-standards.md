@@ -13,7 +13,7 @@
 | 文档 | 内容与适用范围 |
 | --- | --- |
 | [Monorepo 依赖与边界](coding-standards/architecture.md) | 所有任务：包职责、单向依赖、共享契约与模型边界 |
-| [后端规约](coding-standards/backend.md) | API、持久化与迁移：五文件垂直切片、行数限制、Repository、事务、DDD 边界与验证 |
+| [后端规约](coding-standards/backend.md) | API、持久化与迁移：五文件垂直切片、行数限制、Repository、事务、DDD 边界、授权引擎与验证 |
 | [前端规约](coding-standards/frontend.md) | Vue 应用：展示/状态/API 分离、行数限制、Naive UI、Pinia、Router 与测试 |
 | [代码注释规约](coding-standards/comments.md) | 所有任务：注释意图、JSDoc / TSDoc、TODO 及规格/ADR 引用 |
 | [样式规约](coding-standards/styles.md) | UI 与样式变更：Tailwind CSS、token 映射、扫描与层叠、CSS 例外及迁移 |

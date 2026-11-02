@@ -45,7 +45,7 @@ describe('角色变更与审计原子性', () => {
       } }
     })
     const { ids } = fixture
-    await expect(new RoleBindingService({ transaction, now: fixture.now }).grant(ids.owner, {
+    await expect(new RoleBindingService({ transaction, now: fixture.now, permissions: fixture.permissions }).grant(ids.owner, {
       subjectUserId: ids.actor, role: 'organizer', scope: { type: 'organization', id: ids.orgA }, expiresAt: null,
     })).rejects.toMatchObject({ code: '23514' })
     expect(await new PgAuthorizationRepository(db.pool).findBindings(ids.actor)).not.toEqual(expect.arrayContaining([expect.objectContaining({ role: 'organizer' })]))

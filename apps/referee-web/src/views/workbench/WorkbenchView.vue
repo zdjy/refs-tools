@@ -36,16 +36,16 @@ onMounted(initialize)
       <a class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" href="#main" aria-label="裁判工具箱主页"><span class="grid size-7 place-items-center rounded-full bg-ink text-surface">R</span><span>裁判工具箱</span></a>
       <div class="flex items-center gap-2 text-[12px] text-body">
         <span class="hidden sm:inline">本地工作台</span>
-        <RouterLink class="inline-flex min-h-11 items-center px-2 py-0 text-[13px] text-body no-underline hover:text-red" to="/account">账号</RouterLink>
+        <RouterLink class="inline-flex min-h-11 min-w-11 items-center justify-center px-2 py-0 text-[13px] text-body no-underline hover:text-red" to="/account">账号</RouterLink>
         <n-popconfirm positive-text="清空" negative-text="取消" @positive-click="clearAll">
           <template #trigger><n-button quaternary :disabled="!sessions.length && !restoreFailed">清空全部</n-button></template>
           清空本设备的全部比赛会话？此操作无法撤销，请先导出需要保留的记录。
         </n-popconfirm>
       </div>
     </header>
-    <section id="main" class="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1280px] grid-cols-[minmax(0,1fr)] md:grid-cols-[220px_minmax(0,1fr)] lg:grid-cols-[248px_minmax(0,1fr)]" tabindex="-1">
+    <section id="main" class="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1280px] grid-cols-[minmax(0,1fr)] tablet:grid-cols-[208px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)] 2xl:max-w-[1440px]" tabindex="-1">
       <WorkbenchSidebar :sessions="sessions" :active-id="activeId" :disabled="restoreFailed" @create="createDialogVisible = true" @select="selectSession" />
-      <section class="min-w-0 px-3 pt-5 pb-[max(32px,env(safe-area-inset-bottom))] xs:px-4 md:px-6 md:pt-7 md:pb-12 lg:p-8" aria-label="比赛控制台">
+      <section class="min-w-0 px-3 pt-5 pb-[max(32px,env(safe-area-inset-bottom))] xs:px-4 compact:px-5 md:px-6 md:pt-7 md:pb-12 xl:p-8" aria-label="比赛控制台">
         <n-alert v-if="storageError" class="mb-3" type="error" :show-icon="false">
           {{ storageError }}
           <div class="mt-2"><n-button secondary @click="retryStorage">{{ restoreFailed ? '重试读取' : '重试保存' }}</n-button></div>
@@ -88,13 +88,13 @@ onMounted(initialize)
             <strong>{{ activeSession.scorer.teams[activeSession.scorer.timeoutTeam].name }} 暂停中</strong>
             <n-button secondary @click="endTimeout">结束球队暂停</n-button>
           </div>
-          <section class="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)] lg:items-stretch" aria-label="球队记分牌">
+          <section class="grid grid-cols-[minmax(0,1fr)] gap-3 compact:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)] xl:items-stretch" aria-label="球队记分牌">
             <TeamScorePanel v-for="side in (['home', 'away'] as const)" :key="`${activeSession.id}-${side}`"
               :side="side" :team="activeSession.scorer.teams[side]" :period-score="activeSession.scorer.teams[side].periodScores[activeSession.period - 1] ?? 0"
               :fouls="activeSession.fouls[side]" :limit="activeSession.scorer.rules.foulWarningLimit"
               :possession="activeSession.scorer.possession === side" :timeout-active="!!activeSession.scorer.timeoutTeam"
               @stat="recordStat" @correct="correctScore" @foul="adjustFoul" @timeout="callTimeout" @restore="restoreTimeout" @rename="renameTeam" @possession="setPossession" />
-          <section class="order-first mt-0 grid grid-cols-[minmax(0,1fr)] gap-3 sm:col-span-full sm:grid-cols-2 lg:order-none lg:col-start-2 lg:col-end-auto lg:row-start-1 lg:grid-cols-[minmax(0,1fr)]" aria-label="计时器">
+          <section class="order-first mt-0 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 compact:col-span-full md:grid-cols-3 xl:order-none xl:col-start-2 xl:col-end-auto xl:row-start-1 xl:grid-cols-[minmax(0,1fr)]" aria-label="计时器">
             <WorkbenchClock v-for="entry in clockEntries" :key="entry.kind" :clock="activeSession.clocks[entry.kind]" :now="now"
               :disabled="entry.kind === 'shot' ? activeSession.scorer.shotLinked : entry.kind === 'timeout' && !!activeSession.scorer.timeoutTeam"
               @toggle="toggleClock" @reset="resetClock" @edit="editClock" />

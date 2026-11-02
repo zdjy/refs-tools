@@ -10,34 +10,13 @@ export type PermissionContext = {
   subjectUserId: string; now: string; bindings: readonly ScopedRoleBinding[]
   activeMember: boolean; resource: ResourceScope
 }
-const grants = {
-  'self.read': [], 'self.write': [],
-  'platform.manage': ['platform_admin'],
-  'organization.manage': ['owner'],
-  'role.manage': ['owner', 'platform_admin'],
-  'role.delegate': ['owner', 'organizer'],
-  'event.manage': ['owner', 'organizer'],
-  'match.manage': ['owner', 'organizer'],
-  'match.operate': ['owner', 'organizer', 'head_referee'],
-  'organization.certification.review': ['certifier'],
-  'platform.certification.review': ['platform_admin'],
-  'content.edit': ['content_editor'],
-  'content.unpublish': ['content_editor', 'platform_admin'],
-  'grading.review': ['grader'],
-  'results.override': ['platform_admin'],
-  'moderation.manage': ['moderator'],
-  'audit.read': ['owner', 'platform_admin'],
-} as const satisfies Record<string, readonly Role[]>
-export type Permission = keyof typeof grants
-const targets: Record<Permission, readonly ScopeType[]> = {
-  'self.read': ['self'], 'self.write': ['self'], 'platform.manage': ['platform'],
-  'organization.manage': ['organization'], 'role.manage': ['platform', 'organization'],
-  'role.delegate': ['event', 'match'], 'event.manage': ['organization', 'event'],
-  'match.manage': ['match'], 'match.operate': ['match'],
-  'organization.certification.review': ['organization'], 'platform.certification.review': ['platform'],
-  'content.edit': ['platform'], 'content.unpublish': ['platform'], 'grading.review': ['platform'],
-  'results.override': ['platform'], 'moderation.manage': ['platform'], 'audit.read': ['platform', 'organization'],
-}
+export const permissions = [
+  'self.read', 'self.write', 'platform.manage', 'organization.manage', 'role.manage', 'role.delegate',
+  'event.manage', 'match.manage', 'match.operate', 'organization.certification.review',
+  'platform.certification.review', 'content.edit', 'content.unpublish', 'grading.review',
+  'results.override', 'moderation.manage', 'audit.read',
+] as const
+export type Permission = typeof permissions[number]
 
 /** 校验角色允许的绑定范围；裁判长不得绑定整个组织，平台角色也不能借组织范围生效。 */
 export function isValidRoleScope(role: Role, type: ScopeType, id: string | null): boolean {
@@ -48,28 +27,34 @@ export function isValidRoleScope(role: Role, type: ScopeType, id: string | null)
   return (role === 'owner' || role === 'certifier') && type === 'organization'
 }
 
-function covers(binding: ScopedRoleBinding, resource: ResourceScope): boolean {
-  if (binding.scopeType === 'platform') return resource.type === 'platform'
-  if (binding.scopeType === 'organization') return binding.scopeId === resource.organizationId
-  if (binding.scopeType === 'event') return binding.scopeId === resource.eventId
-  return binding.scopeType === 'match' && binding.scopeId === resource.matchId
+/** 仅匹配服务端解析的归属链，不提供平台到组织的隐式继承；空 ID 不覆盖业务范围。 */
+export function scopeCoversResource(scope: { type: ScopeType; id: string | null }, resource: ResourceScope): boolean {
+  if (scope.type === 'platform') return scope.id === null && resource.type === 'platform'
+  if (!scope.id) return false
+  if (scope.type === 'self') return resource.type === 'self' && scope.id === resource.id
+  if (scope.type === 'organization') return scope.id === resource.organizationId
+  if (scope.type === 'event') return scope.id === resource.eventId
+  return scope.type === 'match' && scope.id === resource.matchId
 }
 
-/** 按当前绑定、服务端解析归属与组织现状默认拒绝；不代替业务模块的状态机/资格校验。时间使用 UTC ISO-8601。 */
-export function isPermitted(permission: Permission, context: PermissionContext): boolean {
-  const { resource, subjectUserId, bindings, now, activeMember } = context
-  if (!Object.hasOwn(grants, permission) || !targets[permission].includes(resource.type)) return false
+/** 检查授权前置领域约束，不授予角色权限；冻结/解散仅保留审计读取，终态禁止新运营操作。 */
+export function isAuthorizationContextAllowed(permission: Permission, context: PermissionContext): boolean {
+  const { resource, subjectUserId, activeMember } = context
+  if (!permissions.includes(permission)) return false
   if (permission === 'self.read' || permission === 'self.write') {
     return resource.type === 'self' && resource.ownerUserId === subjectUserId && resource.id === subjectUserId
   }
   if (resource.type === 'self') return false
   if (resource.organizationId && (!activeMember || !['active', 'frozen', 'dissolved'].includes(resource.organizationStatus ?? ''))) return false
   if (resource.organizationId && resource.organizationStatus !== 'active' && permission !== 'audit.read') return false
-  if (['completed', 'cancelled', 'closed'].includes(resource.state ?? '') && permission !== 'audit.read') return false
-  const allowed: readonly Role[] = grants[permission]
-  return bindings.some((b) => b.subjectUserId === subjectUserId && allowed.includes(b.role)
-    && (b.role !== 'owner' || resource.ownerUserId === subjectUserId)
-    && isValidRoleScope(b.role, b.scopeType, b.scopeId) && b.revokedAt === null
-    && Date.parse(b.startsAt) <= Date.parse(now) && (b.expiresAt === null || Date.parse(b.expiresAt) > Date.parse(now))
-    && covers(b, resource))
+  return !['completed', 'cancelled', 'closed'].includes(resource.state ?? '') || permission === 'audit.read'
+}
+
+/** 判断单条绑定是否属于当前用户且仍有效；UTC ISO-8601 到期时刻即失效，owner 还须符合当前所有权。 */
+export function isRoleBindingActive(binding: ScopedRoleBinding, context: PermissionContext): boolean {
+  const { subjectUserId, now, resource } = context
+  return binding.subjectUserId === subjectUserId && (binding.role !== 'owner' || resource.ownerUserId === subjectUserId)
+    && isValidRoleScope(binding.role, binding.scopeType, binding.scopeId) && binding.revokedAt === null
+    && Date.parse(binding.startsAt) <= Date.parse(now)
+    && (binding.expiresAt === null || Date.parse(binding.expiresAt) > Date.parse(now))
 }

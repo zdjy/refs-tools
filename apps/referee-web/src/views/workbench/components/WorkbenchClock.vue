@@ -13,14 +13,14 @@ const display = computed(() => presentClock(props.clock, props.now))
 
 <template>
   <n-card
-    class="min-w-0 sm:first:col-span-2 lg:first:col-auto"
+    class="min-w-0 sm:first:col-span-2 md:first:col-auto"
     content-style="padding: 0;"
   >
     <div class="p-4">
       <div class="flex items-center justify-between gap-2 text-[13px] text-body">
         <span>{{ clock.label }}</span><span class="text-[12px]" :class="display.expired ? 'text-red-hover' : clock.status === 'running' ? 'text-green' : ''" role="status">{{ display.state }}</span>
       </div>
-      <div class="mx-0 my-3.5 text-[clamp(32px,7vw,42px)] leading-[1.1] font-[650] text-ink tabular-nums md:text-[34px] lg:text-[32px]" role="timer" :aria-label="clock.label" aria-live="off">{{ display.value }}</div>
+      <div class="mx-0 my-3.5 text-[clamp(32px,7vw,42px)] leading-[1.1] font-[650] text-ink tabular-nums md:text-[34px] xl:text-[32px] 2xl:text-[38px]" role="timer" :aria-label="clock.label" aria-live="off">{{ display.value }}</div>
       <div class="flex items-center gap-2">
         <n-button class="min-w-[86px]" type="primary" :disabled="disabled || display.cannotStart" :aria-label="`${display.action}${clock.label}`" @click="emit('toggle', clock.kind)">
           {{ display.action }}

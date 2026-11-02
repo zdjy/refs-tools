@@ -44,14 +44,18 @@ apps/referee-web/
 * `ui-tokens.ts` 为颜色、字体、阴影和焦点值的唯一来源，应用入口先注入 CSS 变量再挂载。`tailwind.css` 用 `@theme inline` 映射，不复制色值；Naive UI 仍由 `ui-theme.ts` 消费相同 token。
 * 使用语义工具类：`bg-canvas`、`bg-surface`、`bg-soft`、`text-ink`、`text-body`、`border-line`、`text-red`、`hover:text-red-hover`、`shadow-card`、`font-sans`。透明色、`currentColor` 可以使用；禁止框架默认品牌色、硬编码颜色任意值和页面内 token 重定义。
 * 默认颜色、断点、圆角和阴影命名空间已重置。圆角限定 `rounded-xl`（12px）、`rounded-2xl`（16px）、`rounded-3xl`（24px）和 `rounded-full`；阴影使用 `shadow-card`，其他阴影先补充共享 token。Naive UI 组件通过公开主题接口维护相同取值。
-* 断点统一为下表，使用无前缀类表达移动基础布局，再按 `xs → sm → md → lg` 增强。不使用 Tailwind 默认断点含义、`xl`/`2xl`、任意断点或 `max-*` 变体引入另一套布局策略；新增断点需在相关规格说明理由并集中配置。
+* 断点统一为下表，使用无前缀类表达 320px 起的移动基础布局，再按 `xs → sm → compact → md → tablet → lg → xl → 2xl` 增强。不使用 Tailwind 默认断点含义、任意断点或 `max-*` 变体引入另一套布局策略；新增断点需在相关规格说明理由并集中配置。各布局按内容所需空间选择切换档位，不在同一断点机械启用所有多栏布局；本次细分理由与验收见[响应式适配规格](../../specs/0005-responsive-layout.md)。
 
 | 变体 | 最小宽度 |
 | --- | --- |
 | `xs:` | 375px |
 | `sm:` | 480px |
+| `compact:` | 640px |
 | `md:` | 768px |
+| `tablet:` | 960px |
 | `lg:` | 1100px |
+| `xl:` | 1280px |
+| `2xl:` | 1536px |
 
 * 间距与字号优先使用 Tailwind 标准尺度；确需 `min-h-[44px]`、`grid-cols-[minmax(0,1fr)]` 等非主题数值时可使用任意值，但不得用其绕过颜色、圆角、阴影与断点约束。
 * 共享 UI 规范中的十六进制工具类和阴影示例是视觉值参考，实际代码必须映射成现有语义 token；`bg-white` 对应 `bg-surface`。营销留白示例不能机械套用到场边密集操作页。
@@ -89,6 +93,6 @@ apps/referee-web/
 
 ## 7. 交付检查
 
-* 执行相关单测、`typecheck` 和生产构建；使用 `pnpm --filter @refs-tools/referee-web test:styles` 独立验证语义 token、四档断点、状态变体及任意值类确实生成，且无默认调色板、Preflight 或扫描范围外规则意外进入产物。该命令执行内存构建，不并入低内存单测。
+* 执行相关单测、`typecheck` 和生产构建；使用 `pnpm --filter @refs-tools/referee-web test:styles` 独立验证语义 token、全部八档断点、状态变体及任意值类确实生成，且无默认调色板、Preflight 或扫描范围外规则意外进入产物。该命令执行内存构建，不并入低内存单测。
 * 比较构建前后的 CSS/JS 体积；Tailwind 只参与构建，不能因此增加生产前端服务、远程字体/CDN 或私有数据缓存。浏览器基线及兼容性取舍见 ADR 0013。
 * 组件迁移必须另做浏览器验收：320px 移动端及桌面无页面级横向溢出、44×44px 触控目标、可访问名称、键盘/焦点、禁用/加载/错误状态、系统 reduced-motion 和 FIBA 主题一致性。仅修改依赖和配置时不得将“构建通过”表述为“所有页面已完成视觉验收”。

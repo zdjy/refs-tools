@@ -22,7 +22,7 @@ function updateRule(key: keyof WorkbenchRuleInput, value: number | null) {
   >
     <p class="mt-0 mr-0 mb-5 ml-0 text-[14px] leading-[1.6] text-body">新会话固定本次配置。暂停按节分配（加时同额）；这不是完整 FIBA/NBA 规则，请按赛事核对。</p>
     <n-alert v-if="error" type="error" :show-icon="false" class="mb-3">{{ error }}</n-alert>
-    <form id="create-workbench" class="grid grid-cols-[minmax(0,1fr)] gap-4 xs:grid-cols-2" @submit.prevent="emit('confirm')">
+    <form id="create-workbench" class="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2" @submit.prevent="emit('confirm')">
       <div v-for="field in ruleFields" :key="field.key" class="min-w-0">
         <label class="mb-2 block text-[14px] text-body" :for="`rule-${field.key}`">{{ field.label }}</label>
         <n-input-number

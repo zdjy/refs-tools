@@ -8,6 +8,7 @@ import { createSmtpEmailProvider } from './providers/email/smtp.js'
 import { AuditService } from './modules/audit/audit.service.js'
 import { PgAuditRepository } from './modules/audit/audit.repository.js'
 import { PgAuthorizationRepository } from './modules/authorization/authorization.repository.js'
+import { createCasbinPermissionEvaluator } from './infrastructure/authorization/casbin.js'
 
 /** 生产入口显式装配连接池、provider 与 Service，关闭实例时释放连接。 */
 export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
@@ -19,6 +20,7 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
   }
   const policy = authPolicyFromEnvironment(env)
   const email = createSmtpEmailProvider(env)
+  const permissions = await createCasbinPermissionEvaluator()
   const pool = createDatabasePool(databaseConfigFromEnvironment(env))
   const service = new AuthService({
     transaction: createTransactionRunner(pool, (client) => ({ auth: new PgAuthRepository(client) })),
@@ -30,7 +32,7 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
       audit: { sessions: service, service: new AuditService({
         transaction: createTransactionRunner(pool, (client) => ({
           authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
-        })), now: () => new Date(),
+        })), now: () => new Date(), permissions,
       }) },
       close: async () => { await pool.end() },
     })

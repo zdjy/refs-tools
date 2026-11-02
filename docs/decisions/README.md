@@ -19,3 +19,4 @@
 - [ADR 0012：邮箱验证后首次设置密码免重复验证](./0012-initial-password-after-email-verification.md) — 已验证且无密码账号直接设置首次密码，已有密码修改保留邮箱重验。
 - [ADR 0013：前端样式采用 Tailwind CSS](./0013-tailwindcss-styling.md) — 使用 Tailwind CSS 4.x 与官方 Vite 插件，复用 FIBA token，现有界面已完成迁移并保留必要 CSS 例外。
 - [ADR 0014：实时作用域授权与追加式审计基础](./0014-scoped-authorization-and-audit-foundation.md) — 提前建立最小归属骨架，使用实时角色/成员门禁和同事务追加审计，区分平台与组织权限。
+- [ADR 0015：采用 Casbin 作为服务端授权引擎](./0015-casbin-authorization-engine.md) — API 使用固定只读策略匹配角色/权限/作用域，保留纯领域约束、实时数据库授权及事务一致性。

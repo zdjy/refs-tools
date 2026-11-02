@@ -14,7 +14,7 @@ watch(() => props.team.name, (value) => { name.value = value; editing.value = fa
 </script>
 
 <template>
-  <n-card class="min-w-0 lg:first:col-start-1 lg:first:row-start-1 lg:[&:nth-child(2)]:col-start-3 lg:[&:nth-child(2)]:row-start-1">
+  <n-card class="min-w-0 xl:first:col-start-1 xl:first:row-start-1 xl:[&:nth-child(2)]:col-start-3 xl:[&:nth-child(2)]:row-start-1">
     <header class="flex flex-wrap items-center justify-between gap-2">
       <span class="text-[12px] text-body">{{ side === 'home' ? '主队' : '客队' }}</span>
       <n-button quaternary :aria-label="`修改${side === 'home' ? '主队' : '客队'}队名`" @click="editing = !editing">改队名</n-button>

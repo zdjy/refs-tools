@@ -15,6 +15,7 @@
     "@refs-tools/contracts": "workspace:*",
     "@refs-tools/domain": "workspace:*",
     "@sinclair/typebox": "^0.34.52",
+    "casbin": "^5.51.1",
     "fastify": "^5.6.1",
     "nodemailer": "^10.3.1",
     "pg": "^8.16.3"

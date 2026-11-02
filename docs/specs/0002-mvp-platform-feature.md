@@ -671,9 +671,10 @@ export type AuditEvent = {
 
 - **状态**：已实现；范围、部署权限及后续模块接入见 [ADR 0014](../decisions/0014-scoped-authorization-and-audit-foundation.md) 和[授权与审计说明](../../apps/api/db/AUTHORIZATION_AUDIT.md)。提前创建组织/成员/赛事/比赛的最小归属与状态骨架用于真实 scope 查询，Task 7/15 再通过新增迁移扩展，不代表相应业务接口已实现。
 - **依赖**：Task 3。
-- **实现**：role bindings、组织/事件/比赛 scope resolver、默认拒绝 policy、append-only audit writer。
-- **文件**：`apps/api/db/migrations/0003_rbac_audit.sql`、`apps/api/src/modules/authorization/*`、`apps/api/src/modules/audit/*`、`packages/domain/src/permissions.ts`。
-- **测试**：`apps/api/test/authorization/scope-matrix.test.ts`、`audit/append-only.test.ts` 及同目录独立 `.integration.test.ts`；覆盖跨组织 ID、真实归属解析、撤权/成员退出/冻结即时生效、自身资源、非法角色范围、并发授予、同事务审计回滚、不可变限制、查询分页与 Cookie HTTP 门禁。
+- **实现**：role bindings、组织/事件/比赛 scope resolver、Casbin 默认拒绝的角色/权限/目标与作用域匹配、纯领域状态约束、append-only audit writer。引擎迁移见 [ADR 0015](../decisions/0015-casbin-authorization-engine.md)，编码边界统一见[后端规约](../agents/coding-standards/backend.md#4-授权引擎与策略边界)。
+- **文件**：`apps/api/db/migrations/0003_rbac_audit.sql`、`apps/api/src/modules/authorization/*`、`apps/api/src/infrastructure/authorization/casbin.ts`、`apps/api/src/modules/audit/*`、`packages/domain/src/permissions.ts`。
+- **测试**：`apps/api/test/authorization/casbin.test.ts`、`casbin-matrix.test.ts`、`casbin-startup.test.ts`、`scope-matrix.test.ts`、`audit/append-only.test.ts` 及同目录独立 `.integration.test.ts`；覆盖完整角色/权限/目标矩阵、跨组织 ID、真实归属解析、撤权/成员退出/冻结即时生效、自身资源、非法角色范围、并发授予、同事务审计回滚、不可变限制、查询分页与 Cookie HTTP 门禁。
+- **引擎迁移验收**：现有权限结果、Cookie 和 403/404 行为保持兼容；self 不生成角色绑定；未知权限默认拒绝；多个绑定不得拼接角色和范围；同一引擎处理不同用户/组织的交错请求不得串权；引擎异常不得继续业务操作或返回已读取的受保护数据。固定策略随部署更新，数据库角色撤销与成员/组织现状仍在下一次请求生效；无需修改数据库结构或迁移历史。
 
 ### Task 5：对象存储 adapter 与媒体上传意图
 

@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto'
+import { permissions } from '../helpers/permissions.js'
 import { describe, expect, it } from 'vitest'
 import type { ScopedRoleBinding } from '@refs-tools/contracts/authorization'
 import { RoleBindingService } from '../../src/modules/authorization/role-bindings.service.js'
-import type { AuthorizationRepository } from '../../src/modules/authorization/authorization.types.js'
+import type { AuthorizationRepository, PermissionEvaluator } from '../../src/modules/authorization/authorization.types.js'
 import type { AuditEvent } from '@refs-tools/contracts/audit'
 
-function roleHarness() {
+function roleHarness(evaluator: PermissionEvaluator = permissions) {
   const actor = randomUUID(), target = randomUUID(), org = randomUUID()
   const now = () => new Date('2026-11-02T12:00:00.000Z')
   const owner: ScopedRoleBinding = { id: randomUUID(), subjectUserId: actor, role: 'owner', scopeType: 'organization',
@@ -23,10 +24,19 @@ function roleHarness() {
   const transaction = { run: <T>(work: (r: { authorization: AuthorizationRepository; audit: {
     append: (e: AuditEvent) => Promise<void>; list: () => Promise<{ items: AuditEvent[]; nextCursor: null }>
   } }) => Promise<T>) => work({ authorization, audit: { async append(e) { events.push(e) }, async list() { return { items: events, nextCursor: null } } } }) }
-  return { actor, target, org, events, bindings, authorization, now, transaction, service: new RoleBindingService({ transaction, now }) }
+  return { actor, target, org, events, bindings, authorization, now, transaction, service: new RoleBindingService({ transaction, now, permissions: evaluator }) }
 }
 
 describe('角色授予与撤销 Service', () => {
+  it('授权引擎异常原样传播，不写入绑定或审计，不回退放行', async () => {
+    const failure = new Error('授权引擎异常')
+    const h = roleHarness({ isPermitted() { throw failure } })
+    await expect(h.service.grant(h.actor, { subjectUserId: h.target, role: 'certifier',
+      scope: { type: 'organization', id: h.org }, expiresAt: null })).rejects.toBe(failure)
+    expect(h.bindings).toHaveLength(1)
+    expect(h.events).toEqual([])
+  })
+
   it('组织所有者可授予/撤销组织认证员，并追加安全审计；重复撤销不产生第二次变更', async () => {
     const h = roleHarness()
     const binding = await h.service.grant(h.actor, { subjectUserId: h.target, role: 'certifier', scope: { type: 'organization', id: h.org }, expiresAt: null })

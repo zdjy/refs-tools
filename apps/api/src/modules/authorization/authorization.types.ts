@@ -1,5 +1,5 @@
 import type { Role, ScopedRoleBinding, ScopeType } from '@refs-tools/contracts/authorization'
-import type { Permission, ResourceScope } from '@refs-tools/domain'
+import type { Permission, PermissionContext, ResourceScope } from '@refs-tools/domain'
 import type { TransactionRunner } from '../../application/transaction.js'
 import type { AuditRepository } from '../audit/audit.types.js'
 
@@ -14,8 +14,11 @@ export interface AuthorizationRepository {
   revokeBinding(id: string, now: string): Promise<boolean>
 }
 export type AuthorizationRepositories = { authorization: AuthorizationRepository; audit: AuditRepository }
+export interface PermissionEvaluator {
+  isPermitted(permission: Permission, context: PermissionContext): boolean
+}
 export type AuthorizationDependencies = {
-  transaction: TransactionRunner<AuthorizationRepositories>; now: () => Date
+  transaction: TransactionRunner<AuthorizationRepositories>; now: () => Date; permissions: PermissionEvaluator
 }
 export type AuthorizationCheck = {
   subjectUserId: string; permission: Permission; resource: ResourceReference

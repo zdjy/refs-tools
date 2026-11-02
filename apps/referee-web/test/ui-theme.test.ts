@@ -15,7 +15,7 @@ describe('共享 UI 主题适配', () => {
 
   it('按钮尺寸适配集中维护且不重定义颜色', () => {
     expect(refereeControlThemes.iconButton).toEqual({ fontSizeMedium: '22px' })
-    expect(refereeControlThemes.sessionButton).toEqual({ heightMedium: '58px' })
+    expect(refereeControlThemes.sessionButton).toEqual({ heightMedium: 'auto', paddingMedium: '10px 18px' })
     expect(refereeControlThemes.wrappingButton).toEqual({ heightMedium: 'auto' })
     expect(refereeModalStyle).toEqual({ width: 'calc(100vw - 32px)' })
     expect(refereeTheme.Button?.heightMedium).toBe('44px')
