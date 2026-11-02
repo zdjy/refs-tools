@@ -22,6 +22,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
   const commandError = ref('')
   const history = ref<Record<string, WorkbenchSession[]>>({})
   const undoCount = computed(() => history.value[activeId.value]?.length ?? 0)
+  let initializationAttempted = false
   let ticker: ReturnType<typeof setInterval> | undefined
   const activeSession = computed(() => sessions.value.find((session) => session.id === activeId.value) ?? null)
   const presets = computed(() => activeSession.value ? shotPresets(activeSession.value.rules) : [])
@@ -41,7 +42,11 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
   }
 
   function initialize() {
-    restore()
+    // 往返页面不能用旧快照覆盖尚未保存的内存记录；读取失败由显式重试处理。
+    if (!initializationAttempted) {
+      initializationAttempted = true
+      restore()
+    }
     now.value = Date.now()
     settle()
     if (!ticker) ticker = setInterval(settle, 100)
@@ -164,7 +169,11 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     restoreTimeout: (side: TeamSide) => updateSession((session, at) => restoreTimeout(session, side, at)),
     toggleLink: () => updateSession(toggleLink),
     editClock: (kind: ClockKind, seconds: number) => updateSession((session, at) => editClock(session, kind, seconds, at)),
-    retryStorage: () => restoreFailed.value ? restore() : persist(),
+    retryStorage: () => {
+      if (!restoreFailed.value) return persist()
+      restore()
+      if (!restoreFailed.value) settle()
+    },
     removeSession: (id: string) => deleteSessions([id]),
     clearAll: () => deleteSessions(sessions.value.map((session) => session.id)),
     resetMatch: () => updateSession((session, at) => {

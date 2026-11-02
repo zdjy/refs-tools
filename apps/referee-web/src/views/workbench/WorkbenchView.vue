@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import SkipLink from '../../components/navigation/SkipLink.vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { refereeControlThemes } from '../../ui-theme'
@@ -32,8 +33,9 @@ onMounted(initialize)
 
 <template>
   <main class="min-h-screen">
+    <SkipLink />
     <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-surface px-4 py-2 md:px-8">
-      <a class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" href="#main" aria-label="裁判工具箱主页"><span class="grid size-7 place-items-center rounded-full bg-ink text-surface">R</span><span>裁判工具箱</span></a>
+      <RouterLink class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" to="/" aria-label="裁判工具箱首页"><span aria-hidden="true" class="grid size-7 place-items-center rounded-full bg-ink text-surface">R</span><span>裁判工具箱</span></RouterLink>
       <div class="flex items-center gap-2 text-[12px] text-body">
         <span class="hidden sm:inline">本地工作台</span>
         <RouterLink class="inline-flex min-h-11 min-w-11 items-center justify-center px-2 py-0 text-[13px] text-body no-underline hover:text-red" to="/account">账号</RouterLink>

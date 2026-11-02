@@ -1,0 +1,27 @@
+{
+  "name": "@refs-tools/admin-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -p tsconfig.json && vite build",
+    "typecheck": "vue-tsc -p tsconfig.json",
+    "test": "vitest run --config vitest.config.ts",
+    "test:styles": "node scripts/check-styles.mjs"
+  },
+  "dependencies": {
+    "@refs-tools/contracts": "workspace:*",
+    "naive-ui": "^2.45.3",
+    "pinia": "^4.1.0",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.5",
+    "vue-tsc": "^3.3.14"
+  }
+}

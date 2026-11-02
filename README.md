@@ -79,6 +79,25 @@ docker compose --profile test down
 
 **只有确认可以清空所有联调数据时**才执行 `docker compose --profile test down -v`；它会同时删除数据库和证书 volume，再次启动后需更新本机证书信任。修改 `.env` 的数据库密码不会自动修改已初始化 volume 中的密码；需显式修改数据库账号密码，或确认数据可丢弃后重建。原有 `referee_*` 容器不属于此 Compose 项目；如它们启动后占用相同端口，先停旧服务或调整 `.env`。
 
+## 管理端
+
+独立管理端源码位于 `apps/admin-web`，设计、接入范围及后续验收见 [FS-0007](docs/specs/0007-admin-console.md)，开发 tickets 位于 `.scratch/admin-console/issues/`。参考 GitHub 后台的信息架构，但未整套引入第三方模板。
+
+- 完整 HTTPS 入口：**https://localhost:8443/admin/**；修改后执行 `docker compose up -d --build web`。
+- 首批真实接入：密码登录、同源 Cookie 会话恢复/退出、平台审计筛选和游标分页。
+- 组织、平台认证、内容考试、阅卷和社区治理目前为流程说明页，明确标注待接入，不提供假数据或模拟审核。
+- 尚未设置密码时，先在裁判端通过邮箱验证码登录并设置密码。管理员权限仍须通过[受控部署流程](apps/api/db/AUTHORIZATION_AUDIT.md)初始化；登录和可见菜单不等于获得业务权限。
+
+```sh
+pnpm --filter @refs-tools/admin-web dev       # http://localhost:5174/admin/，只适合纯前端调试
+pnpm --filter @refs-tools/admin-web test
+pnpm --filter @refs-tools/admin-web typecheck
+pnpm --filter @refs-tools/admin-web test:styles
+pnpm --filter @refs-tools/admin-web build
+```
+
+生产构建为静态文件，与裁判端一起由 Nginx 提供；管理端子路径回退到自己的入口，无新增生产 Node.js 服务。`5174` 的 HTTP Origin 不能替代完整 HTTPS 登录联调，不要放宽 Cookie/Origin 安全配置。
+
 ## 前端样式
 
 现有导航、认证/账号、404 和队伍级记录台已迁移至 Tailwind CSS，保留全局可访问性基线及品牌几何裁切，不启用 Preflight。范围与验收见[迁移规格](docs/specs/0004-tailwind-migration.md)，选型及兼容性取舍见 [ADR 0013](docs/decisions/0013-tailwindcss-styling.md)；工程约束统一遵循[样式规约](docs/agents/coding-standards/styles.md)，视觉基线仍为[共享 FIBA UI 规范](docs/ui/fiba_about_ui_specification.md)。

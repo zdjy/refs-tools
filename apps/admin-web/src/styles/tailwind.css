@@ -1,0 +1,46 @@
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities) source(none);
+
+@source '../';
+@source '../../index.html';
+
+/* 保留既有设计尺度，避免 Tailwind 默认主题成为第二套视觉规范。 */
+@theme {
+  --color-*: initial;
+  --breakpoint-*: initial;
+  --breakpoint-xs: 375px;
+  --breakpoint-sm: 480px;
+  --breakpoint-compact: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-tablet: 960px;
+  --breakpoint-lg: 1100px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --radius-*: initial;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --shadow-*: initial;
+  --font-serif: initial;
+}
+
+/* inline 使工具类直接消费运行时注入的 token，不重复维护色值。 */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-sand: var(--sand);
+  --color-facet: var(--facet);
+  --color-surface: var(--surface);
+  --color-soft: var(--soft);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-red: var(--red);
+  --color-red-hover: var(--red-hover);
+  --color-green: var(--green);
+  --color-black: var(--black);
+  --font-sans: var(--font);
+  --shadow-card: var(--shadow);
+}

@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import SkipLink from '../../../components/navigation/SkipLink.vue'
 defineProps<{ account?: boolean }>()
 </script>
 
 <template>
   <div class="min-h-screen bg-canvas">
+    <SkipLink target="#auth-main" />
     <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-surface px-4 py-2 md:px-8">
-      <RouterLink class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" to="/workbench"><span class="grid size-7 place-items-center rounded-full bg-ink text-surface" aria-hidden="true">R</span>裁判工具箱</RouterLink>
+      <RouterLink class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" to="/"><span class="grid size-7 place-items-center rounded-full bg-ink text-surface" aria-hidden="true">R</span>裁判工具箱</RouterLink>
       <RouterLink class="inline-flex min-h-11 items-center text-[12px] text-body no-underline hover:text-red sm:text-[14px]" to="/workbench">进入本地工作台</RouterLink>
     </header>
-    <main id="auth-main" class="mx-auto max-w-[1280px] tablet:grid tablet:min-h-[calc(100vh-64px)] tablet:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
+    <main id="auth-main" tabindex="-1" class="mx-auto max-w-[1280px] tablet:grid tablet:min-h-[calc(100vh-64px)] tablet:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
       <section class="relative overflow-hidden bg-sand px-6 py-8 sm:px-8 sm:py-10 compact:px-10 md:py-12 tablet:flex tablet:flex-col tablet:justify-center tablet:px-8 xl:px-14 xl:py-16" aria-labelledby="auth-intro-title">
         <div class="auth-facet pointer-events-none absolute inset-y-0 right-0 left-[52%] bg-facet opacity-85" aria-hidden="true"></div>
         <div class="relative">

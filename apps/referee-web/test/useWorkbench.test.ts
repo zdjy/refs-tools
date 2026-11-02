@@ -23,6 +23,71 @@ afterEach(() => {
 })
 
 describe('工作台应用状态（不挂载组件库）', () => {
+  it('成功读取空快照后往返只读取一次，并保持单个周期任务', () => {
+    vi.useFakeTimers()
+    const { state, ports, scope } = setup()
+    state.initialize()
+    state.initialize()
+    expect(ports.load).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(1)
+    scope.stop()
+    expect(vi.getTimerCount()).toBe(0)
+    expect(ports.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('保存失败后再次进入保留内存比分、日志、规则与错误，可导出及重试', () => {
+    const save = vi.fn<WorkbenchPorts['save']>(() => { throw new Error('quota') })
+    const { state, ports } = setup({ save })
+    state.initialize()
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
+    state.recordStat('home', 'threeMade')
+    const session = state.activeSession.value
+    const error = state.storageError.value
+    state.initialize()
+    expect(ports.load).toHaveBeenCalledOnce()
+    expect(state.activeSession.value).toEqual(session)
+    expect(state.activeSession.value?.scorer.teams.home.score).toBe(3)
+    expect(state.storageError.value).toBe(error)
+    state.exportSession()
+    expect(ports.download).toHaveBeenCalledWith(session)
+    save.mockImplementation(() => undefined)
+    state.retryStorage()
+    expect(state.storageError.value).toBe('')
+  })
+
+  it('读取失败后的返回不隐式重读，显式重试成功后不再重读', () => {
+    vi.useFakeTimers()
+    const load = vi.fn().mockImplementationOnce(() => { throw new Error('denied') })
+      .mockReturnValue({ sessions: [], activeId: '' })
+    const { state } = setup({ load })
+    state.initialize()
+    state.initialize()
+    expect(load).toHaveBeenCalledOnce()
+    expect(state.restoreFailed.value).toBe(true)
+    state.retryStorage()
+    state.initialize()
+    expect(load).toHaveBeenCalledTimes(2)
+    expect(state.restoreFailed.value).toBe(false)
+    expect(vi.getTimerCount()).toBe(1)
+  })
+
+  it('再次进入按时间戳结算且到时不重复写事件', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(1000)
+    const { state } = setup()
+    state.initialize()
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
+    state.toggleLink()
+    state.toggleClock('game')
+    vi.setSystemTime(601000)
+    state.initialize()
+    expect(state.activeSession.value?.clocks.game.status).toBe('paused')
+    const events = state.activeSession.value?.events
+    state.initialize()
+    expect(state.activeSession.value?.events).toEqual(events)
+    expect(vi.getTimerCount()).toBe(1)
+  })
+
   it('应用状态接受已校验的规则输入并编排领域命令和持久化', () => {
     const { state, ports } = setup()
     const rules = rulesFromInput({ ...defaultRuleInput(), periodCount: 2 }, 100)

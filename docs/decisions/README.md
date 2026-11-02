@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0016：独立管理端与渐进业务接入](./0016-admin-web-foundation.md) — 独立 `/admin/` 静态 SPA，复用 Cookie 与审计契约，不整套引入模板或伪造未完成业务。
+
 - [ADR 0001: Monorepo with Static Client Apps and a Separate API](./0001-monorepo-static-apps-and-api.md) — use a pnpm workspace with independently built referee/admin SPAs and a separately deployed lightweight API.
 - [ADR 0002: Direct Browser-to-Object-Storage Media Flow](./0002-direct-to-object-storage-media-flow.md) — issue short-lived scoped upload/read access while keeping media bytes off the 2C2G API host.
 - [ADR 0003: Scoped RBAC with Explicit Assignment Workflow](./0003-scoped-rbac-and-assignment-workflow.md) — combine baseline roles, explicit scope bindings, separate qualification attributes, and audited assignment state transitions.

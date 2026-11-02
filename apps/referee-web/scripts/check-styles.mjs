@@ -33,7 +33,8 @@ try {
   for (const selector of [
     ...breakpoints.map(([name]) => `.${name === '2xl' ? String.raw`\32 xl` : name}\\:gap-6`),
     String.raw`.compact\:grid-cols-2`, String.raw`.md\:grid-cols-3`, String.raw`.md\:first\:col-auto`,
-    String.raw`.tablet\:grid`, String.raw`.xl\:col-start-2`, String.raw`.\32 xl\:grid-cols-5`,
+    String.raw`.tablet\:grid`, String.raw`.tablet\:hidden`, String.raw`.tablet\:flex`,
+    String.raw`.xl\:grid-cols-3`, String.raw`.xl\:col-start-2`, String.raw`.\32 xl\:grid-cols-5`,
     String.raw`.hover\:text-red-hover:hover`, String.raw`.focus-visible\:ring-red\/30:focus-visible`,
     String.raw`.motion-reduce\:transition-none`, String.raw`.min-h-\[44px\]`, '.font-sans', '.font-mono',
     '.shadow-card', '.rounded-xl', '.rounded-2xl', '.rounded-3xl', '.rounded-full',
