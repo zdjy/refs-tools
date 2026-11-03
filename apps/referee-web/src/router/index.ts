@@ -1,5 +1,6 @@
 import { nextTick } from 'vue'
-import { createRouter, type RouterHistory } from 'vue-router'
+import { createRouter, type RouteRecordRaw, type RouterHistory } from 'vue-router'
+import { editorialRoutes } from '../content/editorial-routes'
 import { modules, type NavigationSection } from '../navigation/modules'
 
 declare module 'vue-router' {
@@ -9,17 +10,22 @@ declare module 'vue-router' {
   }
 }
 
+/** 阅读页路由由内容注册表生成：仍是显式静态路径，未知 slug 不会匹配到任意文章。 */
+const readingRoutes: RouteRecordRaw[] = editorialRoutes.map((item) => ({
+  path: `/read/${item.id}`,
+  name: `read-${item.id}`,
+  component: () => import('../views/reading/ReadingView.vue'),
+  props: { articleId: item.id },
+  meta: { title: item.title, navigation: item.kind === 'guide' ? 'learning' : 'forum' },
+}))
+
 /** 装配显式静态路由；导航元信息不承担业务授权。 */
 export function createAppRouter(history: RouterHistory) {
   const router = createRouter({
     history,
     routes: [
       { path: '/', name: 'home', component: () => import('../views/home/HomeView.vue'), meta: { title: '首页', navigation: 'home' } },
-      { path: '/read/observation-angle', name: 'read-observation-angle', component: () => import('../views/reading/ReadingView.vue'), props: { articleId: 'observation-angle' }, meta: { title: '观察位置与视角', navigation: 'learning' } },
-      { path: '/read/ruleset-reading', name: 'read-ruleset-reading', component: () => import('../views/reading/ReadingView.vue'), props: { articleId: 'ruleset-reading' }, meta: { title: '规则版本研读', navigation: 'learning' } },
-      { path: '/read/pregame-briefing', name: 'read-pregame-briefing', component: () => import('../views/reading/ReadingView.vue'), props: { articleId: 'pregame-briefing' }, meta: { title: '赛前沟通提纲', navigation: 'learning' } },
-      { path: '/read/contact-review', name: 'read-contact-review', component: () => import('../views/reading/ReadingView.vue'), props: { articleId: 'contact-review' }, meta: { title: '接触视角讨论示例', navigation: 'forum' } },
-      { path: '/read/postgame-notes', name: 'read-postgame-notes', component: () => import('../views/reading/ReadingView.vue'), props: { articleId: 'postgame-notes' }, meta: { title: '赛后记录讨论示例', navigation: 'forum' } },
+      ...readingRoutes,
       { path: modules.learning.path, name: 'learning', component: () => import('../views/learning/LearningEntryView.vue'), meta: { title: '学习中心', navigation: 'learning' } },
       { path: modules.practice.path, name: 'practice', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'practice' }, meta: { title: modules.practice.title, navigation: 'learning' } },
       { path: modules['wrong-questions'].path, name: 'wrong-questions', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'wrong-questions' }, meta: { title: modules['wrong-questions'].title, navigation: 'learning' } },

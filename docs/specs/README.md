@@ -6,6 +6,8 @@
 
 ## 规格索引
 
+- [FS-0011：内容门户的动效与模拟论坛](./0011-portal-motion-and-simulated-forum.md)：首页与阅读页的 Awwwards 式编排、Motion 动效、标注为示例的模拟论坛；在 FS-0008 基础上的窄范围例外。
+
 - [FS-0010：管理端深浅两套配色规范](./0010-admin-color-theme.md)：管理端 Light / Dark 主题、浅色侧边栏、暖黑深色侧边栏及组件颜色映射。
 
 - [FS-0009：管理端登录页中性配色](./0009-admin-login-colors.md)：登录页去除红色、浅深色主题与交互状态验收。

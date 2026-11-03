@@ -40,9 +40,12 @@ try {
     '.shadow-card', '.rounded-xl', '.rounded-2xl', '.rounded-3xl', '.rounded-full',
     String.raw`.lg\:grid-cols-3`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
     String.raw`.group-hover\:scale-105`, '.scroll-mt-6', '.sr-only',
-    String.raw`.tablet\:row-span-2`, String.raw`.compact\:grid-cols-3`,
-    String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.3fr\)_minmax\(0\,1fr\)\]`,
-    String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.55fr\)_minmax\(0\,1fr\)\]`,
+    String.raw`.compact\:grid-cols-3`,
+    // 内容门户首页：索引主次栏、论坛版块侧栏、阅读页进度条与目录栏。
+    String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.5fr\)_minmax\(0\,1fr\)\]`,
+    String.raw`.tablet\:grid-cols-\[220px_minmax\(0\,1fr\)\]`,
+    String.raw`.tablet\:grid-cols-\[minmax\(0\,1fr\)_260px\]`,
+    String.raw`.scale-x-\(--progress\)`, String.raw`.hover\:-translate-y-1:hover`,
   ]) {
     assert(css.includes(selector), `缺少工具类：${selector}`)
   }

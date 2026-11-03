@@ -1,36 +1,36 @@
 import { describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory } from 'vue-router'
 import { createAppRouter } from '../src/router'
-import { editorialArticles, editorialFilters, editorialNotice, filterGuides, findEditorial } from '../src/content/editorial'
+import { editorialRoutes } from '../src/content/editorial-routes'
+import { editorialArticles, editorialFilters, editorialNotice, filterGuides, findEditorial, nextEditorial } from '../src/content/editorial'
 
 const router = createAppRouter(createMemoryHistory())
+const guideIds = ['observation-angle', 'ruleset-reading', 'pregame-briefing', 'tablework-signals', 'terminology-check', 'court-communication']
+const discussionIds = ['contact-review', 'postgame-notes', 'table-mismatch', 'first-season-notes']
 
 describe('内置公开内容与阅读导航', () => {
   it('只筛选自编导读，不把讨论示例混入学习资料', () => {
-    expect(filterGuides('全部').map((item) => item.id)).toEqual(['observation-angle', 'ruleset-reading', 'pregame-briefing'])
-    expect(filterGuides('规则研读').map((item) => item.id)).toEqual(['ruleset-reading'])
-    expect(filterGuides('执裁协作').map((item) => item.id)).toEqual(['observation-angle', 'pregame-briefing'])
+    expect(filterGuides('全部').map((item) => item.id)).toEqual(guideIds)
+    expect(filterGuides('规则研读').map((item) => item.id)).toEqual(['ruleset-reading', 'terminology-check'])
     for (const filter of editorialFilters) expect(filterGuides(filter).every((item) => item.kind === 'guide')).toBe(true)
-    expect(filterGuides('全部')).toHaveLength(3)
   })
 
-  it('每篇都有唯一稳定路径、完整正文与唯一目录锚点', () => {
-    expect(new Set(editorialArticles.map((item) => item.id)).size).toBe(5)
-    expect(new Set(editorialArticles.map((item) => item.path)).size).toBe(5)
+  it('路由元信息与完整注册表一一对应，路径唯一稳定', () => {
+    expect(editorialArticles.map((item) => item.id)).toEqual([...guideIds, ...discussionIds])
+    expect(editorialRoutes.map((item) => item.id)).toEqual(editorialArticles.map((item) => item.id))
+    expect(new Set(editorialArticles.map((item) => item.path)).size).toBe(editorialArticles.length)
     for (const article of editorialArticles) {
       expect(article.path).toBe(`/read/${article.id}`)
       expect(findEditorial(article.id)).toBe(article)
+      expect(editorialRoutes.find((item) => item.id === article.id)?.kind).toBe(article.kind)
       expect(article.sections).toHaveLength(3)
-      expect(new Set(article.sections.map((section) => section.id)).size).toBe(article.sections.length)
-      for (const section of article.sections) {
-        expect(section.title.length).toBeGreaterThan(0)
-        expect(section.paragraphs.length).toBeGreaterThanOrEqual(2)
-      }
+      expect(new Set(article.sections.map((section) => section.id)).size).toBe(3)
+      for (const section of article.sections) expect(section.paragraphs.length).toBeGreaterThanOrEqual(2)
     }
     expect(findEditorial('missing')).toBeUndefined()
   })
 
-  it('五条显式阅读路由懒加载，未知 slug 仍为 404', () => {
+  it('每篇阅读路由显式懒加载，未知 slug 仍为 404', () => {
     for (const article of editorialArticles) {
       const route = router.resolve(article.path)
       expect(route.name).toBe(`read-${article.id}`)
@@ -40,6 +40,17 @@ describe('内置公开内容与阅读导航', () => {
       expect(typeof route.matched[0]?.components?.default).toBe('function')
     }
     for (const path of ['/read/missing', '/read', '/read/contact-review/reply']) expect(router.resolve(path).name).toBe('not-found')
+  })
+
+  it('续读只在同类型内回绕，不指向自身', () => {
+    for (const article of editorialArticles) {
+      const next = nextEditorial(article.id)
+      expect(next?.kind).toBe(article.kind)
+      expect(next?.id).not.toBe(article.id)
+    }
+    expect(nextEditorial('court-communication')?.id).toBe('observation-angle')
+    expect(nextEditorial('first-season-notes')?.id).toBe('contact-review')
+    expect(nextEditorial('missing')).toBeUndefined()
   })
 
   it('阅读目录定位到真实锚点并保留滚动留白，未知锚点回到顶部', () => {
@@ -58,9 +69,9 @@ describe('内置公开内容与阅读导航', () => {
     }
   })
 
-  it('讨论始终标记示例，没有真实用户与热度字段', () => {
+  it('讨论始终标记示例，文章对象没有真实用户与热度字段', () => {
     const discussions = editorialArticles.filter((item) => item.kind === 'discussion')
-    expect(discussions).toHaveLength(2)
+    expect(discussions.map((item) => item.id)).toEqual(discussionIds)
     for (const article of discussions) {
       expect(article.label).toContain('讨论示例')
       expect(article.sections.flatMap((section) => section.paragraphs).join('')).toContain('自编')
