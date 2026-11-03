@@ -218,6 +218,9 @@ importers:
       '@refs-tools/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@refs-tools/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       motion:
         specifier: 14.9.0
         version: 14.9.0

@@ -21,7 +21,7 @@ export const modules = {
   events: { id: 'events', title: '赛事与履职', path: '/events', description: '选派确认、签到及赛后主记录', availability: 'planned', beta: true },
   tools: { id: 'tools', title: '裁判工具', path: '/tools', description: '本地比赛工作台与 GB 2312 区位码工具', availability: 'partial', beta: true },
   workbench: { id: 'workbench', title: '本地比赛工作台', path: '/workbench', description: '记分、技术统计、计时、犯规、操作日志及本地导出', availability: 'available', beta: true },
-  gb2312: { id: 'gb2312', title: 'GB 2312 区位码工具', path: '/tools/gb2312', description: '汉字双向查询、派生码及批量转换', availability: 'planned', beta: true },
+  gb2312: { id: 'gb2312', title: 'GB 2312 区位码工具', path: '/tools/gb2312', description: '汉字双向查询、派生码及批量转换', availability: 'available', beta: true },
   forum: { id: 'forum', title: '裁判社区', path: '/forum', description: '判例讨论、执裁心得与交流', availability: 'planned', beta: true },
 } as const satisfies Record<ModuleId, NavigationModule>
 

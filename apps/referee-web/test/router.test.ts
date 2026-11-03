@@ -21,9 +21,10 @@ describe('裁判端静态路由与导航合同', () => {
       expect(route.meta.title).toBeTruthy()
       expect(typeof route.matched.at(-1)?.components?.default).toBe('function')
     }
-    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'gb2312', 'forum'] as const) {
+    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'forum'] as const) {
       expect(router.resolve(modules[id].path).matched[0]?.props.default).toEqual({ moduleId: id })
     }
+    expect(router.resolve(modules.gb2312.path).matched[0]?.components?.default).toBeTypeOf('function')
   })
 
   it('首页恰有八项且顺序固定，所有导航目标存在', () => {
@@ -40,7 +41,8 @@ describe('裁判端静态路由与导航合同', () => {
     expect(moduleStatus(modules.learning)).toBe('建设中')
     expect(moduleStatus(modules.tools)).toBe('部分可用 · Beta')
     expect(moduleStatus(modules.workbench)).toBe('可使用 · Beta')
-    for (const id of ['gb2312', 'events', 'forum'] as const) expect(moduleStatus(modules[id])).toBe('建设中 · Beta 规划')
+    expect(moduleStatus(modules.gb2312)).toBe('可使用 · Beta')
+    for (const id of ['events', 'forum'] as const) expect(moduleStatus(modules[id])).toBe('建设中 · Beta 规划')
   })
 
   it('当前页和栏目使用不同 aria-current，无归属模块不误高亮', () => {
