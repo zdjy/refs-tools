@@ -58,7 +58,7 @@
           <component
             v-else
             v-bind="getComponentProps(schema)"
-            :is="schema.component"
+            :is="getFormComponent(schema.component)"
             v-model:value="formModel[schema.field]"
             :class="{ isFull: schema.isFull != false && getProps.isFull }"
           />
@@ -125,6 +125,7 @@
 <script lang="ts">
   import { defineComponent, reactive, ref, computed, unref, onMounted, watch } from 'vue';
   import { createPlaceholderMessage } from './helper';
+  import { resolveFormComponent } from './componentMap';
   import { useFormEvents } from './hooks/useFormEvents';
   import { useFormValues } from './hooks/useFormValues';
 
@@ -175,6 +176,10 @@
           props.resetButtonOptions
         ) as Partial<ButtonProps>;
       });
+
+      function getFormComponent(name) {
+        return resolveFormComponent(name);
+      }
 
       function getComponentProps(schema) {
         const compProps = schema.componentProps ?? {};
@@ -299,6 +304,7 @@
         loadingSub,
         isInline,
         getComponentProps,
+        getFormComponent,
         unfoldToggle,
       };
     },
