@@ -214,7 +214,7 @@
         margin: 0 8px 8px 0;
         position: relative;
         padding: 8px;
-        border: 1px solid #d9d9d9;
+        border: 1px solid var(--admin-line);
         border-radius: 2px;
         display: flex;
         justify-content: center;
@@ -294,14 +294,14 @@
       }
 
       &-item-select-picture {
-        border: 1px dashed #d9d9d9;
+        border: 1px dashed var(--admin-line);
         border-radius: 2px;
         cursor: pointer;
-        background: #fafafa;
-        color: #666;
+        background: var(--admin-surface-muted);
+        color: var(--admin-body);
 
         .upload-title {
-          color: #666;
+          color: var(--admin-body);
         }
       }
     }

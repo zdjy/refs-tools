@@ -137,6 +137,7 @@
 <script lang="ts">
   import { websiteConfig } from '@/config/website.config';
   import { useProjectSetting } from '@/hooks/setting/useProjectSetting';
+  import { useDesignSettingStore } from '@/store/modules/designSetting';
   import { AsideMenu } from '@/layout/components/Menu';
   import { RedirectName } from '@/router/constant';
   import { useScreenLockStore } from '@/store/modules/screenLock';
@@ -173,7 +174,8 @@
       const dialog = useDialog();
       const { t } = useI18n();
       const localeStore = useLocaleStore();
-      const { navMode, navTheme, headerSetting, menuSetting, crumbsSetting } = useProjectSetting();
+      const { navMode, headerSetting, menuSetting, crumbsSetting } = useProjectSetting();
+      const designStore = useDesignSettingStore();
 
       // 语言切换下拉
       const localeOptions = computed(() =>
@@ -195,16 +197,11 @@
         username: userStore?.info?.username ?? '',
         fullscreenIcon: 'FullscreenOutlined',
         navMode,
-        navTheme,
         headerSetting,
         crumbsSetting,
       });
 
-      const getInverted = computed(() => {
-        return ['light', 'header-dark'].includes(unref(navTheme))
-          ? props.inverted
-          : !props.inverted;
-      });
+      const getInverted = computed(() => designStore.darkTheme);
 
       const mixMenu = computed(() => {
         return unref(menuSetting).mixMenu;
@@ -393,7 +390,7 @@
     align-items: center;
     padding: 0;
     height: 64px;
-    box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
+    box-shadow: var(--admin-shadow);
     transition: all 0.2s ease-in-out;
     width: 100%;
     z-index: 11;
@@ -432,7 +429,7 @@
       }
 
       &-menu {
-        color: var(--text-color);
+        color: var(--admin-body);
       }
     }
 
@@ -468,7 +465,7 @@
       }
 
       &:hover {
-        background: hsl(0deg 0% 100% / 8%);
+        background: var(--admin-surface-muted);
       }
 
       .anticon {

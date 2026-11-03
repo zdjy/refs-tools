@@ -7,7 +7,7 @@
           {{ props.title }}
           <n-tooltip trigger="hover" v-if="props.titleTooltip">
             <template #trigger>
-              <n-icon size="18" class="ml-1 text-gray-400 cursor-pointer">
+              <n-icon size="18" class="ml-1 text-admin-muted cursor-pointer">
                 <QuestionCircleOutlined />
               </n-icon>
             </template>
@@ -298,7 +298,7 @@
         margin-left: 12px;
         font-size: 16px;
         cursor: pointer;
-        color: var(--text-color);
+        color: var(--admin-body);
 
         :hover {
           color: var(--admin-primary);

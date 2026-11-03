@@ -30,6 +30,7 @@
   import { useAsyncRouteStore } from '@/store/modules/asyncRoute';
   import { generatorMenu, generatorMenuMix } from '@/utils';
   import { useProjectSettingStore } from '@/store/modules/projectSetting';
+  import { useDesignSettingStore } from '@/store/modules/designSetting';
   import { useProjectSetting } from '@/hooks/setting/useProjectSetting';
   import { useLocaleStore } from '@/store/modules/locale';
 
@@ -59,6 +60,7 @@
       const router = useRouter();
       const asyncRouteStore = useAsyncRouteStore();
       const settingStore = useProjectSettingStore();
+      const designStore = useDesignSettingStore();
       const localeStore = useLocaleStore();
       const menus = ref<any[]>([]);
       const selectedKeys = ref<string>(currentRoute.name as string);
@@ -76,9 +78,7 @@
         openKeys: getOpenKeys,
       });
 
-      const inverted = computed(() => {
-        return ['dark', 'header-dark'].includes(settingStore.navTheme);
-      });
+      const inverted = computed(() => designStore.darkTheme);
 
       const getSelectedKeys = computed(() => {
         const location = props.location;

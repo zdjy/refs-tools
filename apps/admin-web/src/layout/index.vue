@@ -93,7 +93,6 @@
   const {
     // showFooter,
     navMode,
-    navTheme,
     headerSetting,
     menuSetting,
     multiTabsSetting,
@@ -138,13 +137,9 @@
     return unref(multiTabsSetting).fixed;
   });
 
-  const inverted = computed(() => {
-    return ['dark', 'header-dark'].includes(unref(navTheme));
-  });
+  const inverted = computed(() => unref(getDarkTheme));
 
-  const getHeaderInverted = computed(() => {
-    return ['light', 'header-dark'].includes(unref(navTheme)) ? unref(inverted) : !unref(inverted);
-  });
+  const getHeaderInverted = inverted;
 
   const leftMenuWidth = computed(() => {
     const { minMenuWidth, menuWidth } = unref(menuSetting);
@@ -188,11 +183,11 @@
 
 <style lang="less">
   .layout-side-drawer {
-    background-color: var(--admin-ink);
+    background-color: var(--admin-sidebar);
 
     .layout-sider {
       min-height: 100vh;
-      box-shadow: 2px 0 8px 0 rgb(29 35 41 / 5%);
+      box-shadow: var(--admin-shadow);
       position: relative;
       z-index: 13;
       transition: all 0.2s ease-in-out;
@@ -211,7 +206,7 @@
 
     .layout-sider {
       min-height: 100vh;
-      box-shadow: 2px 0 8px 0 rgb(29 35 41 / 5%);
+      box-shadow: var(--admin-shadow);
       position: relative;
       z-index: 13;
       transition: all 0.2s ease-in-out;

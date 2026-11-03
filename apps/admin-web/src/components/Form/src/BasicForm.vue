@@ -8,7 +8,7 @@
             {{ schema.label }}
             <n-tooltip trigger="hover" :style="schema.labelMessageStyle">
               <template #trigger>
-                <n-icon size="18" class="text-gray-400 cursor-pointer">
+                <n-icon size="18" class="text-admin-muted cursor-pointer">
                   <QuestionCircleOutlined />
                 </n-icon>
               </template>

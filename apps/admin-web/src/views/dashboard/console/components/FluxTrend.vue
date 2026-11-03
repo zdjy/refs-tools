@@ -16,7 +16,7 @@
   const chartRef = ref<HTMLDivElement | null>(null);
   const { setOptions } = useECharts(chartRef as Ref<HTMLDivElement>);
   const designStore = useDesignSettingStore();
-  const palette = computed(() => getAdminPalette(designStore.appTheme, designStore.darkTheme));
+  const palette = computed(() => getAdminPalette(designStore.darkTheme));
 
   const updateChart = () => {
     setOptions({
@@ -31,6 +31,8 @@
       },
       xAxis: {
         type: 'category',
+        axisLabel: { color: palette.value.body },
+        axisLine: { lineStyle: { color: palette.value.line } },
         boundaryGap: false,
         data: [
           '6:00',
@@ -57,7 +59,7 @@
           lineStyle: {
             width: 1,
             type: 'solid',
-            color: 'rgba(226,226,226,0.5)',
+            color: palette.value.line,
           },
         },
         axisTick: {
@@ -67,6 +69,8 @@
       yAxis: [
         {
           type: 'value',
+          axisLabel: { color: palette.value.muted },
+          axisLine: { lineStyle: { color: palette.value.line } },
           max: 80000,
           splitNumber: 4,
           axisTick: {
@@ -75,7 +79,7 @@
           splitArea: {
             show: true,
             areaStyle: {
-              color: ['rgba(255,255,255,0.2)', 'rgba(226,226,226,0.2)'],
+              color: [palette.value.surface, palette.value.surfaceMuted],
             },
           },
         },

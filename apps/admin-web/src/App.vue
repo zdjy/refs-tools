@@ -47,7 +47,7 @@
   const palette = computed(() =>
     route.name === PageEnum.BASE_LOGIN_NAME
       ? getLoginPalette(designStore.darkTheme)
-      : getAdminPalette(designStore.appTheme, designStore.darkTheme)
+      : getAdminPalette(designStore.darkTheme)
   );
 
   watchEffect(() => {
@@ -59,7 +59,7 @@
   const getThemeOverrides = computed(() =>
     route.name === PageEnum.BASE_LOGIN_NAME
       ? getLoginColorTheme(designStore.darkTheme)
-      : getColorTheme(designStore.appTheme, designStore.darkTheme)
+      : getColorTheme(designStore.darkTheme)
   );
 
   const getDarkTheme = computed(() => (designStore.darkTheme ? darkTheme : undefined));

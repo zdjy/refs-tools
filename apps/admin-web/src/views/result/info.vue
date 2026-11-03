@@ -10,7 +10,7 @@
           <p>您提交的内容如下：</p>
           <p class="mt-3">
             <n-space align="center">
-              <n-icon size="20" color="#1B8754">
+              <n-icon size="20" color="var(--admin-success)">
                 <CheckCircleOutlined />
               </n-icon>
               <span>转入支付宝账户（189****5426）：￥1980元</span>
@@ -19,7 +19,7 @@
           </p>
           <p class="mt-3">
             <n-space>
-              <n-icon size="20" color="#1B8754">
+              <n-icon size="20" color="var(--admin-success)">
                 <CheckCircleOutlined />
               </n-icon>
               <span>转入支付宝账户（187****5426）：￥2980元</span>

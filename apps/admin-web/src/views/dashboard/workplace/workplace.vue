@@ -68,7 +68,7 @@
             >
               <div class="flex">
                 <span>
-                  <n-icon size="30" color="#42b983">
+                  <n-icon size="30" color="var(--admin-success)">
                     <LogoVue />
                   </n-icon>
                 </span>
@@ -84,7 +84,7 @@
             >
               <div class="flex">
                 <span>
-                  <n-icon size="30" color="#e44c27">
+                  <n-icon size="30" color="var(--admin-primary)">
                     <Html5Outlined />
                   </n-icon>
                 </span>
@@ -100,7 +100,7 @@
             >
               <div class="flex">
                 <span>
-                  <n-icon size="30" color="#dd0031">
+                  <n-icon size="30" color="var(--admin-error)">
                     <LogoAngular />
                   </n-icon>
                 </span>
@@ -116,7 +116,7 @@
             >
               <div class="flex">
                 <span>
-                  <n-icon size="30" color="#61dafb">
+                  <n-icon size="30" color="var(--admin-info)">
                     <LogoReact />
                   </n-icon>
                 </span>
@@ -231,7 +231,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="#68c755">
+                  <n-icon size="30" color="var(--admin-success)">
                     <DashboardOutlined />
                   </n-icon>
                 </span>
@@ -241,7 +241,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="#fab251">
+                  <n-icon size="30" color="var(--admin-warning)">
                     <ProfileOutlined />
                   </n-icon>
                 </span>
@@ -261,7 +261,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="#f06b96">
+                  <n-icon size="30" color="var(--admin-primary-hover)">
                     <ApartmentOutlined />
                   </n-icon>
                 </span>
@@ -271,7 +271,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="#7238d1">
+                  <n-icon size="30" color="var(--admin-sand-deep)">
                     <SettingOutlined />
                   </n-icon>
                 </span>

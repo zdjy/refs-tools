@@ -22,7 +22,7 @@
               <template v-else>
                 日同比
                 <CountTo :startVal="1" suffix="%" :endVal="visits.rise" />
-                <n-icon size="12" color="#1B8754">
+                <n-icon size="12" color="var(--admin-success)">
                   <CaretUpOutlined />
                 </n-icon>
               </template>
@@ -32,7 +32,7 @@
               <template v-else>
                 周同比
                 <CountTo :startVal="1" suffix="%" :endVal="visits.decline" />
-                <n-icon size="12" color="#D4A017">
+                <n-icon size="12" color="var(--admin-warning)">
                   <CaretDownOutlined />
                 </n-icon>
               </template>
@@ -114,7 +114,7 @@
               <template v-else>
                 日同比
                 <CountTo :startVal="1" suffix="%" :endVal="orderLarge.rise" />
-                <n-icon size="12" color="#1B8754">
+                <n-icon size="12" color="var(--admin-success)">
                   <CaretUpOutlined />
                 </n-icon>
               </template>
@@ -124,7 +124,7 @@
               <template v-else>
                 周同比
                 <CountTo :startVal="1" suffix="%" :endVal="orderLarge.rise" />
-                <n-icon size="12" color="#D4A017">
+                <n-icon size="12" color="var(--admin-warning)">
                   <CaretDownOutlined />
                 </n-icon>
               </template>
@@ -163,7 +163,7 @@
               <template v-else>
                 月同比
                 <CountTo :startVal="1" suffix="%" :endVal="volume.rise" />
-                <n-icon size="12" color="#1B8754">
+                <n-icon size="12" color="var(--admin-success)">
                   <CaretUpOutlined />
                 </n-icon>
               </template>
@@ -173,7 +173,7 @@
               <template v-else>
                 月同比
                 <CountTo :startVal="1" suffix="%" :endVal="volume.decline" />
-                <n-icon size="12" color="#D4A017">
+                <n-icon size="12" color="var(--admin-warning)">
                   <CaretDownOutlined />
                 </n-icon>
               </template>
@@ -272,7 +272,7 @@
 
   const designStore = useDesignSettingStore();
   const dashboardPalette = computed(() =>
-    getAdminPalette(designStore.appTheme, designStore.darkTheme)
+    getAdminPalette(designStore.darkTheme)
   );
   const loading = ref(true);
   const visits = ref({} as InVisits);

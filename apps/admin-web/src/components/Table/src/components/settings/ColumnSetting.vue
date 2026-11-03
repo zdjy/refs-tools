@@ -270,7 +270,7 @@
       &-icon {
         margin-left: 12px;
         font-size: 16px;
-        color: var(--text-color);
+        color: var(--admin-body);
         cursor: pointer;
 
         :hover {
@@ -319,7 +319,7 @@
 
     &-checkbox-dark {
       &:hover {
-        background: hsl(0deg 0% 100% / 8%);
+        background: var(--admin-surface-muted);
       }
     }
   }

@@ -130,7 +130,7 @@
       },
     },
     setup(props) {
-      const { getDarkTheme, getAppTheme } = useDesignSetting();
+      const { getDarkTheme } = useDesignSetting();
       const { navMode, headerSetting, menuSetting, multiTabsSetting, isMobile } =
         useProjectSetting();
       const settingStore = useProjectSettingStore();
@@ -519,7 +519,6 @@
         handleContextMenu,
         onClickOutside,
         getDarkTheme,
-        getAppTheme,
         getCardColor,
         getBaseColor,
       };
@@ -622,7 +621,7 @@
           }
 
           .active-item {
-            color: v-bind(getAppTheme);
+            color: var(--admin-primary);
           }
         }
       }
@@ -658,7 +657,7 @@
   }
 
   .tabs-view-dark-background {
-    background: var(--admin-ink);
+    background: var(--admin-surface);
   }
 
   .tabs-view-fix {

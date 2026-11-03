@@ -14,7 +14,7 @@ export function setupNaiveDiscreteApi() {
 
   const configProviderPropsRef = computed(() => ({
     theme: designStore.darkTheme ? darkTheme : undefined,
-    themeOverrides: getColorTheme(designStore.appTheme, designStore.darkTheme),
+    themeOverrides: getColorTheme(designStore.darkTheme),
   }));
   const { message, dialog, notification, loadingBar } = createDiscreteApi(
     ['message', 'dialog', 'notification', 'loadingBar'],

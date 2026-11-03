@@ -61,7 +61,7 @@
         </n-input>
 
         <div class="flex w-full" v-if="isLoginError">
-          <span class="text-red-500">{{ errorMsg }}</span>
+          <span class="text-admin-error">{{ errorMsg }}</span>
         </div>
 
         <div class="flex justify-around w-full mt-1">
@@ -193,13 +193,13 @@
     position: fixed;
     inset: 0;
     display: flex;
-    background: #000;
-    color: white;
+    background: var(--admin-canvas);
+    color: var(--admin-ink);
     overflow: hidden;
     z-index: 9999;
 
     &.onLockLogin {
-      background-color: rgb(25 28 34 / 88%);
+      background-color: color-mix(in srgb, var(--admin-canvas) 88%, transparent);
       backdrop-filter: blur(7px);
     }
 
@@ -231,7 +231,7 @@
       z-index: 100;
 
       .tips {
-        color: white;
+        color: var(--admin-ink);
         cursor: text;
       }
 

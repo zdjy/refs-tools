@@ -1,8 +1,6 @@
 export interface ProjectSettingState {
   //导航模式
   navMode: string;
-  //导航风格
-  navTheme: string;
   //顶部设置
   headerSetting: object;
   //页脚

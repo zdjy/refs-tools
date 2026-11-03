@@ -9,12 +9,12 @@
             <template #trigger>
               <n-switch v-model:value="designStore.darkTheme" class="dark-theme-switch">
                 <template #checked>
-                  <n-icon size="14" color="#ffd93b">
+                  <n-icon size="14" color="var(--admin-warning)">
                     <SunnySharp />
                   </n-icon>
                 </template>
                 <template #unchecked>
-                  <n-icon size="14" color="#ffd93b">
+                  <n-icon size="14" color="var(--admin-warning)">
                     <Moon />
                   </n-icon>
                 </template>
@@ -22,22 +22,6 @@
             </template>
             <span>{{ designStore.darkTheme ? t('layout.setting.darkTheme') : t('layout.setting.lightTheme') }}</span>
           </n-tooltip>
-        </div>
-
-        <n-divider title-placement="center">{{ t('layout.setting.systemTheme') }}</n-divider>
-
-        <div class="drawer-setting-item align-items-top">
-          <span
-            class="theme-item"
-            v-for="(item, index) in appThemeList"
-            :key="index"
-            :style="{ 'background-color': item }"
-            @click="togTheme(item)"
-          >
-            <n-icon size="12" v-if="item === designStore.appTheme">
-              <CheckOutlined />
-            </n-icon>
-          </span>
         </div>
 
         <n-divider title-placement="center">{{ t('layout.setting.navMode') }}</n-divider>
@@ -54,7 +38,7 @@
               </template>
               <span>{{ t('layout.setting.navModeVertical') }}</span>
             </n-tooltip>
-            <n-badge dot :color="designStore.appTheme" v-show="settingStore.navMode === 'vertical'" />
+            <n-badge dot color="var(--admin-primary)" v-show="settingStore.navMode === 'vertical'" />
           </div>
 
           <div class="drawer-setting-item-style">
@@ -68,7 +52,7 @@
               </template>
               <span>{{ t('layout.setting.navModeHorizontal') }}</span>
             </n-tooltip>
-            <n-badge dot :color="designStore.appTheme" v-show="settingStore.navMode === 'horizontal'" />
+            <n-badge dot color="var(--admin-primary)" v-show="settingStore.navMode === 'horizontal'" />
           </div>
 
           <div class="drawer-setting-item-style">
@@ -82,55 +66,10 @@
               </template>
               <span>{{ t('layout.setting.navModeHorizontalMix') }}</span>
             </n-tooltip>
-            <n-badge dot :color="designStore.appTheme" v-show="settingStore.navMode === 'horizontal-mix'" />
+            <n-badge dot color="var(--admin-primary)" v-show="settingStore.navMode === 'horizontal-mix'" />
           </div>
         </div>
 
-        <n-divider title-placement="center">{{ t('layout.setting.navTheme') }}</n-divider>
-
-        <div class="drawer-setting-item align-items-top">
-          <div class="drawer-setting-item-style align-items-top">
-            <n-tooltip placement="top">
-              <template #trigger>
-                <img
-                  src="~@/assets/images/nav-theme-dark.svg"
-                  :alt="t('layout.setting.navThemeDark')"
-                  @click="togNavTheme('dark')"
-                />
-              </template>
-              <span>{{ t('layout.setting.navThemeDark') }}</span>
-            </n-tooltip>
-            <n-badge dot :color="designStore.appTheme" v-if="settingStore.navTheme === 'dark'" />
-          </div>
-
-          <div class="drawer-setting-item-style">
-            <n-tooltip placement="top">
-              <template #trigger>
-                <img
-                  src="~@/assets/images/nav-theme-light.svg"
-                  :alt="t('layout.setting.navThemeLight')"
-                  @click="togNavTheme('light')"
-                />
-              </template>
-              <span>{{ t('layout.setting.navThemeLight') }}</span>
-            </n-tooltip>
-            <n-badge dot :color="designStore.appTheme" v-if="settingStore.navTheme === 'light'" />
-          </div>
-
-          <div class="drawer-setting-item-style">
-            <n-tooltip placement="top">
-              <template #trigger>
-                <img
-                  src="~@/assets/images/header-theme-dark.svg"
-                  @click="togNavTheme('header-dark')"
-                  :alt="t('layout.setting.navThemeHeaderDark')"
-                />
-              </template>
-              <span>{{ t('layout.setting.navThemeHeaderDark') }}</span>
-            </n-tooltip>
-            <n-badge dot :color="designStore.appTheme" v-if="settingStore.navTheme === 'header-dark'" />
-          </div>
-        </div>
         <n-divider title-placement="center">{{ t('layout.setting.interfaceFunction') }}</n-divider>
 
         <div class="drawer-setting-item">
@@ -230,18 +169,16 @@
 </template>
 
 <script lang="ts">
-  import { defineComponent, reactive, toRefs, unref, watch, computed } from 'vue';
+  import { defineComponent, reactive, toRefs, unref, computed } from 'vue';
   import { useProjectSettingStore } from '@/store/modules/projectSetting';
   import { useDesignSettingStore } from '@/store/modules/designSetting';
-  import { CheckOutlined } from '@vicons/antd';
   import { Moon, SunnySharp } from '@vicons/ionicons5';
-  import { darkTheme } from 'naive-ui';
   import { useI18n } from 'vue-i18n';
   import { animates } from '@/settings/animateSetting';
 
   export default defineComponent({
     name: 'ProjectSetting',
-    components: { CheckOutlined, Moon, SunnySharp },
+    components: { Moon, SunnySharp },
     props: {
       title: {
         type: String,
@@ -268,17 +205,9 @@
         width: props.width,
         isDrawer: false,
         placement: 'right' as const,
-        appThemeList: designStore.appThemeList,
       });
 
       const drawerTitle = computed(() => props.title || t('layout.setting.title'));
-
-      watch(
-        () => designStore.darkTheme,
-        (to) => {
-          settingStore.navTheme = to ? 'header-dark' : 'dark';
-        }
-      );
 
       const directionsOptions = computed(() => {
         return animateOptions.value.find(
@@ -294,17 +223,6 @@
         state.isDrawer = false;
       }
 
-      function togNavTheme(theme) {
-        settingStore.navTheme = theme;
-        if (settingStore.navMode === 'horizontal' && ['light'].includes(theme)) {
-          settingStore.navTheme = 'dark';
-        }
-      }
-
-      function togTheme(color) {
-        designStore.appTheme = color;
-      }
-
       function togNavMode(mode) {
         settingStore.navMode = mode;
         settingStore.menuSetting.mixMenu = false;
@@ -316,10 +234,7 @@
         drawerTitle,
         settingStore,
         designStore,
-        togNavTheme,
         togNavMode,
-        togTheme,
-        darkTheme,
         openDrawer,
         closeDrawer,
         animateOptions,
@@ -362,21 +277,6 @@
         flex: 1;
       }
 
-      .theme-item {
-        width: 20px;
-        min-width: 20px;
-        height: 20px;
-        cursor: pointer;
-        border: 1px solid #eee;
-        border-radius: 2px;
-        margin: 0 5px 5px 0;
-        text-align: center;
-        line-height: 14px;
-
-        .n-icon {
-          color: #fff;
-        }
-      }
     }
 
     .align-items-top {
@@ -388,10 +288,5 @@
       justify-content: center;
     }
 
-    .dark-switch .n-switch {
-      ::v-deep(.n-switch__rail) {
-        background-color: #111111;
-      }
-    }
   }
 </style>

@@ -50,7 +50,7 @@
     margin: 40px auto 0;
 
     ::v-deep(.n-result-content) {
-      background-color: #fafafa;
+      background-color: var(--admin-surface-muted);
       padding: 24px 40px;
     }
 

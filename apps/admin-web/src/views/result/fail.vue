@@ -6,7 +6,7 @@
           <p>您提交的内容有如下错误：</p>
           <p class="mt-3">
             <n-space align="center">
-              <n-icon size="20" color="#8A650A">
+              <n-icon size="20" color="var(--admin-warning)">
                 <InfoCircleOutlined />
               </n-icon>
               <span>认证照片不够清晰</span>
@@ -15,7 +15,7 @@
           </p>
           <p class="mt-3">
             <n-space>
-              <n-icon size="20" color="#8A650A">
+              <n-icon size="20" color="var(--admin-warning)">
                 <InfoCircleOutlined />
               </n-icon>
               <span>备注包含敏感字符，并且不能包含政治相关</span>

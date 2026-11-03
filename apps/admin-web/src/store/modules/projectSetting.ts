@@ -4,7 +4,6 @@ import type { IHeaderSetting, IMenuSetting, IMultiTabsSetting, ICrumbsSetting } 
 
 const {
   navMode,
-  navTheme,
   isMobile,
   headerSetting,
   showFooter,
@@ -18,7 +17,6 @@ const {
 
 interface ProjectSettingState {
   navMode: string; //导航模式
-  navTheme: string; //导航风格
   headerSetting: IHeaderSetting; //顶部设置
   showFooter: boolean; //页脚
   menuSetting: IMenuSetting; //多标签
@@ -34,7 +32,6 @@ export const useProjectSettingStore = defineStore({
   id: 'app-project-setting',
   state: (): ProjectSettingState => ({
     navMode: navMode,
-    navTheme,
     isMobile,
     headerSetting,
     showFooter,
@@ -48,9 +45,6 @@ export const useProjectSettingStore = defineStore({
   getters: {
     getNavMode(): string {
       return this.navMode;
-    },
-    getNavTheme(): string {
-      return this.navTheme;
     },
     getIsMobile(): boolean {
       return this.isMobile;
@@ -81,9 +75,6 @@ export const useProjectSettingStore = defineStore({
     },
   },
   actions: {
-    setNavTheme(value: string): void {
-      this.navTheme = value;
-    },
     setIsMobile(value: boolean): void {
       this.isMobile = value;
     },
