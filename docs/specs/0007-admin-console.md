@@ -1,8 +1,8 @@
 # FS-0007：管理端设计与分阶段实施规格
 
-- 状态：第一批基础实现；业务模块待依赖就绪后实施
+- 状态：第一批基础与 Naive UI Admin 源码迁移已实施；待真实授权账号端到端验收；业务模块待依赖就绪后实施
 - 业务依据：[MVP-001](0001-mvp-scope-and-business-rules.md)、[FS-0002](0002-mvp-platform-feature.md)
-- 决策：[ADR 0016](../decisions/0016-admin-web-foundation.md)
+- 决策：[ADR 0016](../decisions/0016-admin-web-foundation.md)（首批基础）与 [ADR 0017](../decisions/0017-admin-template-selection.md)（现成模板选型，替代自研应用壳方向）
 - 开发入口：`.scratch/admin-console/spec.md` 与 `issues/` 的独立 tickets
 - 统一工程约束引用[编码规约](../agents/coding-standards.md)，视觉引用[共享 FIBA UI 规格](../ui/fiba_about_ui_specification.md)，此处不另建规约或 token。
 
@@ -12,19 +12,19 @@
 
 不实现全平台业务后端、不新增任意角色编辑器、不把平台管理员伪装成组织者、不实现 AI 审核、聊天、支付、服务器媒体中转和转码。工作台不是虚构增长看板；无统计 API 时不显示假数字、假趋势或“0 待办”。
 
-## 2. 调研与设计取舍
+## 2. 调研与模板采用
 
-GitHub API 搜索 `vue naive admin`，阅读下列仓库 README；第三方项目随版本变化，此处只记录本次借鉴点，不依赖其运行时。
+需求方明确要求直接使用现成后台模板，停止自研后台基础框架。按 [ADR 0017](../decisions/0017-admin-template-selection.md) 采用 [Naive UI Admin](https://github.com/jekip/naive-ui-admin) 的 **MIT 开源版 v3.0.0**，固定 commit `c9db4cde447240eaa17fbe439f507680819add3d`；完整 GitHub 搜索范围、36 项候选对照、13 项深入核查与取舍均在该 ADR 维护。
 
-| 来源 | 借鉴 | 不采用 |
-| --- | --- | --- |
-| [Naive UI Admin](https://github.com/jekip/naive-ui-admin) | 分组侧导航、顶栏路径、统一状态反馈、集中主题 | 全套组件二次封装、Mock 默认开启、动态权限菜单 |
-| [Vue Naive Admin](https://github.com/zclzone/vue-naive-admin) | 简洁模块结构、明确区分 403/404、CRUD 筛选布局 | Token/状态持久化、Redis/JWT、UnoCSS、后端菜单管理 |
-| [SoybeanAdmin](https://github.com/soybeanjs/soybean-admin) | 响应式应用壳、模块化、独立状态页 | 自动文件路由、全量演示组件、主题配置器和外部 Mock |
+迁移必须直接复用上游布局、导航、顶栏、移动菜单和适用的基础页面/组件，替换现有自研应用壳，不接受只参考截图重新仿写。品牌与主题仍适配共享 FIBA 规格；上游源码接入遵循统一编码规约，具体适配范围见 ADR 0017，不另建后台技术规范。
 
-本项目的辨识点是“裁判业务的运营工作区”，不是流量看板。首页以待接入业务流程与可用审计入口组织任务；稳定的侧导航承担空间定位，红色只用于当前项与风险提醒。检索工具的营销式 Hero 推荐不适用于操作后台，因此未采用其配色、字体与布局。
+模板不等于现成的裁判业务系统。既有 Cookie 会话、真实审计查询和第 3–6 节业务/安全行为保留；移除演示账户、生产 Mock、假统计及凭据持久化，不新增模板配套后端或动态菜单权限服务。未实现模块继续明确待接入，不以模板的示例 CRUD 冒充业务完成。
+
+源码替换已由 ticket 07 实施，实际装配模板 layout、Header、Menu、Main、Logo 与移动 Drawer；来源及本地裁剪见[第三方说明](../../apps/admin-web/third-party/naive-ui-admin/README.md)。首批“只借鉴、不引入”的方式已被本节和 ADR 0017 替代；第 8 节为迁移前基线，本次结果单独记录在[模板迁移验收记录](0007-admin-template-acceptance.md)，真实授权账号链路仍待补验。
 
 ### 2.1 视觉与结构
+
+以下是共享视觉和业务信息结构约束，不要求保留原自研壳的 DOM 实现。模板现成布局应在集中主题与配置中适配，避免重新开发一套布局。
 
 色彩和字体全部消费共享规格：暖白画布、沙金导航区域、白色内容面、炭黑主操作、球场红强调；使用系统字体，无 CDN 字体。页面标题 24–32px，正文优先 14–16px，不用低对比度辅助灰承载必要信息。
 
@@ -122,10 +122,15 @@ FS-0002 已规定写接口，但很多后台列表/详情尚未定义，不能�
 | 04 | 组织/认证管理闭环 | FS-0002 Task 7、8 及 GET 契约 | 审核/补件/申诉/并发/私有材料权限 |
 | 05 | 内容考试与阅卷闭环 | Task 5、9–13 及 GET 契约 | 版本不可变、发布检查、评分边界/改判审计 |
 | 06 | 社区治理 Beta | Task 19 及 GET 契约 | 举报处理、处罚/时长/申诉回避、审计 |
+| 07 | 直接采用 Naive UI Admin，替换自研后台应用壳 | ADR 0017；保留 01–03 基线 | 上游源码/许可溯源、会话/审计回归、无 Mock/凭据持久化、版本/主题兼容、体积与浏览器验收 |
+
+07 不依赖 04–06，可先迁移模板，再在模板基座上接入后续业务。模板采用不是重写后端或宣称业务模块完成。
 
 任务路径和独立状态见 `.scratch/admin-console/issues/`。不因为 01–03 完成而勾选 FS-0002 的组织、媒体、认证、考试、论坛后端任务。
 
 ## 8. 验证记录
+
+> 本节保留模板迁移前的首批自研壳基线。ticket 07 的构建、体积、源码/许可检查及浏览器结果见[模板迁移验收记录](0007-admin-template-acceptance.md)，不能沿用本节数字或截图宣称新模板已验收。
 
 ### 8.1 首批检查结果
 

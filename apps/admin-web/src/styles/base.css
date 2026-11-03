@@ -19,7 +19,7 @@
 
 /* 保持未分层，以保证组件库的 outline/transform 不会屏蔽全局可访问性与按压反馈。 */
 button:not(:disabled):active { transform: scale(.98); }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [role="menuitem"]:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
   /* 覆盖组件库动效，使系统减弱动态效果偏好在弹层和控件中同样生效。 */

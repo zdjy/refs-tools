@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onMounted, watch } from 'vue'
 import { NButton, NConfigProvider, zhCN, dateZhCN } from 'naive-ui'
-import { RouterView, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useSessionStore } from './stores/session'
 import { adminTheme } from './ui-theme'
-import AdminShell from './components/layout/AdminShell.vue'
+import AdminLayout from './layout/index.vue'
 
 const LoginView = defineAsyncComponent(() => import('./views/login/LoginView.vue'))
 const session = useSessionStore()
@@ -30,8 +30,6 @@ watch(() => [session.status, route.path], () => {
       <NButton type="primary" @click="session.restore">重新连接</NButton>
     </div>
     <LoginView v-else-if="session.status !== 'authenticated'" />
-    <AdminShell v-else>
-      <RouterView />
-    </AdminShell>
+    <AdminLayout v-else />
   </NConfigProvider>
 </template>

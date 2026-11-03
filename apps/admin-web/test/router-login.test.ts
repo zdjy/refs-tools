@@ -1,4 +1,5 @@
 import { createMemoryHistory } from 'vue-router'
+import { createMenuOptions } from '../src/layout/components/Menu/menu.presentation'
 import { describe, expect, it, vi } from 'vitest'
 import { createAdminRouter } from '../src/router'
 import { adminModules } from '../src/router/modules'
@@ -15,6 +16,15 @@ describe('静态导航与展示', () => {
       expect(router.resolve(path).meta.title).toBeTruthy()
     }
     expect(router.resolve('/unknown').meta.title).toBe('页面不存在')
+  })
+
+  it('模板菜单仅投影静态入口，不按权限探测或生成路由', () => {
+    const navigate = vi.fn()
+    const menus = createMenuOptions(navigate)
+    const links = menus.flatMap(group => group.children ?? [])
+    expect(links.map(item => item.key)).toEqual(['/', ...adminModules.map(item => item.path), '/audit'])
+    expect(navigate).not.toHaveBeenCalled()
+    expect(menus.map(group => group.label)).toEqual(['工作空间', '运营管理', '学习与考试', '安全与治理'])
   })
 
   it('筛选项完整对应共享契约，未知动作和无效时间有可读回退', () => {

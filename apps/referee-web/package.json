@@ -11,6 +11,7 @@
     "test:styles": "node scripts/check-styles.mjs"
   },
   "dependencies": {
+    "@lucide/vue": "1.66.0",
     "@refs-tools/contracts": "workspace:*",
     "naive-ui": "^2.45.3",
     "pinia": "^4.1.0",

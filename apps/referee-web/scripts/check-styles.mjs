@@ -38,6 +38,8 @@ try {
     String.raw`.hover\:text-red-hover:hover`, String.raw`.focus-visible\:ring-red\/30:focus-visible`,
     String.raw`.motion-reduce\:transition-none`, String.raw`.min-h-\[44px\]`, '.font-sans', '.font-mono',
     '.shadow-card', '.rounded-xl', '.rounded-2xl', '.rounded-3xl', '.rounded-full',
+    String.raw`.lg\:grid-cols-3`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
+    String.raw`.group-hover\:scale-105`, '.scroll-mt-6', '.sr-only',
   ]) {
     assert(css.includes(selector), `缺少工具类：${selector}`)
   }

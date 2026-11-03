@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { ArrowRight } from '@lucide/vue'
 import type { NavigationModule } from '../../navigation/modules'
 import { moduleStatus } from '../../navigation/navigation.presentation'
 import NavigationIcon from './NavigationIcon.vue'
@@ -14,6 +15,6 @@ defineProps<{ module: NavigationModule }>()
     </div>
     <h3 class="mt-5 mb-2 text-lg font-bold tracking-tight group-hover:text-red">{{ module.title }}</h3>
     <p class="m-0 grow text-sm leading-relaxed wrap-anywhere text-body">{{ module.description }}</p>
-    <div aria-hidden="true" class="mt-5 flex justify-end border-0 border-t border-solid border-line pt-3 text-body"><svg class="size-5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h15m-6-6 6 6-6 6" /></svg></div>
+    <div aria-hidden="true" class="mt-5 flex justify-end border-0 border-t border-solid border-line pt-3 text-body"><ArrowRight class="size-5 transition-transform duration-300 group-hover:translate-x-1" :stroke-width="1.5" /></div>
   </RouterLink>
 </template>

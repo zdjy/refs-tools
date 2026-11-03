@@ -1,8 +1,6 @@
 import type { GlobalThemeOverrides } from 'naive-ui'
 import { uiTokens as t } from './ui-tokens'
 
-// Modal preset 的未分层宽度不能用工具类覆盖；通过公开接口保留移动端留白。
-export const adminModalStyle = { width: 'calc(100vw - 32px)' }
 export const adminTheme: GlobalThemeOverrides = {
   common: {
     primaryColor: t.ink, primaryColorHover: t.black, primaryColorPressed: t.black, primaryColorSuppl: t.ink,
@@ -30,5 +28,21 @@ export const adminTheme: GlobalThemeOverrides = {
     borderInfo: `1px solid ${t.line}`, contentTextColorInfo: t.body,
     colorError: t.soft, borderError: `1px solid ${t.red}`, contentTextColorError: t.redHover,
   },
+  // 模板布局使用组件库的公开主题接口，不用工具类与未分层的组件样式竞争。
+  Layout: {
+    color: t.canvas, textColor: t.ink, siderColor: t.sand, headerColor: t.surface,
+    siderBorderColor: t.line, headerBorderColor: t.line,
+  },
+  Menu: {
+    color: t.sand, borderRadius: '12px', itemHeight: '48px', fontSize: '14px',
+    groupTextColor: t.body, itemTextColor: t.ink, itemTextColorHover: t.ink,
+    itemTextColorActive: t.redHover, itemTextColorActiveHover: t.redHover,
+    itemIconColor: t.body, itemIconColorHover: t.ink, itemIconColorCollapsed: t.ink,
+    itemIconColorActive: t.redHover, itemIconColorActiveHover: t.redHover,
+    itemColorHover: t.facet, itemColorActive: t.surface, itemColorActiveHover: t.surface,
+    itemColorActiveCollapsed: t.surface,
+  },
+  Drawer: { color: t.sand, textColor: t.ink, boxShadow: t.shadow },
+  Breadcrumb: { itemTextColor: t.body, itemTextColorHover: t.ink, itemTextColorActive: t.ink, separatorColor: t.body },
   Modal: { borderRadius: '24px' },
 }

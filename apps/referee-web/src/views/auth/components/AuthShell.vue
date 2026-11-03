@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { ShieldCheck } from '@lucide/vue'
 import SkipLink from '../../../components/navigation/SkipLink.vue'
 defineProps<{ account?: boolean }>()
 </script>
@@ -19,7 +20,7 @@ defineProps<{ account?: boolean }>()
           <h1 class="m-0 text-[30px] leading-[1.35] tracking-[-.04em] whitespace-pre-line sm:text-[36px] xl:text-[44px]" id="auth-intro-title">{{ account ? '专注场上，\n安心连接。' : '每一次判罚，\n从充分准备开始。' }}</h1>
           <p class="mt-4 mr-0 mb-0 ml-0 max-w-[360px] text-[14px] leading-[1.8] text-body xl:mt-6 xl:text-[16px]">{{ account ? '在这里管理你的登录方式与会话，守护属于你的裁判档案。' : '用一个账号连接学习、考试与裁判履职，让场下的积累，成为场上的底气。' }}</p>
           <div class="hidden tablet:mt-12 tablet:flex tablet:items-start tablet:gap-3 tablet:border-0 tablet:border-t tablet:border-solid tablet:border-body tablet:pt-6">
-            <svg class="size-6 shrink-0 basis-6 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3 4 6v6c0 4 8 9 8 9s8-5 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg>
+            <ShieldCheck class="size-6 shrink-0 basis-6 text-ink" :stroke-width="1.5" aria-hidden="true" />
             <p class="m-0 text-[13px] leading-[1.8]">你的账号，独立的访问边界。<br><span class="text-body">个人材料与业务记录按授权范围访问。</span></p>
           </div>
         </div>

@@ -1,12 +1,18 @@
-<script setup lang="ts">
-import { RouterLink } from 'vue-router'
-</script>
-
 <template>
-  <section class="rounded-2xl border border-solid border-line bg-surface p-6 md:p-10">
-    <p class="text-sm font-semibold text-red">404</p>
-    <h1 class="text-3xl font-bold">页面不存在</h1>
-    <p class="text-body">请检查地址，或从工作台选择业务模块。</p>
-    <RouterLink to="/" class="inline-flex min-h-[44px] items-center font-semibold hover:text-red">返回运营工作台</RouterLink>
-  </section>
+  <div class="flex min-h-[60vh] flex-col justify-center py-12">
+    <div class="text-center">
+      <p class="font-mono text-sm text-body">404</p>
+      <h1 class="py-5 text-2xl text-ink">抱歉，你访问的页面不存在</h1>
+      <NButton type="primary" @click="goHome">回到工作台</NButton>
+    </div>
+  </div>
 </template>
+
+<script lang="ts" setup>
+  import { NButton } from 'naive-ui';
+  import { useRouter } from 'vue-router';
+  const router = useRouter();
+  function goHome() {
+    router.push('/');
+  }
+</script>

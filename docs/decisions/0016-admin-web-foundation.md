@@ -1,6 +1,6 @@
 # ADR 0016：独立管理端与渐进业务接入
 
-- 状态：已接受
+- 状态：部分被 [ADR 0017](0017-admin-template-selection.md) 替代（不引入模板/不复制源码的决定已撤销；其余边界保留）
 - 关联：[FS-0007](../specs/0007-admin-console.md)、ADR 0001、0007、0008、0010、0013、0014
 
 ## 背景
@@ -10,6 +10,8 @@
 调研了 [Naive UI Admin](https://github.com/jekip/naive-ui-admin)、[Vue Naive Admin](https://github.com/zclzone/vue-naive-admin)、[SoybeanAdmin](https://github.com/soybeanjs/soybean-admin)。它们的模块导航、布局、错误页面和可定制主题适合参考，但整套引入会带来动态菜单权限、持久化登录状态、UnoCSS 或自动路由等与既有方向不一致的机制。
 
 ## 决策
+
+> 以下保留首批实现时的历史决策。需求方现已明确要求直接使用现成模板；第 1、2 项中关于不引入模板、不复制源码的限制由 ADR 0017 替代，具体选用 Naive UI Admin 开源版。源码替换已由 ticket 07 实施，真实授权账号验收限制见[迁移验收记录](../specs/0007-admin-template-acceptance.md)。
 
 1. 新建独立构建的 `apps/admin-web` 静态 SPA，生产基路径 `/admin/`。复用现有 Vue、TypeScript、Vite、Naive UI、Tailwind、Router、Pinia 版本，不新增后台模板、图表、图标或表格封装框架。
 2. 只参考公开项目的交互思想，不复制其源码或图片。沿用共享 FIBA UI 规格；各 SPA 独立拥有主题适配入口，不跨应用导入代码。暂不为两个入口抽象新的 UI 包。
