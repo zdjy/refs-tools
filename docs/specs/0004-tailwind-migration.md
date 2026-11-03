@@ -7,7 +7,7 @@
 
 迁移 `apps/referee-web` 的导航、应用骨架、404、登录、注册、账号和队伍级记录台及私有子组件。仅替换样式实现，不改变文案、业务规则、数据契约、登录会话、本地存储、路由或离线边界。
 
-视觉继续遵循[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，工程约束仅维护于[样式规约](../agents/coding-standards/styles.md)。保持原有 token、几何折面、排版、间距、圆角、微阴影、胶囊按钮和状态反馈；延续既有场边操作密度例外，不套用营销页留白。
+视觉继续遵循[共享 UI 规范](../ui/macos_fiba.md)，工程约束仅维护于[样式规约](../agents/coding-standards/styles.md)。迁移当时保持原有视觉；该基线已由 [FS-0012](0012-macos-vibrancy-ui.md) 切换到新规范，圆角、阴影与动效取值以新规范和样式规约为准；延续既有场边操作密度例外，不套用营销页留白。
 
 ## 验收标准
 

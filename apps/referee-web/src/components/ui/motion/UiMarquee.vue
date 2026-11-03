@@ -41,7 +41,7 @@ function toggle() {
         </ul>
       </div>
     </div>
-    <button v-if="!reduced" type="button" :aria-pressed="paused" aria-label="暂停滚动关键词" class="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-solid border-line bg-surface text-ink transition-all duration-300 ease-[cubic-bezier(.25,.1,.25,1)] hover:border-body active:scale-95" @click="toggle">
+    <button v-if="!reduced" type="button" :aria-pressed="paused" aria-label="暂停滚动关键词" class="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-solid border-line bg-surface text-ink transition-all duration-200 ease-out hover:border-body active:scale-95" @click="toggle">
       <component :is="paused ? Play : Pause" class="size-4" aria-hidden="true" />
     </button>
   </div>

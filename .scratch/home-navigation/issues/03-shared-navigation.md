@@ -9,7 +9,7 @@
 ## 必读
 
 - [FS-0006 §4.2、§7、A04、B03～B05](../../../docs/specs/0006-home-navigation.md)。
-- [共享 UI 规范](../../../docs/ui/fiba_about_ui_specification.md)。
+- [共享 UI 规范](../../../docs/ui/macos_fiba.md)。
 - [编码规约索引](../../../docs/agents/coding-standards.md)中的通用、前端与样式主题。
 
 ## 实施步骤

@@ -9,9 +9,9 @@ const emit = defineEmits<{ copy: [label: string, value: string | undefined] }>()
 </script>
 
 <template>
-  <div class="mt-4 rounded-2xl border border-solid border-line bg-soft p-4 compact:p-5">
+  <div class="mt-4 rounded-xl border border-solid border-line bg-soft p-4 compact:p-5">
     <div class="flex flex-wrap items-start justify-between gap-3">
-      <div><p class="m-0 text-xs font-semibold uppercase tracking-wider text-red">批量结果</p><p class="mt-2 mb-0 text-sm text-body">{{ result.gb2312Count }} 个汉字 · {{ result.asciiCount }} 个 ASCII · {{ result.unsupportedCount }} 个未支持</p></div>
+      <div><p class="m-0 text-xs font-bold uppercase tracking-wider text-red-hover">批量结果</p><p class="mt-2 mb-0 text-sm text-body">{{ result.gb2312Count }} 个汉字 · {{ result.asciiCount }} 个 ASCII · {{ result.unsupportedCount }} 个未支持</p></div>
       <n-button secondary size="small" :disabled="!result.input" @click="emit('copy', 'batch', result.items.map((item) => item.character ?? '�').join(''))"><Copy :size="15" aria-hidden="true" />复制转换结果</n-button>
     </div>
     <div v-if="rows.length" class="mt-4 overflow-x-auto rounded-xl border border-solid border-line bg-surface">

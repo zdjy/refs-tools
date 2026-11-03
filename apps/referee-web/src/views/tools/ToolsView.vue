@@ -8,7 +8,7 @@ import { moduleStatus } from '../../navigation/navigation.presentation'
 
 <template>
   <NavigationShell>
-    <header class="rounded-3xl bg-sand p-6 compact:p-8">
+    <header class="rounded-2xl bg-sand p-6 compact:p-8">
       <p class="mt-0 mb-3 text-sm font-semibold text-body">{{ moduleStatus(modules.tools) }}</p>
       <h1 class="m-0 text-3xl font-bold tracking-tight text-ink">裁判工具</h1>
       <p class="mt-4 mb-0 text-base leading-relaxed text-body">场边记录与实用查询。当前可使用本地比赛工作台，无需登录。</p>

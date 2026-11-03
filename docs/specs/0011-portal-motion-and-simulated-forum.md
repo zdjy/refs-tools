@@ -3,7 +3,7 @@
 - 状态：已实现；自动化与 Chrome 无头浏览器验收通过，人工项见第 5 节。
 - 范围：裁判端首页与十条阅读路由。
 - 决策：[ADR 0019](../decisions/0019-motion-and-simulated-forum-content.md)。
-- 视觉基线：[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，不变。
+- 视觉基线：[共享 UI 规范](../ui/macos_fiba.md)；视觉基线已由 [FS-0012](0012-macos-vibrancy-ui.md) 切换为 macOS 毛玻璃规范。
 - 对 [FS-0008](0008-editorial-home.md) 的关系：仅在第 1 节列出的三点上放宽，其余（路由、工作台生命周期、无新增 API、无持久缓存）继续有效。
 
 ## 1. 相对 FS-0008 的例外

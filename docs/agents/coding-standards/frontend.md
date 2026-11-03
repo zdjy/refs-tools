@@ -46,7 +46,7 @@ apps/referee-web/src/
 
 ## 3. UI 组件框架与 DDD 边界
 
-基础组件库采用 **Naive UI 2.x**，选型依据见 [ADR 0007](../../decisions/0007-vue-ui-framework.md)；视觉与交互基线统一引用 [FIBA UI 规范](../../ui/fiba_about_ui_specification.md)。本节只定义工程边界，不另建配色、排版或圆角规范。UI 框架属于表现层技术依赖，不是领域模型、业务规则或应用服务。
+基础组件库采用 **Naive UI 2.x**，选型依据见 [ADR 0007](../../decisions/0007-vue-ui-framework.md)；视觉与交互基线统一引用 [共享 UI 规范](../../ui/macos_fiba.md)。本节只定义工程边界，不另建配色、排版或圆角规范。UI 框架属于表现层技术依赖，不是领域模型、业务规则或应用服务。
 
 ### (1) 依赖方向与职责归属
 

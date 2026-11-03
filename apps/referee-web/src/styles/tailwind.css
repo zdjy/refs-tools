@@ -21,9 +21,11 @@
   --radius-*: initial;
   --radius-xl: 12px;
   --radius-2xl: 16px;
-  --radius-3xl: 24px;
   --shadow-*: initial;
   --font-serif: initial;
+  /* 主过渡统一为 200ms ease-out，见 macOS 毛玻璃规范「交互与动效」。 */
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: ease-out;
 }
 
 /* inline 使工具类直接消费运行时注入的 token，不重复维护色值。 */
@@ -43,4 +45,7 @@
   --color-black: var(--black);
   --font-sans: var(--font);
   --shadow-card: var(--shadow);
+  --shadow-raised: var(--raised);
+  --shadow-lift: var(--lift);
+  --shadow-selected: var(--selected);
 }

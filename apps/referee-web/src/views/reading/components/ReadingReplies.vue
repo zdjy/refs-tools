@@ -9,11 +9,11 @@ defineProps<{ thread: SampleThread }>()
 
 <template>
   <section class="mt-8" aria-labelledby="replies-title">
-    <p class="mt-0 mb-3 font-mono text-xs tracking-wider text-red-hover uppercase">Replies / 示例回应</p>
+    <p class="mt-0 mb-3 text-xs font-bold tracking-wider text-red-hover uppercase">Replies / 示例回应</p>
     <h2 id="replies-title" class="m-0 text-2xl font-bold tracking-tight text-ink compact:text-3xl">{{ thread.replies.length }} 条示例回应</h2>
     <p class="mt-3 mb-0 text-sm leading-relaxed text-body">回应人物均为示例角色，数值为示例值，并非真实用户内容。真实回复与点赞尚未开放。</p>
     <div class="mt-6 grid gap-4">
-      <article v-for="(reply, index) in thread.replies" :key="index" v-reveal="{ delay: index * 0.06, y: 18 }" class="rounded-2xl border border-solid border-line bg-surface p-5 shadow-card compact:p-6">
+      <article v-for="(reply, index) in thread.replies" :key="index" v-reveal="{ delay: index * 0.06, y: 18 }" class="rounded-xl border border-solid border-line bg-surface p-5 shadow-card compact:p-6">
         <header class="flex items-center gap-3">
           <PersonaAvatar :shape="findPersona(reply.personaId).shape" />
           <div class="min-w-0"><p class="m-0 text-sm font-semibold text-ink">{{ findPersona(reply.personaId).name }}</p><p class="m-0 text-xs text-body">{{ reply.moment }}</p></div>

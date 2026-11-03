@@ -11,11 +11,11 @@ const breakpoints = [['xs', 375], ['sm', 480], ['compact', 640], ['md', 768], ['
 const classes = [
   'bg-canvas', 'bg-sand', 'bg-facet', 'bg-surface', 'bg-soft',
   'text-ink', 'text-body', 'text-muted', 'border-line', 'text-red', 'text-green', 'text-black',
-  'font-sans', 'font-mono', 'shadow-card', 'rounded-xl', 'rounded-2xl', 'rounded-3xl', 'rounded-full',
+  'font-sans', 'font-mono', 'shadow-card', 'shadow-raised', 'shadow-lift', 'shadow-selected', 'rounded-xl', 'rounded-2xl', 'rounded-full',
   ...breakpoints.map(([name]) => `${name}:gap-6`),
   'md:grid-cols-3', 'md:first:col-auto', 'tablet:grid', 'xl:col-start-2', '2xl:grid-cols-5',
   'hover:text-red-hover', 'focus-visible:ring-red/30', 'motion-reduce:transition-none', 'min-h-[44px]',
-  'bg-blue-500', 'rounded-lg', 'shadow-2xl', '3xl:block', 'font-serif',
+  'bg-blue-500', 'rounded-lg', 'rounded-3xl', 'shadow-2xl', '3xl:block', 'font-serif',
 ]
 
 // 构建检查独立于低内存单测，临时源文件只用于验证扫描与生成，不写入 dist。
@@ -27,7 +27,7 @@ try {
   const css = outputs.filter((item) => item.type === 'asset' && item.fileName.endsWith('.css'))
     .map((item) => String(item.source)).join('\n')
 
-  for (const token of ['canvas', 'sand', 'facet', 'surface', 'soft', 'ink', 'body', 'muted', 'line', 'red', 'green', 'black', 'font', 'shadow', 'red-hover']) {
+  for (const token of ['canvas', 'sand', 'facet', 'surface', 'soft', 'ink', 'body', 'muted', 'line', 'red', 'green', 'black', 'font', 'shadow', 'raised', 'lift', 'selected', 'red-hover']) {
     assert(css.includes(`var(--${token})`), `缺少 token 映射：${token}`)
   }
   for (const selector of [
@@ -37,7 +37,7 @@ try {
     String.raw`.xl\:grid-cols-3`, String.raw`.xl\:col-start-2`, String.raw`.\32 xl\:grid-cols-5`,
     String.raw`.hover\:text-red-hover:hover`, String.raw`.focus-visible\:ring-red\/30:focus-visible`,
     String.raw`.motion-reduce\:transition-none`, String.raw`.min-h-\[44px\]`, '.font-sans', '.font-mono',
-    '.shadow-card', '.rounded-xl', '.rounded-2xl', '.rounded-3xl', '.rounded-full',
+    '.shadow-card', '.shadow-raised', '.shadow-lift', '.shadow-selected', '.rounded-xl', '.rounded-2xl', '.rounded-full',
     String.raw`.lg\:grid-cols-3`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
     String.raw`.group-hover\:scale-105`, '.scroll-mt-6', '.sr-only',
     String.raw`.compact\:grid-cols-3`,
@@ -45,7 +45,9 @@ try {
     String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.5fr\)_minmax\(0\,1fr\)\]`,
     String.raw`.tablet\:grid-cols-\[220px_minmax\(0\,1fr\)\]`,
     String.raw`.tablet\:grid-cols-\[minmax\(0\,1fr\)_260px\]`,
-    String.raw`.scale-x-\(--progress\)`, String.raw`.hover\:-translate-y-1:hover`,
+    String.raw`.scale-x-\(--progress\)`, String.raw`.hover\:-translate-y-0\.5:hover`,
+    // macOS 毛玻璃：顶栏/侧栏模糊、半透明画布与悬停浮升阴影。
+    '.backdrop-blur-xl', '.backdrop-blur-md', String.raw`.bg-canvas\/90`, String.raw`.hover\:shadow-lift:hover`,
   ]) {
     assert(css.includes(selector), `缺少工具类：${selector}`)
   }
@@ -57,7 +59,7 @@ try {
   }
   const widths = [...new Set([...css.matchAll(/@media\s*\(width\s*>=\s*(\d+)px\)/g)].map((match) => Number(match[1])))]
   assert.deepEqual(widths, breakpoints.map(([, width]) => width), '产物包含未登记的宽度断点')
-  for (const forbidden of ['.bg-blue-500', '.rounded-lg{', '.shadow-2xl', String.raw`.\33 xl\:block`, '.font-serif', '12347px', 'oklch(', '::file-selector-button', 'box-sizing:border-box;margin:0;padding:0']) {
+  for (const forbidden of ['.bg-blue-500', '.rounded-lg{', String.raw`.rounded-3xl`, '.shadow-2xl', String.raw`.\33 xl\:block`, '.font-serif', '12347px', 'oklch(', '::file-selector-button', 'box-sizing:border-box;margin:0;padding:0']) {
     assert(!css.includes(forbidden), `意外生成默认主题、Preflight 或扫描范围外规则：${forbidden}`)
   }
   assert(!css.includes('@theme') && !css.includes('@source'), 'Tailwind 指令未被编译')

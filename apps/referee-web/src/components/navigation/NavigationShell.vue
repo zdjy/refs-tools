@@ -8,7 +8,7 @@ import PrimaryNavigation from './PrimaryNavigation.vue'
 <template>
   <div class="min-h-screen bg-canvas">
     <SkipLink />
-    <header class="border-0 border-b border-solid border-line bg-surface tablet:sticky tablet:top-0 tablet:z-40">
+    <header class="border-0 border-b border-solid border-line bg-canvas/90 backdrop-blur-md tablet:sticky tablet:top-0 tablet:z-40">
       <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 py-3 compact:px-6 tablet:gap-4 xl:px-8">
         <RouterLink to="/" class="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-bold text-ink no-underline hover:text-red"><span aria-hidden="true" class="grid size-8 place-items-center rounded-full bg-ink text-surface">R</span><span>裁判工具箱</span></RouterLink>
         <PrimaryNavigation />

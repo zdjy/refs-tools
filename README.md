@@ -81,7 +81,7 @@ docker compose --profile test down
 
 ## 上游模板快照
 
-`apps/admin-web` 完整保留 [jekip/naive-ui-admin](https://github.com/jekip/naive-ui-admin) 的 `main` 分支源码，版本 `3.0.0`，commit `c9db4cde447240eaa17fbe439f507680819add3d`；MIT 许可、上游 README、锁文件、示例和 Mock 均保留。本地只修改 UI 颜色，使用[共享 FIBA 配色](docs/ui/fiba_about_ui_specification.md)，不改布局、字体、尺寸、路由、登录逻辑或构建配置。
+`apps/admin-web` 完整保留 [jekip/naive-ui-admin](https://github.com/jekip/naive-ui-admin) 的 `main` 分支源码，版本 `3.0.0`，commit `c9db4cde447240eaa17fbe439f507680819add3d`；MIT 许可、上游 README、锁文件、示例和 Mock 均保留。本地只修改 UI 颜色，使用[共享 UI 规范配色](docs/ui/macos_fiba.md)，不改布局、字体、尺寸、路由、登录逻辑或构建配置。
 
 按本次“完整引入、仅改配色”的要求，该快照独立安装和构建，不纳入根 pnpm 工作区及 Docker/Nginx 部署；不对上游执行 Tailwind 4 迁移、组件拆分或业务接入。旧管理端源码、专属规格、ADR、tickets 及部署入口已移除，共用 API、账号、权限和审计能力保留。
 
@@ -98,7 +98,7 @@ pnpm build
 
 ## 前端样式
 
-现有导航、认证/账号、404 和队伍级记录台已迁移至 Tailwind CSS，保留全局可访问性基线及品牌几何裁切，不启用 Preflight。范围与验收见[迁移规格](docs/specs/0004-tailwind-migration.md)，选型及兼容性取舍见 [ADR 0013](docs/decisions/0013-tailwindcss-styling.md)；工程约束统一遵循[样式规约](docs/agents/coding-standards/styles.md)，视觉基线仍为[共享 FIBA UI 规范](docs/ui/fiba_about_ui_specification.md)。
+现有导航、认证/账号、404 和队伍级记录台已迁移至 Tailwind CSS，保留全局可访问性基线及品牌几何裁切，不启用 Preflight。范围与验收见[迁移规格](docs/specs/0004-tailwind-migration.md)，选型及兼容性取舍见 [ADR 0013](docs/decisions/0013-tailwindcss-styling.md)；工程约束统一遵循[样式规约](docs/agents/coding-standards/styles.md)，视觉基线仍为[共享 UI 规范](docs/ui/macos_fiba.md)。
 
 独立样式构建检查：`pnpm --filter @refs-tools/referee-web test:styles`，不并入低内存单测。
 

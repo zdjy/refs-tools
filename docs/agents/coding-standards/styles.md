@@ -1,6 +1,6 @@
 # 样式规约：Tailwind CSS
 
-本文件属于[全栈架构与编码规约](../coding-standards.md)，是样式工程约束的唯一维护来源。选型与迁移取舍见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)，视觉基线引用[共享 FIBA UI 规范](../../ui/fiba_about_ui_specification.md)。
+本文件属于[全栈架构与编码规约](../coding-standards.md)，是样式工程约束的唯一维护来源。选型与迁移取舍见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)，视觉基线引用[共享 UI 规范](../../ui/macos_fiba.md)。
 
 ## 1. 技术基线与职责
 
@@ -42,8 +42,8 @@ apps/referee-web/
 ## 3. Token 与响应式配置
 
 * `ui-tokens.ts` 为颜色、字体、阴影和焦点值的唯一来源，应用入口先注入 CSS 变量再挂载。`tailwind.css` 用 `@theme inline` 映射，不复制色值；Naive UI 仍由 `ui-theme.ts` 消费相同 token。
-* 使用语义工具类：`bg-canvas`、`bg-surface`、`bg-soft`、`text-ink`、`text-body`、`border-line`、`text-red`、`hover:text-red-hover`、`shadow-card`、`font-sans`。透明色、`currentColor` 可以使用；禁止框架默认品牌色、硬编码颜色任意值和页面内 token 重定义。
-* 默认颜色、断点、圆角和阴影命名空间已重置。圆角限定 `rounded-xl`（12px）、`rounded-2xl`（16px）、`rounded-3xl`（24px）和 `rounded-full`；阴影使用 `shadow-card`，其他阴影先补充共享 token。Naive UI 组件通过公开主题接口维护相同取值。
+* 使用语义工具类：`bg-canvas`、`bg-surface`、`bg-soft`、`text-ink`、`text-body`、`border-line`、`text-red`、`hover:text-red-hover`、`shadow-card`、`shadow-raised`、`shadow-lift`、`shadow-selected`、`font-sans`。透明色、`bg-canvas/90` 一类对语义色的透明度修饰符、`currentColor` 可以使用；禁止框架默认品牌色、硬编码颜色任意值和页面内 token 重定义。
+* 默认颜色、断点、圆角和阴影命名空间已重置。圆角限定 `rounded-xl`（12px，卡片、面板、输入框、导航项）、`rounded-2xl`（16px，应用窗口级主容器与特征横幅）和 `rounded-full`（按钮、标签），不使用 24px 圆角；阴影按「微层 `shadow-card` → 浮雕 `shadow-raised` → 悬停 `shadow-lift` → 激活导航 `shadow-selected`」分级，其他阴影先补充共享 token。主过渡为 200ms `ease-out`（`@theme` 已设为默认值），边框不得大于 1px。Naive UI 组件通过公开主题接口维护相同取值。
 * 断点统一为下表，使用无前缀类表达 320px 起的移动基础布局，再按 `xs → sm → compact → md → tablet → lg → xl → 2xl` 增强。不使用 Tailwind 默认断点含义、任意断点或 `max-*` 变体引入另一套布局策略；新增断点需在相关规格说明理由并集中配置。各布局按内容所需空间选择切换档位，不在同一断点机械启用所有多栏布局；本次细分理由与验收见[响应式适配规格](../../specs/0005-responsive-layout.md)。
 
 | 变体 | 最小宽度 |
@@ -95,4 +95,4 @@ apps/referee-web/
 
 * 执行相关单测、`typecheck` 和生产构建；使用 `pnpm --filter @refs-tools/referee-web test:styles` 独立验证语义 token、全部八档断点、状态变体及任意值类确实生成，且无默认调色板、Preflight 或扫描范围外规则意外进入产物。该命令执行内存构建，不并入低内存单测。
 * 比较构建前后的 CSS/JS 体积；Tailwind 只参与构建，不能因此增加生产前端服务、远程字体/CDN 或私有数据缓存。浏览器基线及兼容性取舍见 ADR 0013。
-* 组件迁移必须另做浏览器验收：320px 移动端及桌面无页面级横向溢出、44×44px 触控目标、可访问名称、键盘/焦点、禁用/加载/错误状态、系统 reduced-motion 和 FIBA 主题一致性。仅修改依赖和配置时不得将“构建通过”表述为“所有页面已完成视觉验收”。
+* 组件迁移必须另做浏览器验收：320px 移动端及桌面无页面级横向溢出、44×44px 触控目标、可访问名称、键盘/焦点、禁用/加载/错误状态、系统 reduced-motion 和 共享 UI 规范一致性。仅修改依赖和配置时不得将“构建通过”表述为“所有页面已完成视觉验收”。

@@ -3,7 +3,7 @@
 - 状态：首页与阅读页的动效、模拟论坛和扩充内容已由 [FS-0011](0011-portal-motion-and-simulated-forum.md) 替代，本文第 1、2 节中与之冲突的限制以 FS-0011 为准；以下为首版与第一次改版记录。内容门户式首页已实现；本轮验证记录见第 6 节。第 5 节保留上一版验收历史，不代表本轮布局已通过浏览器复验。
 - 范围：裁判端首页、内置内容阅读与共享导航图标。
 - 业务与导航基础：[FS-0006](0006-home-navigation.md)。
-- 视觉基线：[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，保持原规范不变。
+- 视觉基线：[共享 UI 规范](../ui/macos_fiba.md)；视觉基线已由 [FS-0012](0012-macos-vibrancy-ui.md) 切换为 macOS 毛玻璃规范。
 - 工程约束：[编码规约](../agents/coding-standards.md)。
 
 ## 1. 范围与真实性

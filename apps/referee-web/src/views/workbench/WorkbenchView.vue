@@ -34,7 +34,7 @@ onMounted(initialize)
 <template>
   <main class="min-h-screen">
     <SkipLink />
-    <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-surface px-4 py-2 md:px-8">
+    <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-canvas/90 px-4 py-2 backdrop-blur-md tablet:sticky tablet:top-0 tablet:z-40 md:px-8">
       <RouterLink class="inline-flex min-h-11 items-center gap-2.5 text-[14px] font-bold text-ink no-underline" to="/" aria-label="裁判工具箱首页"><span aria-hidden="true" class="grid size-7 place-items-center rounded-full bg-ink text-surface">R</span><span>裁判工具箱</span></RouterLink>
       <div class="flex items-center gap-2 text-[12px] text-body">
         <span class="hidden sm:inline">本地工作台</span>
@@ -59,7 +59,7 @@ onMounted(initialize)
         <template v-if="activeSession">
           <header class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p class="mt-0 mr-0 mb-[7px] ml-0 text-[12px] font-[750] text-red">队伍级记录台</p><h2 class="m-0 text-[22px] tracking-[-.02em] wrap-anywhere">{{ activeSession.scorer.teams.home.name }} vs {{ activeSession.scorer.teams.away.name }}</h2>
+              <p class="mt-0 mr-0 mb-[7px] ml-0 text-xs font-bold tracking-wider text-red-hover uppercase">队伍级记录台</p><h2 class="m-0 text-[22px] tracking-[-.02em] wrap-anywhere">{{ activeSession.scorer.teams.home.name }} vs {{ activeSession.scorer.teams.away.name }}</h2>
               <p class="mt-1.5 mr-0 mb-0 ml-0 text-[12px] wrap-anywhere text-body">{{ activeSession.period > activeSession.rules.periodCount ? `加时 ${activeSession.period - activeSession.rules.periodCount}` : `第 ${activeSession.period} 节` }} / {{ activeSession.rules.label }}</p>
               <p class="mt-1.5 mr-0 mb-0 ml-0 text-[12px] wrap-anywhere text-body">规则版本：{{ activeSession.rules.id }}</p>
             </div>
@@ -86,7 +86,7 @@ onMounted(initialize)
           </div>
           <p v-if="shortcutsEnabled" class="mt-3.5 mr-0 mb-0 ml-0 text-[12px] leading-[1.6] text-body">Space 启停比赛钟 · R/T 重置进攻钟 · P 球权 · H 蜂鸣 · Ctrl/Cmd+Z 撤销。输入或弹窗中不生效。</p>
           <p v-if="feedback" class="rounded-xl bg-sand p-3 text-[13px] text-body" role="status">{{ feedback }}</p>
-          <div v-if="activeSession.scorer.timeoutTeam" class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-sand p-4" role="status">
+          <div v-if="activeSession.scorer.timeoutTeam" class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sand p-4" role="status">
             <strong>{{ activeSession.scorer.teams[activeSession.scorer.timeoutTeam].name }} 暂停中</strong>
             <n-button secondary @click="endTimeout">结束球队暂停</n-button>
           </div>
@@ -102,7 +102,7 @@ onMounted(initialize)
               @toggle="toggleClock" @reset="resetClock" @edit="editClock" />
           </section>
           </section>
-          <div class="mt-3 flex min-h-[62px] items-center gap-3.5 rounded-2xl bg-sand px-3.5 py-2 text-[13px] text-body">
+          <div class="mt-3 flex min-h-[62px] items-center gap-3.5 rounded-xl bg-sand px-3.5 py-2 text-[13px] text-body">
             <span>节次</span><strong class="text-[18px] text-ink">{{ String(activeSession.period).padStart(2, '0') }} <small class="text-[12px] font-medium text-body">/ {{ activeSession.rules.periodCount }}</small></strong>
             <div class="ml-auto"><n-popconfirm positive-text="确认换节" negative-text="取消" @positive-click="switchPeriod">
               <template #trigger><n-button secondary>{{ activeSession.period >= activeSession.rules.periodCount ? '进入加时' : '下一节' }}</n-button></template>

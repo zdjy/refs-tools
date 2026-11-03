@@ -6,7 +6,7 @@
 - 适用应用：`apps/referee-web`。
 - 任务入口：[首页开发任务](../../.scratch/home-navigation/spec.md)。
 - 业务依据：[MVP-001](0001-mvp-scope-and-business-rules.md)、[FS-0002](0002-mvp-platform-feature.md)、[队伍级记录台](0003-team-scorer-console.md)。
-- UI 依据：[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)、[响应式规格](0005-responsive-layout.md)。
+- UI 依据：[共享 UI 规范](../ui/macos_fiba.md)、[响应式规格](0005-responsive-layout.md)。
 - 工程约束：遵循[统一编码规约](../agents/coding-standards.md)，不在本文重新定义依赖、分层、样式或文件长度规则。
 
 ## 1. 目标与范围

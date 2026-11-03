@@ -30,7 +30,7 @@ export const vReveal: ObjectDirective<HTMLElement, RevealOptions | undefined> = 
     const { delay = 0, y = 28 } = value ?? {}
     el.style.opacity = '0'
     const stop = inView(el, () => {
-      const run = animate(el, { opacity: [0, 1], y: [y, 0] }, { duration: 0.9, delay, ease: [0.25, 0.1, 0.25, 1] })
+      const run = animate(el, { opacity: [0, 1], y: [y, 0] }, { duration: 0.4, delay, ease: 'easeOut' })
       // 动画结束后清除内联样式，让 hover 抬升与按压反馈的工具类重新生效。
       run.then(() => {
         el.style.removeProperty('opacity')

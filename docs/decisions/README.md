@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0020：裁判端 UI 基线切换为 macOS 毛玻璃规范](./0020-macos-vibrancy-ui-baseline.md) — 唯一 UI 基线改为 macOS 毛玻璃（FIBA 暖沙金），圆角、阴影、动效与毛玻璃分层随之调整。
+
 - [ADR 0019：裁判端引入 Motion 动画库与模拟论坛内容](./0019-motion-and-simulated-forum-content.md) — 仅在首页与阅读页使用 motion，reduced-motion 全部关闭；模拟论坛仅限示例角色与示例值。
 
 - [ADR 0018：裁判端内置编辑内容与 Lucide 图标](./0018-editorial-content-and-icons.md) — 公开自编导读与讨论示例不冒充真实业务内容，按需使用官方 Vue 图标组件，不增加后端或缓存。

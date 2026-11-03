@@ -10,7 +10,7 @@ const { board, threads, expanded, toggle } = useThreadFeed()
 
 <template>
   <section class="mt-14 compact:mt-24" aria-labelledby="forum-title">
-    <div class="relative overflow-hidden rounded-3xl bg-sand p-5 compact:p-8 xl:p-12">
+    <div class="relative overflow-hidden rounded-2xl bg-sand p-5 compact:p-8 xl:p-12">
       <div aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-0 w-[40%] bg-facet [clip-path:polygon(0_0,100%_0,60%_100%,0_100%)]"></div>
       <div v-reveal class="relative grid gap-6 tablet:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] tablet:items-end">
         <div class="tablet:col-start-2">
@@ -24,7 +24,7 @@ const { board, threads, expanded, toggle } = useThreadFeed()
       <nav aria-label="论坛版块" class="min-w-0 tablet:sticky tablet:top-6">
         <p class="mt-0 mb-3 font-mono text-xs tracking-wider text-body uppercase">版块</p>
         <div class="flex gap-2 overflow-x-auto pb-2 tablet:flex-col tablet:overflow-visible tablet:pb-0" role="group" aria-label="按版块筛选讨论">
-          <button v-for="tab in boardTabs" :key="tab.id" type="button" :aria-pressed="board === tab.id" aria-controls="thread-list" class="min-h-11 shrink-0 cursor-pointer rounded-full border border-solid px-5 py-2 text-left text-sm font-medium transition-all duration-300 ease-[cubic-bezier(.25,.1,.25,1)] active:scale-95 tablet:rounded-2xl" :class="board === tab.id ? 'border-ink bg-ink text-surface' : 'border-line bg-surface text-body hover:border-body hover:text-ink'" @click="board = tab.id">
+          <button v-for="tab in boardTabs" :key="tab.id" type="button" :aria-pressed="board === tab.id" aria-controls="thread-list" class="min-h-11 shrink-0 cursor-pointer rounded-full border border-solid px-5 py-2 text-left text-sm font-medium transition-all duration-200 ease-out active:scale-95 tablet:rounded-xl" :class="board === tab.id ? 'border-line bg-sand font-semibold text-ink shadow-selected' : 'border-transparent bg-soft text-body hover:bg-sand/60 hover:text-ink'" @click="board = tab.id">
             <span class="block">{{ tab.title }}</span>
             <span class="mt-0.5 hidden text-xs font-normal opacity-80 tablet:block">{{ tab.hint }}</span>
           </button>

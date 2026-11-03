@@ -33,7 +33,7 @@ async function onSubmit() {
 
 <template>
   <AuthShell>
-    <div class="mx-auto max-w-[480px] rounded-3xl border border-solid border-line bg-surface px-5 py-6 shadow-card xs:px-6 xs:py-7 sm:px-8 sm:py-9 md:w-full lg:p-10">
+    <div class="mx-auto max-w-[480px] rounded-2xl border border-solid border-line bg-surface px-5 py-6 shadow-raised xs:px-6 xs:py-7 sm:px-8 sm:py-9 md:w-full lg:p-10">
       <template v-if="status === 'unknown' || status === 'loading'">
         <p role="status">正在确认登录状态…</p>
       </template>
@@ -44,7 +44,7 @@ async function onSubmit() {
       </template>
       <template v-else>
         <header class="mb-7">
-          <p class="mt-0 mr-0 mb-3 ml-0 text-[12px] font-bold tracking-[.06em] text-red">{{ mode === 'register' ? '创建账号' : '欢迎回来' }}</p>
+          <p class="mt-0 mr-0 mb-3 ml-0 text-xs font-bold tracking-wider text-red-hover uppercase">{{ mode === 'register' ? '创建账号' : '欢迎回来' }}</p>
           <h2 class="mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">{{ mode === 'register' ? '开启你的裁判之旅' : '登录裁判工具箱' }}</h2>
           <p class="m-0 text-[14px] leading-[1.7] text-body">{{ mode === 'register' ? '验证邮箱，建立属于你的个人账号。' : '登录后，继续你的学习与裁判履职。' }}</p>
         </header>
