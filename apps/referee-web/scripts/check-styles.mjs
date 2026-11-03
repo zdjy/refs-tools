@@ -40,6 +40,9 @@ try {
     '.shadow-card', '.rounded-xl', '.rounded-2xl', '.rounded-3xl', '.rounded-full',
     String.raw`.lg\:grid-cols-3`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
     String.raw`.group-hover\:scale-105`, '.scroll-mt-6', '.sr-only',
+    String.raw`.tablet\:row-span-2`, String.raw`.compact\:grid-cols-3`,
+    String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.3fr\)_minmax\(0\,1fr\)\]`,
+    String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.55fr\)_minmax\(0\,1fr\)\]`,
   ]) {
     assert(css.includes(selector), `缺少工具类：${selector}`)
   }

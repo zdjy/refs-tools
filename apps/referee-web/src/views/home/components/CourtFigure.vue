@@ -3,9 +3,10 @@ import { ScanEye } from '@lucide/vue'
 </script>
 
 <template>
-  <figure class="relative m-0 flex min-h-[300px] flex-col justify-between overflow-hidden rounded-2xl bg-facet p-5 compact:min-h-[360px] compact:p-6">
+  <figure class="group relative m-0 flex min-h-[240px] flex-col justify-between overflow-hidden rounded-2xl bg-facet p-5 compact:min-h-[360px] compact:p-6">
     <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-sand [clip-path:polygon(0_0,75%_0,30%_100%,0_100%)]"></div>
-    <svg class="pointer-events-none absolute inset-0 h-full w-full text-ink" viewBox="0 0 520 420" fill="none" aria-hidden="true">
+    <svg class="pointer-events-none absolute inset-0 h-full w-full text-ink transition-transform duration-500 ease-[cubic-bezier(.25,.1,.25,1)] group-hover:scale-105" viewBox="0 0 520 420" fill="none" aria-hidden="true">
+      <path d="m155 283 100-100 126 66" class="fill-sand" opacity=".6" />
       <g transform="translate(100 -45) rotate(24 180 240)" stroke="currentColor" stroke-width="2" opacity=".22">
         <rect x="20" y="50" width="320" height="510" rx="3" />
         <path d="M20 305h320M126 50v104h108V50M126 560V456h108v104" />
@@ -19,7 +20,7 @@ import { ScanEye } from '@lucide/vue'
       <circle cx="155" cy="283" r="5" class="fill-ink" /><circle cx="381" cy="249" r="5" class="fill-ink" />
     </svg>
     <div class="relative flex items-center justify-between gap-2 text-xs font-medium text-ink"><span>球场观察笔记</span><ScanEye class="size-5" :stroke-width="1.5" aria-hidden="true" /></div>
-    <figcaption class="relative mt-44 self-start rounded-2xl border border-solid border-line bg-surface px-4 py-3 shadow-card compact:mt-56">
+    <figcaption class="relative mt-32 self-start rounded-2xl border border-solid border-line bg-surface px-4 py-3 shadow-card compact:mt-56">
       <p class="m-0 text-sm font-semibold text-ink">位置改变，视野也会改变。</p>
       <p class="mt-1 mb-0 text-xs leading-relaxed text-body">观察关系示意，非站位标准</p>
     </figcaption>
