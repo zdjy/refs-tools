@@ -54,7 +54,7 @@
               </template>
               <span>{{ t('layout.setting.navModeVertical') }}</span>
             </n-tooltip>
-            <n-badge dot color="#D83A1E" v-show="settingStore.navMode === 'vertical'" />
+            <n-badge dot :color="designStore.appTheme" v-show="settingStore.navMode === 'vertical'" />
           </div>
 
           <div class="drawer-setting-item-style">
@@ -68,7 +68,7 @@
               </template>
               <span>{{ t('layout.setting.navModeHorizontal') }}</span>
             </n-tooltip>
-            <n-badge dot color="#D83A1E" v-show="settingStore.navMode === 'horizontal'" />
+            <n-badge dot :color="designStore.appTheme" v-show="settingStore.navMode === 'horizontal'" />
           </div>
 
           <div class="drawer-setting-item-style">
@@ -82,7 +82,7 @@
               </template>
               <span>{{ t('layout.setting.navModeHorizontalMix') }}</span>
             </n-tooltip>
-            <n-badge dot color="#D83A1E" v-show="settingStore.navMode === 'horizontal-mix'" />
+            <n-badge dot :color="designStore.appTheme" v-show="settingStore.navMode === 'horizontal-mix'" />
           </div>
         </div>
 
@@ -100,7 +100,7 @@
               </template>
               <span>{{ t('layout.setting.navThemeDark') }}</span>
             </n-tooltip>
-            <n-badge dot color="#D83A1E" v-if="settingStore.navTheme === 'dark'" />
+            <n-badge dot :color="designStore.appTheme" v-if="settingStore.navTheme === 'dark'" />
           </div>
 
           <div class="drawer-setting-item-style">
@@ -114,7 +114,7 @@
               </template>
               <span>{{ t('layout.setting.navThemeLight') }}</span>
             </n-tooltip>
-            <n-badge dot color="#D83A1E" v-if="settingStore.navTheme === 'light'" />
+            <n-badge dot :color="designStore.appTheme" v-if="settingStore.navTheme === 'light'" />
           </div>
 
           <div class="drawer-setting-item-style">
@@ -128,7 +128,7 @@
               </template>
               <span>{{ t('layout.setting.navThemeHeaderDark') }}</span>
             </n-tooltip>
-            <n-badge dot color="#D83A1E" v-if="settingStore.navTheme === 'header-dark'" />
+            <n-badge dot :color="designStore.appTheme" v-if="settingStore.navTheme === 'header-dark'" />
           </div>
         </div>
         <n-divider title-placement="center">{{ t('layout.setting.interfaceFunction') }}</n-divider>

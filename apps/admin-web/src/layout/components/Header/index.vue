@@ -424,7 +424,7 @@
       }
 
       ::v-deep(.ant-breadcrumb span:last-child .link-text) {
-        color: #635E57;
+        color: var(--admin-body);
       }
 
       .n-breadcrumb {
@@ -473,7 +473,7 @@
 
       .anticon {
         font-size: 16px;
-        color: #635E57;
+        color: var(--admin-body);
       }
     }
 
@@ -484,22 +484,22 @@
   }
 
   .layout-header-light {
-    background: #FAF8F5;
-    color: #635E57;
+    background: var(--admin-surface);
+    color: var(--admin-body);
 
     .n-icon {
-      color: #635E57;
+      color: var(--admin-body);
     }
 
     .layout-header-left {
       ::v-deep(.n-breadcrumb .n-breadcrumb-item:last-child .n-breadcrumb-item__link) {
-        color: #635E57;
+        color: var(--admin-body);
       }
     }
 
     .layout-header-trigger {
       &:hover {
-        background: #F5F2EB;
+        background: var(--admin-surface-muted);
       }
     }
   }

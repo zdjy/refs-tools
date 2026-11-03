@@ -2,7 +2,9 @@
   <div ref="chartRef" :style="{ height, width }"></div>
 </template>
 <script lang="ts" setup>
-  import { onMounted, ref, Ref } from 'vue';
+  import { computed, onMounted, ref, Ref, watch } from 'vue';
+  import { getAdminPalette } from '@/settings/uiPalette';
+  import { useDesignSettingStore } from '@/store/modules/designSetting';
 
   import { useECharts } from '@/hooks/web/useECharts';
 
@@ -13,15 +15,17 @@
   });
   const chartRef = ref<HTMLDivElement | null>(null);
   const { setOptions } = useECharts(chartRef as Ref<HTMLDivElement>);
+  const designStore = useDesignSettingStore();
+  const palette = computed(() => getAdminPalette(designStore.appTheme, designStore.darkTheme));
 
-  onMounted(() => {
+  const updateChart = () => {
     setOptions({
       tooltip: {
         trigger: 'axis',
         axisPointer: {
           lineStyle: {
             width: 1,
-            color: '#1B8754',
+            color: palette.value.success,
           },
         },
       },
@@ -87,7 +91,7 @@
           type: 'line',
           areaStyle: {},
           itemStyle: {
-            color: '#D83A1E',
+            color: palette.value.primary,
           },
         },
         {
@@ -99,10 +103,13 @@
           type: 'line',
           areaStyle: {},
           itemStyle: {
-            color: '#1B8754',
+            color: palette.value.success,
           },
         },
       ],
     });
-  });
+  };
+
+  onMounted(updateChart);
+  watch(palette, updateChart);
 </script>

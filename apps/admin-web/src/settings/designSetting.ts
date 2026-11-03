@@ -1,19 +1,12 @@
-// app theme preset color
-export const appThemeList: string[] = [
-  '#D83A1E',
-  '#BA2F17',
-  '#111111',
-  '#635E57',
-  '#8C867E',
-  '#D4A017',
-  '#1B8754',
-];
+import { adminColorPalettes, DEFAULT_ADMIN_ACCENT } from './uiPalette';
+
+export const appThemeList = Object.keys(adminColorPalettes);
 
 const setting = {
   //深色主题
   darkTheme: false,
   //系统主题色
-  appTheme: '#D83A1E',
+  appTheme: DEFAULT_ADMIN_ACCENT,
   //系统内置主题色列表
   appThemeList,
 };

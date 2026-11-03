@@ -31,11 +31,11 @@
 
     a {
       font-size: 14px;
-      color: #8C867E;
+      color: var(--admin-muted);
       transition: all 0.2s ease-in-out;
 
       &:hover {
-        color: #D83A1E;
+        color: var(--admin-primary);
       }
     }
 
@@ -50,7 +50,7 @@
     }
 
     .copyright {
-      color: #8C867E;
+      color: var(--admin-muted);
       font-size: 14px;
     }
   }

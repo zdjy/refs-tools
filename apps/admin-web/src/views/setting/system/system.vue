@@ -65,21 +65,21 @@
     padding: 5px 16px;
 
     &:hover {
-      background: #F5F2EB;
+      background: var(--admin-surface-muted);
       cursor: pointer;
     }
   }
 
   .thing-cell-on {
-    background: #EBE4D8;
-    color: #D83A1E;
+    background: var(--admin-sand);
+    color: var(--admin-primary);
 
     ::v-deep(.n-thing-main .n-thing-header .n-thing-header__title) {
-      color: #D83A1E;
+      color: var(--admin-primary);
     }
 
     &:hover {
-      background: #DDD4C5;
+      background: var(--admin-sand-deep);
     }
   }
 </style>

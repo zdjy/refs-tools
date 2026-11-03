@@ -55,7 +55,7 @@
                         <template #trigger>
                           <n-icon
                             size="18"
-                            :color="element.fixed === 'left' ? '#D83A1E' : undefined"
+                            :color="element.fixed === 'left' ? 'var(--admin-primary)' : undefined"
                             class="cursor-pointer"
                             @click="fixedColumn(element, 'left')"
                           >
@@ -69,7 +69,7 @@
                         <template #trigger>
                           <n-icon
                             size="18"
-                            :color="element.fixed === 'right' ? '#D83A1E' : undefined"
+                            :color="element.fixed === 'right' ? 'var(--admin-primary)' : undefined"
                             class="cursor-pointer"
                             @click="fixedColumn(element, 'right')"
                           >
@@ -274,7 +274,7 @@
         cursor: pointer;
 
         :hover {
-          color: #D83A1E;
+          color: var(--admin-primary);
         }
       }
     }
@@ -287,7 +287,7 @@
       padding: 10px 14px;
 
       &:hover {
-        background: #EBE4D8;
+        background: var(--admin-sand);
       }
 
       .drag-icon {
@@ -312,7 +312,7 @@
         flex: 1;
 
         &:hover {
-          color: #D83A1E !important;
+          color: var(--admin-primary) !important;
         }
       }
     }

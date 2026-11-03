@@ -301,7 +301,7 @@
         color: var(--text-color);
 
         :hover {
-          color: #D83A1E;
+          color: var(--admin-primary);
         }
       }
     }

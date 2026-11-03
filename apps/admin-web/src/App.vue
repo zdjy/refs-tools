@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, onUnmounted } from 'vue';
+  import { computed, onMounted, onUnmounted, watchEffect } from 'vue';
   import { darkTheme } from 'naive-ui';
   import { LockScreen } from '@/components/Lockscreen';
   import { AppProvider } from '@/components/Application';
@@ -27,7 +27,9 @@
   import { useLocaleStore } from '@/store/modules/locale';
   import { naiveLocales } from '@/locales';
   import { DEFAULT_LOCALE } from '@/locales/types';
-  import { getColorTheme } from '@/settings/colorTheme';
+  import { getColorTheme, getLoginColorTheme } from '@/settings/colorTheme';
+  import { getAdminPalette, getLoginPalette, getPaletteCssVariables } from '@/settings/uiPalette';
+  import { PageEnum } from '@/enums/pageEnum';
 
   const route = useRoute();
   const useScreenLock = useScreenLockStore();
@@ -42,10 +44,23 @@
   const isLock = computed(() => useScreenLock.isLocked);
   const lockTime = computed(() => useScreenLock.lockTime);
 
-  /**
-   * @type import('naive-ui').GlobalThemeOverrides
-   */
-  const getThemeOverrides = computed(() => getColorTheme(designStore.appTheme, designStore.darkTheme));
+  const palette = computed(() =>
+    route.name === PageEnum.BASE_LOGIN_NAME
+      ? getLoginPalette(designStore.darkTheme)
+      : getAdminPalette(designStore.appTheme, designStore.darkTheme)
+  );
+
+  watchEffect(() => {
+    for (const [name, value] of Object.entries(getPaletteCssVariables(palette.value))) {
+      document.documentElement.style.setProperty(name, value);
+    }
+  });
+
+  const getThemeOverrides = computed(() =>
+    route.name === PageEnum.BASE_LOGIN_NAME
+      ? getLoginColorTheme(designStore.darkTheme)
+      : getColorTheme(designStore.appTheme, designStore.darkTheme)
+  );
 
   const getDarkTheme = computed(() => (designStore.darkTheme ? darkTheme : undefined));
 

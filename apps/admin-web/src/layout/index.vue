@@ -188,7 +188,7 @@
 
 <style lang="less">
   .layout-side-drawer {
-    background-color: #111111;
+    background-color: var(--admin-ink);
 
     .layout-sider {
       min-height: 100vh;
@@ -206,7 +206,7 @@
     flex: auto;
 
     &-default-background {
-      background: #FAF8F5;
+      background: var(--admin-canvas);
     }
 
     .layout-sider {

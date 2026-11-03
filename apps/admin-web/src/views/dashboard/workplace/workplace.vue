@@ -251,7 +251,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="#D83A1E">
+                  <n-icon size="30" color="var(--admin-primary)">
                     <FileProtectOutlined />
                   </n-icon>
                 </span>

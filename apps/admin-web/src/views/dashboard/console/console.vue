@@ -224,7 +224,9 @@
   </div>
 </template>
 <script lang="ts" setup>
-  import { ref, onMounted } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
+  import { getAdminPalette } from '@/settings/uiPalette';
+  import { useDesignSettingStore } from '@/store/modules/designSetting';
   import { getConsoleInfo } from '@/api/dashboard/console';
   import VisiTab from './components/VisiTab.vue';
   import { CountTo } from '@/components/CountTo/index';
@@ -268,6 +270,10 @@
     amount: number;
   }
 
+  const designStore = useDesignSettingStore();
+  const dashboardPalette = computed(() =>
+    getAdminPalette(designStore.appTheme, designStore.darkTheme)
+  );
   const loading = ref(true);
   const visits = ref({} as InVisits);
   const saleroom = ref({} as InSaleroom);
@@ -275,12 +281,12 @@
   const volume = ref({} as InVolume);
 
   // 图标列表
-  const iconList = [
+  const iconList = computed(() => [
     {
       icon: UsergroupAddOutlined,
       size: '32',
       title: '用户',
-      color: '#D83A1E',
+      color: dashboardPalette.value.primary,
       eventObject: {
         click: () => {},
       },
@@ -289,7 +295,7 @@
       icon: BarChartOutlined,
       size: '32',
       title: '分析',
-      color: '#D83A1E',
+      color: dashboardPalette.value.primary,
       eventObject: {
         click: () => {},
       },
@@ -298,7 +304,7 @@
       icon: ShoppingCartOutlined,
       size: '32',
       title: '商品',
-      color: '#BA2F17',
+      color: dashboardPalette.value.primaryHover,
       eventObject: {
         click: () => {},
       },
@@ -307,7 +313,7 @@
       icon: AccountBookOutlined,
       size: '32',
       title: '订单',
-      color: '#635E57',
+      color: dashboardPalette.value.body,
       eventObject: {
         click: () => {},
       },
@@ -316,7 +322,7 @@
       icon: CreditCardOutlined,
       size: '32',
       title: '票据',
-      color: '#D4A017',
+      color: dashboardPalette.value.warning,
       eventObject: {
         click: () => {},
       },
@@ -325,7 +331,7 @@
       icon: MailOutlined,
       size: '32',
       title: '消息',
-      color: '#1B8754',
+      color: dashboardPalette.value.success,
       eventObject: {
         click: () => {},
       },
@@ -334,7 +340,7 @@
       icon: TagsOutlined,
       size: '32',
       title: '标签',
-      color: '#8C867E',
+      color: dashboardPalette.value.muted,
       eventObject: {
         click: () => {},
       },
@@ -343,12 +349,12 @@
       icon: SettingOutlined,
       size: '32',
       title: '配置',
-      color: '#DDD4C5',
+      color: dashboardPalette.value.sandDeep,
       eventObject: {
         click: () => {},
       },
     },
-  ];
+  ]);
 
   onMounted(async () => {
     const data = await getConsoleInfo();
