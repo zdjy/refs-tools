@@ -2,7 +2,7 @@
 
 ## 范围与动机
 
-覆盖现有裁判端工作台、登录/注册与账号管理页面。不新增管理端、跨端契约、业务规则或同步行为；沿用[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，工程断点唯一维护在[样式规约](../agents/coding-standards/styles.md#3-token-与响应式配置)。
+覆盖现有裁判端工作台、登录/注册与账号管理页面。不新增跨端契约、业务规则或同步行为；沿用[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，工程断点唯一维护在[样式规约](../agents/coding-standards/styles.md#3-token-与响应式配置)。
 
 原布局在 480px 就将球队面板分为双列，单卡宽度约 210px；768px 同时启用工作台侧栏和认证双栏，导致内容突然收窄；1100px 又将记分牌切为三栏，按钮容易多次折行。不能仅以页面没有横向滚动判定适配成功。
 

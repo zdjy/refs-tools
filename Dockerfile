@@ -4,13 +4,13 @@ RUN npm install --global pnpm@12.16.1
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/referee-web/package.json apps/referee-web/package.json
-COPY apps/admin-web/package.json apps/admin-web/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/domain/package.json packages/domain/package.json
 
 FROM workspace AS dependencies
 RUN pnpm install --frozen-lockfile
-COPY apps ./apps
+COPY apps/api apps/api
+COPY apps/referee-web apps/referee-web
 COPY packages ./packages
 COPY vitest.config.ts vitest.database.config.ts ./
 
@@ -36,11 +36,10 @@ EXPOSE 3000
 CMD ["node", "apps/api/dist/server.js"]
 
 FROM dependencies AS web-build
-RUN pnpm --filter @refs-tools/contracts run build && pnpm --filter @refs-tools/referee-web run build && pnpm --filter @refs-tools/admin-web run build
+RUN pnpm --filter @refs-tools/contracts run build && pnpm --filter @refs-tools/referee-web run build
 
 FROM nginx:alpine AS web
 COPY --from=web-build /workspace/apps/referee-web/dist /usr/share/nginx/html
-COPY --from=web-build /workspace/apps/admin-web/dist /usr/share/nginx/html/admin
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 443
 

@@ -1,35 +1,79 @@
-<script setup lang="ts">
-import { defineAsyncComponent, onMounted, watch } from 'vue'
-import { NButton, NConfigProvider, zhCN, dateZhCN } from 'naive-ui'
-import { useRoute, useRouter } from 'vue-router'
-import { useSessionStore } from './stores/session'
-import { adminTheme } from './ui-theme'
-import AdminLayout from './layout/index.vue'
-
-const LoginView = defineAsyncComponent(() => import('./views/login/LoginView.vue'))
-const session = useSessionStore()
-const route = useRoute()
-const router = useRouter()
-onMounted(() => { void session.restore() })
-watch([() => route.meta.title, () => session.status], ([title, status]) => {
-  document.title = `${status === 'authenticated' ? String(title ?? '平台管理') : '管理端登录'} · 裁判工具平台`
-}, { immediate: true })
-watch(() => [session.status, route.path], () => {
-  if (session.status === 'authenticated' && route.path === '/login') void router.replace('/')
-})
-</script>
-
 <template>
-  <NConfigProvider :theme-overrides="adminTheme" :locale="zhCN" :date-locale="dateZhCN">
-    <div v-if="session.status === 'unknown' || session.status === 'loading'" class="grid min-h-screen place-items-center p-6" role="status">
-      正在恢复管理端会话…
-    </div>
-    <div v-else-if="session.status === 'error'" class="mx-auto max-w-lg p-6">
-      <h1 class="text-2xl">暂时无法确认登录状态</h1>
-      <p role="alert" class="text-body">{{ session.error }}</p>
-      <NButton type="primary" @click="session.restore">重新连接</NButton>
-    </div>
-    <LoginView v-else-if="session.status !== 'authenticated'" />
-    <AdminLayout v-else />
+  <NConfigProvider
+    v-if="!isLock"
+    :locale="naiveLocale"
+    :theme="getDarkTheme"
+    :theme-overrides="getThemeOverrides"
+    :date-locale="naiveDateLocale"
+  >
+    <AppProvider>
+      <RouterView />
+    </AppProvider>
   </NConfigProvider>
+
+  <transition v-if="isLock && $route.name !== 'login'" name="slide-up">
+    <LockScreen />
+  </transition>
 </template>
+
+<script lang="ts" setup>
+  import { computed, onMounted, onUnmounted } from 'vue';
+  import { darkTheme } from 'naive-ui';
+  import { LockScreen } from '@/components/Lockscreen';
+  import { AppProvider } from '@/components/Application';
+  import { useScreenLockStore } from '@/store/modules/screenLock.js';
+  import { useRoute } from 'vue-router';
+  import { useDesignSettingStore } from '@/store/modules/designSetting';
+  import { useLocaleStore } from '@/store/modules/locale';
+  import { naiveLocales } from '@/locales';
+  import { DEFAULT_LOCALE } from '@/locales/types';
+  import { getColorTheme } from '@/settings/colorTheme';
+
+  const route = useRoute();
+  const useScreenLock = useScreenLockStore();
+  const designStore = useDesignSettingStore();
+  const localeStore = useLocaleStore();
+
+  // naive-ui 语言包跟随当前语言切换
+  const naiveLocale = computed(() => naiveLocales[localeStore.locale ?? DEFAULT_LOCALE].locale);
+  const naiveDateLocale = computed(
+    () => naiveLocales[localeStore.locale ?? DEFAULT_LOCALE].dateLocale
+  );
+  const isLock = computed(() => useScreenLock.isLocked);
+  const lockTime = computed(() => useScreenLock.lockTime);
+
+  /**
+   * @type import('naive-ui').GlobalThemeOverrides
+   */
+  const getThemeOverrides = computed(() => getColorTheme(designStore.appTheme, designStore.darkTheme));
+
+  const getDarkTheme = computed(() => (designStore.darkTheme ? darkTheme : undefined));
+
+  let timer: number | undefined;
+
+  const timekeeping = () => {
+    if (timer) clearInterval(timer);
+    if (route.name == 'login' || isLock.value) return;
+    // 设置不锁屏
+    useScreenLock.setLock(false);
+    // 重置锁屏时间
+    useScreenLock.setLockTime();
+    timer = window.setInterval(() => {
+      // 锁屏倒计时递减
+      useScreenLock.setLockTime(lockTime.value - 1);
+      if (lockTime.value <= 0) {
+        // 设置锁屏
+        useScreenLock.setLock(true);
+        if (timer) clearInterval(timer);
+      }
+    }, 1000);
+  };
+
+  onMounted(() => {
+    document.addEventListener('mousedown', timekeeping);
+  });
+
+  onUnmounted(() => {
+    document.removeEventListener('mousedown', timekeeping);
+  });
+</script>

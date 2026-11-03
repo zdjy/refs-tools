@@ -4,7 +4,7 @@ import type { AuditQuery, OrganizationAuditParams } from '@refs-tools/contracts/
 import type { SessionService } from '../auth/session.service.js'
 import { sessionToken } from '../auth/auth.http.js'
 import type { AuditService } from './audit.service.js'
-import { auditListSchema, organizationAuditListSchema } from './audit.schema.js'
+import { organizationAuditListSchema } from './audit.schema.js'
 
 export type AuditRouteDependencies = { service: AuditService; sessions: Pick<SessionService, 'requireSession'> }
 
@@ -13,10 +13,6 @@ export function auditRoutes(dependencies: AuditRouteDependencies): FastifyPlugin
   return async (app) => {
     app.addHook('onRequest', async (_request, reply) => {
       reply.header('cache-control', 'no-store').header('vary', 'Cookie')
-    })
-    app.get<{ Querystring: AuditQuery }>('/admin/audit-events', { schema: auditListSchema }, async (request) => {
-      const { user } = await dependencies.sessions.requireSession(sessionToken(request))
-      return apiResponse(await dependencies.service.listPlatform(user.id, request.query))
     })
     app.get<{ Params: OrganizationAuditParams; Querystring: AuditQuery }>(
       '/organizations/:orgId/audit-events', { schema: organizationAuditListSchema }, async (request) => {

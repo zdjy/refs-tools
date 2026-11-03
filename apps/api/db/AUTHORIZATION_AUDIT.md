@@ -53,8 +53,7 @@ COMMIT;
 
 ## API 验收入口
 
-- `GET /api/v1/admin/audit-events`：当前 `platform_admin`，可按 `scopeType/scopeId/resourceType/resourceId` 筛选。
-- `GET /api/v1/organizations/{orgId}/audit-events`：该组织当前有效 owner + active membership，仅返回本组织及下属赛事/比赛日志。
+- `- `GET /api/v1/organizations/{orgId}/audit-events`：该组织当前有效 owner + active membership，仅返回本组织及下属赛事/比赛日志。
 - 查询支持 `cursor` UUID 和 `limit`（1–100，默认 50），返回 `{data:{items,nextCursor}}`。摘要不返回 before/after，响应 `Cache-Control: no-store`。
 - 使用既有 `__Host-refs_session` Cookie。未登录为 401；无平台权限为 403；组织不可见与不存在统一 404。撤销绑定/退出成员关系后相同 Cookie 的下一次请求立即失权。
 - frozen/dissolved 组织仅允许仍有绑定/成员关系的负责人读取历史审计，不允许运营。成功查询本身也追加审计；查询条件不是授权依据。

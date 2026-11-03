@@ -2,7 +2,7 @@
 
 本文件属于[全栈架构与编码规约](../coding-standards.md)。
 
-本规约同样适用于后续 `apps/referee-admin` 等 Vue 前端应用；各应用内部遵守相同边界，但不得相互跨目录引用。目录中的样式文件职责见[样式规约](styles.md)。
+裁判端前端应用内部遵守本规约。目录中的样式文件职责见[样式规约](styles.md)。
 
 ## 1. 模块组织：三权分立 (`apps/referee-web/src/`)
 

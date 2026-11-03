@@ -1,18 +1,59 @@
-import { createRouter, type RouterHistory, type RouteRecordRaw } from 'vue-router'
-import { adminModules } from './modules'
+import { App } from 'vue';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { RedirectRoute } from '@/router/base';
+import { PageEnum } from '@/enums/pageEnum';
+import { createRouterGuards } from './guards';
+import type { IModuleType } from './types';
 
-export const routes: RouteRecordRaw[] = [
-  { path: '/', component: () => import('../views/dashboard/DashboardView.vue'), meta: { title: '运营工作台' } },
-  { path: '/login', component: () => import('../views/login/LoginView.vue'), meta: { title: '管理端登录' } },
-  ...adminModules.map((module) => ({
-    path: module.path, component: () => import('../views/module/ModuleView.vue'),
-    props: { module }, meta: { title: module.title },
-  })),
-  { path: '/audit', component: () => import('../views/audit/AuditView.vue'), meta: { title: '操作审计' } },
-  { path: '/:pathMatch(.*)*', component: () => import('../views/NotFoundView.vue'), meta: { title: '页面不存在' } },
-]
+const modules = import.meta.glob<IModuleType>('./modules/**/*.ts', { eager: true });
 
-/** 仅映射导航；受保护资源的实时授权仍由 API 执行。 */
-export function createAdminRouter(history: RouterHistory) {
-  return createRouter({ history, routes, scrollBehavior: () => ({ top: 0 }) })
+const routeModuleList: RouteRecordRaw[] = Object.keys(modules).reduce((list, key) => {
+  const mod = modules[key].default ?? {};
+  const modList = Array.isArray(mod) ? [...mod] : [mod];
+  return [...list, ...modList];
+}, []);
+
+function sortRoute(a, b) {
+  return (a.meta?.sort ?? 0) - (b.meta?.sort ?? 0);
 }
+
+routeModuleList.sort(sortRoute);
+
+export const RootRoute: RouteRecordRaw = {
+  path: '/',
+  name: 'Root',
+  redirect: PageEnum.BASE_HOME,
+  meta: {
+    title: 'Root',
+  },
+};
+
+export const LoginRoute: RouteRecordRaw = {
+  path: '/login',
+  name: 'Login',
+  component: () => import('@/views/login/index.vue'),
+  meta: {
+    title: 'route.login',
+  },
+};
+
+//需要验证权限
+export const asyncRoutes = [...routeModuleList];
+
+//普通路由 无需验证权限
+export const constantRouter: RouteRecordRaw[] = [LoginRoute, RootRoute, RedirectRoute];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: constantRouter,
+  strict: true,
+  scrollBehavior: () => ({ left: 0, top: 0 }),
+});
+
+export function setupRouter(app: App) {
+  app.use(router);
+  // 创建路由守卫
+  createRouterGuards(router);
+}
+
+export default router;

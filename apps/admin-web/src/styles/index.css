@@ -1,3 +1,0 @@
-/* 保留 reset 与可访问性基线，不启用 Preflight，见 ADR 0013。 */
-@import './tailwind.css';
-@import './base.css';

@@ -5,18 +5,18 @@
 
 ## Context
 
-The product has two web experiences with different interaction priorities: a mobile-first referee client that also works on desktop, and a desktop-oriented administration console. They share domain concepts, authentication, and API contracts. Production is limited to 2 CPU cores and 2 GB RAM. The frontend must not consume production application-server memory, and the system should remain straightforward to build and deploy.
+The product has a mobile-first referee client that also works on desktop. A separately sourced desktop-oriented administration template may be kept for evaluation, but is not a deployed workspace application. Production is limited to 2 CPU cores and 2 GB RAM. The frontend must not consume production application-server memory, and the system should remain straightforward to build and deploy.
 
 ## Options
 
 ### A. Monorepo with independently built SPAs and a separate API (recommended)
 
-A pnpm workspace can contain the referee client, administration app, API, and small shared packages for API schemas, domain types, and design primitives. Build outputs are static assets served by Nginx. The API is a separately deployed, lightweight service.
+A pnpm workspace can contain the referee client, API, and small shared packages for API schemas, domain types, and design primitives. An independently sourced administration template can remain outside the workspace. Deployed build outputs are static assets served by Nginx. The API is a separately deployed, lightweight service.
 
 - Advantages: shared contracts and selected UI primitives without coupling release/runtime lifecycles; one repository simplifies coordinated changes; static frontends consume no Node.js runtime memory in production.
 - Costs: workspace tooling and dependency boundaries need discipline; shared packages can become an accidental coupling point; CI may build more than necessary unless targets are scoped.
 
-### B. Separate repositories for client, admin, and API
+### B. Separate repositories for client, future admin, and API
 
 - Advantages: independent access controls and release cadence; clearer repository ownership at larger organizational scale.
 - Costs: duplicated tooling and contract versioning; coordinated changes are harder for a small team; more repository and pipeline overhead.
@@ -33,7 +33,6 @@ Use a pnpm-workspace Monorepo with independently buildable applications and a se
 ```text
 apps/
   referee-web/       # responsive, installable client SPA
-  admin-web/         # administration SPA
   api/               # lightweight stateless API
 packages/
   contracts/         # API schemas and shared transport types
@@ -41,7 +40,7 @@ packages/
   ui/                # accessible primitives, only where interaction is consistent
 ```
 
-The two SPAs are built in CI and deployed as static files to Nginx/CDN. The API runs independently as a lightweight service. Do not deploy a Node.js frontend server on the 2C2G host. Keep the shared packages small: do not force the mobile client and admin console into one UI shell or share components whose behavior differs materially. API schemas are the preferred sharing boundary; generate clients/types from a canonical schema when practical rather than duplicating contracts by hand.
+The referee SPA is built in CI and deployed as static files to Nginx/CDN. The API runs independently as a lightweight service. Do not deploy a Node.js frontend server on the 2C2G host. Keep shared packages small and do not force independently sourced experiences into one UI shell or share components whose behavior differs materially. API schemas are the preferred sharing boundary; generate clients/types from a canonical schema when practical rather than duplicating contracts by hand.
 
 The database may share the host only after connection limits and memory budgets are configured; this ADR does not select the API framework or database. Record those choices separately after deployment constraints and operational expertise are known.
 

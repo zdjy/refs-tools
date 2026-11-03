@@ -5,5 +5,8 @@ export const NewAuditEventSchema = Type.Object({
   ...Type.Omit(AuditEventSchema, ['id', 'createdAt']).properties,
   organizationId: AuditEventSchema.properties.scopeId,
 }, { additionalProperties: false })
-export const auditListSchema = { querystring: AuditQuerySchema, response: { 200: AuditListResponseSchema } }
-export const organizationAuditListSchema = { ...auditListSchema, params: OrganizationAuditParamsSchema }
+export const organizationAuditListSchema = {
+  querystring: AuditQuerySchema,
+  params: OrganizationAuditParamsSchema,
+  response: { 200: AuditListResponseSchema },
+}

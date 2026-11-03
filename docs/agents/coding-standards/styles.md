@@ -1,6 +1,6 @@
 # 样式规约：Tailwind CSS
 
-本文件属于[全栈架构与编码规约](../coding-standards.md)，是样式工程约束的唯一维护来源。选型与迁移取舍见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)，视觉基线引用[共享 FIBA UI 规范](../../ui/fiba_about_ui_specification.md)。同样适用于后续 `apps/referee-admin`。
+本文件属于[全栈架构与编码规约](../coding-standards.md)，是样式工程约束的唯一维护来源。选型与迁移取舍见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)，视觉基线引用[共享 FIBA UI 规范](../../ui/fiba_about_ui_specification.md)。
 
 ## 1. 技术基线与职责
 

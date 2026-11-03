@@ -28,10 +28,6 @@ function validScope(input: NewAuditEvent): boolean {
 export class AuditService {
   constructor(private readonly dependencies: AuditDependencies) {}
 
-  async listPlatform(actor: string, query: AuditQuery): Promise<AuditList> {
-    return this.list(actor, { type: 'platform', id: null }, query)
-  }
-
   async listOrganization(actor: string, organizationId: string, query: AuditQuery): Promise<AuditList> {
     return this.list(actor, { type: 'organization', id: organizationId }, query)
   }

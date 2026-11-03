@@ -13,7 +13,7 @@
 1. 交付正式的学习与考试闭环：登录后浏览资料、收藏/最近访问、练习与错题复习、参加正式考试、主观题阅卷、查看考试成绩。
 2. 交付正式的裁判资质闭环：创建并审核组织、组织内认证、满足前置条件后申请平台认证、审核/撤销/申诉、展示受限认证档案。
 3. 提供可用 Beta：组织赛事选派与赛后记录、离线比赛工作台和 GB 2312 区位码工具、裁判论坛。
-4. 采用 Monorepo 中独立的客户端 SPA、管理端 SPA 和轻量 API；前端生产产物由 Nginx/CDN 静态托管，不在 2C2G 主机运行前端 Node 服务。
+4. 采用 Monorepo 中的裁判客户端 SPA 和轻量 API；前端生产产物由 Nginx/CDN 静态托管，不在 2C2G 主机运行前端 Node 服务。
 5. 所有媒体采用浏览器直传对象存储。API 只处理授权、上传意图、对象核验、元数据和状态；不代理媒体字节、不缓冲大文件、不转码视频。
 6. 所有受保护资源采用服务端 RBAC 与对象级授权；授权按角色、资源、作用域和当前状态判断，默认拒绝。
 7. 提供可测试的边界：考试断线恢复、重复请求幂等、上传对象核验、认证/选派状态转换、审计和组织隔离。
@@ -442,8 +442,6 @@ export type AuditEvent = {
 | --- | --- | --- |
 | `POST /organizations` | `{name,region,purpose,ownerLegalName,contact,platformInviteToken?}`；回 `{organization,status:"pending_review"|"active"}`。 | 已验证普通用户；有效一次性平台邀请码可直接创建为 active；邀请码用途与成员码隔离 |
 | `GET /organizations/{id}` | 回组织公开/成员视图，字段按关系过滤。 | 登录；私有字段需组织成员或平台权限 |
-| `POST /admin/organizations/{id}/review` | `{decision:"approve"|"reject",reason?}`；回最新组织状态。 | `platform_admin`；审计 |
-| `POST /admin/organization-invites` | `{expiresAt,maxUses,purpose:"create_organization"}`；回一次性明文 token（仅创建时返回）。 | `platform_admin` |
 | `POST /organizations/{id}/membership-requests` | `{message?}`；回 `{membershipId,status:"pending"}`。 | 已验证用户；目标组织 active |
 | `POST /organizations/{id}/invitations` | `{userId,expiresAt?}`；回 `{invitationId}`。 | 组织 owner/organizer |
 | `POST /organizations/{id}/invitations/{invitationId}/accept` | 回 active membership。 | 被邀请用户本人；邮箱已验证；幂等 |
@@ -455,8 +453,6 @@ export type AuditEvent = {
 | `POST /events/{eventId}/head-referees` | `{userId,matchIds?}`；回 event/match-scoped binding。 | 组织 owner/organizer；目标用户须为本组织成员；不得创建 organization-scoped head referee |
 | `DELETE /events/{eventId}/head-referees/{bindingId}` | 回 `{revoked:true}`。 | 组织 owner/organizer；立即撤权并审计 |
 | `DELETE /organizations/{id}/role-bindings/{bindingId}` | 回 `{revoked:true}`。 | 组织 owner；即时撤权；审计 |
-| `POST /admin/organizations/{id}/freeze` | `{reason}`；回 `{status:"frozen"}`。 | `platform_admin`；历史业务只读；审计 |
-| `POST /admin/organizations/{id}/ownership-transfer` | `{newOwnerUserId,reason}`；回新的 owner binding。 | `platform_admin`；目标用户须为 active member；审计 |
 
 ### 3.4 媒体直传
 
@@ -486,16 +482,6 @@ export type AuditEvent = {
 
 | Method / Endpoint | 请求与响应 | 鉴权要求 |
 | --- | --- | --- |
-| `POST /admin/learning/categories` | `{name,parentId?}`；回 `{id,name,parentId,depth}`。 | `platform_admin`；最多三级 |
-| `PATCH /admin/learning/categories/{id}` | `{name?,parentId?,status?}`；回分类。 | `platform_admin`；移动时校验深度并保留历史引用 |
-| `POST /admin/learning/assets` | 资料草稿字段及已核验 media IDs；回 asset/version。 | `content_editor` |
-| `POST /admin/learning/assets/{id}/versions` | `{baseVersion,content,categoryIds,mediaIds,allowDownload}`；回新草稿版本。 | `content_editor`；不得改写已发布版本 |
-| `POST /admin/learning/assets/{id}/publish` | `{expectedVersion}`；回 published version。 | `content_editor`；完整性校验；审计 |
-| `POST /admin/learning/assets/{id}/unpublish` | `{reason}`；回状态。 | `content_editor` 或 `platform_admin` |
-| `POST /admin/questions` | `{kind,prompt,options?,answerKey,explanation,basePoints,rubric?,mediaIds}`；回题目版本。 | `content_editor`；answer key 仅后台响应 |
-| `POST /admin/questions/{id}/versions` | `{baseVersion,kind,prompt,options?,answerKey,explanation,basePoints,rubric?,mediaIds}`；回新题目版本。 | `content_editor`；不得改写已发布/考试引用版本 |
-| `POST /admin/exams` | `{title,policy,questionRefs}`；回 draft。 | `content_editor` |
-| `POST /admin/exams/{id}/publish` | `{expectedVersion}`；回 `{examId,version,status:"published",publishedAt}`。 | `content_editor`；完整性校验、冻结快照、审计 |
 | `GET /exams` | 查询可见考试摘要，不暴露答案。 | 登录；按考试 eligibility 过滤 |
 | `POST /exams/{id}/attempts` | `{idempotencyKey}`；回 `{attemptId,deadlineAt,serverRevision,questions}`。 | 邮箱已验证；报名/认证/组织/邀请码条件满足；仅一个活动尝试 |
 | `PUT /attempts/{id}/answers/{questionId}` | `{answer,clientRevision,expectedServerRevision}`；回 `{serverRevision,savedAt}`。 | 本人活动 attempt；事务校验截止/宽限和版本 |
@@ -504,7 +490,6 @@ export type AuditEvent = {
 | `GET /me/exam-results/{examId}` | 回尝试列表、汇总、待阅卷/通过/失败和展示策略裁剪后的反馈。 | 本人 |
 | `GET /grading/queue` | 回待阅主观题摘要。 | `grader` |
 | `POST /grading/attempts/{attemptId}/reviews` | `{questionId,score,feedback,expectedVersion}`；回评分与尝试最新状态。 | `grader`；该考试授权范围 |
-| `POST /admin/exam-attempts/{attemptId}/overrides` | `{questionId,score,reason}`；回改判结果。 | `platform_admin`；保留原阅卷并审计 |
 
 ### 3.7 认证与申诉
 
@@ -515,13 +500,8 @@ export type AuditEvent = {
 | `GET /me/certifications` | 回本人认证列表、范围、级别、状态和审核摘要。 | 本人 |
 | `GET /organizations/{orgId}/certifications/review-queue` | 回组织申请摘要。 | 该组织 `certifier`；本组织成员范围 |
 | `POST /organizations/{orgId}/certifications/{id}/decision` | `{decision:"approve"|"reject"|"needs_more_information",reason}`；回状态。 | 组织 `certifier`；不能自审；本组织有效成员 |
-| `GET /admin/certifications/review-queue` | 回平台认证申请列表。 | `platform_admin` 或平台授权 reviewer |
-| `POST /admin/certifications/{id}/decision` | `{decision,reason}`；回状态。 | 平台认证 reviewer；平台范围 |
 | `POST /organizations/{orgId}/certifications/{id}/revoke` | `{reason}`；回 `{status:"revoked"}`。 | 组织 owner 或授权 certifier；只可撤销本组织认证；审计 |
-| `POST /admin/certifications/{id}/revoke` | `{reason}`；回 `{status:"revoked"}`。 | 平台认证 reviewer；仅平台认证；审计 |
 | `POST /certifications/{id}/appeals` | `{reason,evidenceMediaIds?}`；回 `appeal_pending`。 | 申请人/认证持有人；适用驳回或撤销结果 |
-| `POST /admin/certification-appeals/{id}/decision` | `{decision:"uphold"|"overturn"|"request_more_information",reason}`；回最终状态。 | 高于原审核权限的 reviewer；原审核员不可自审 |
-| `GET /admin/audit-events` | 查询 `{scopeType?,scopeId?,resourceType?,resourceId?,cursor?}`；回授权范围内审计摘要。 | `platform_admin`；所有查询写入审计 |
 | `GET /organizations/{orgId}/audit-events` | 查询 `{resourceType?,resourceId?,cursor?}`；回本组织业务审计摘要。 | 组织 owner；仅该组织范围 |
 
 ### 3.8 赛事、选派、签到和赛后记录 Beta
@@ -737,7 +717,7 @@ export type AuditEvent = {
 
 - **依赖**：Task 12、Task 4。
 - **实现**：授权阅卷队列、0..满分校验、评语、提交即生效、考试汇总重算和改判追加审计。
-- **文件**：`apps/api/db/migrations/0011_grading.sql`、`apps/api/src/modules/grading/*`、`apps/admin-web/src/features/grading/*`。
+- **文件**：`apps/api/db/migrations/0011_grading.sql`、`apps/api/src/modules/grading/*`。
 - **测试**：`apps/api/test/grading/score-boundary.test.ts`、`review-scope.test.ts`、`override-audit.test.ts`、`exam-aggregation.test.ts`。
 
 ### Task 14：学习个人状态与客户端缓存
@@ -780,7 +760,7 @@ export type AuditEvent = {
 
 - **依赖**：Task 5、Task 4、Task 3。
 - **实现**：板块、白名单富文本清洗、附件同步校验、发帖回复/点赞收藏/举报、软删除、限时编辑、禁言封禁和申诉。
-- **文件**：`apps/api/db/migrations/0015_forum.sql`、`apps/api/src/modules/forum/*`、`apps/api/src/modules/moderation/*`、`apps/referee-web/src/features/forum/*`、`apps/admin-web/src/features/moderation/*`。
+- **文件**：`apps/api/db/migrations/0015_forum.sql`、`apps/api/src/modules/forum/*`、`apps/api/src/modules/moderation/*`、`apps/referee-web/src/features/forum/*`。
 - **测试**：`apps/api/test/forum/rich-text-sanitization.test.ts`、`attachment-validation.test.ts`、`edit-window.test.ts`、`soft-delete-audit.test.ts`、`apps/api/test/moderation/appeal-scope.test.ts`。
 
 ### Task 20：端到端权限矩阵与发布验收

@@ -8,10 +8,7 @@
 
 - [ADR 0018：裁判端内置编辑内容与 Lucide 图标](./0018-editorial-content-and-icons.md) — 公开自编导读与讨论示例不冒充真实业务内容，按需使用官方 Vue 图标组件，不增加后端或缓存。
 
-- [ADR 0017：直接采用 Naive UI Admin 作为管理端模板](./0017-admin-template-selection.md) — 选定 MIT 开源版 v3.0.0 并完成后台壳源码迁移，保留 Cookie 与服务端授权；真实授权账号链路待补验。
-- [ADR 0016：独立管理端与渐进业务接入](./0016-admin-web-foundation.md) — 独立 `/admin/` 静态 SPA，复用 Cookie 与审计契约，不伪造未完成业务；原“不引入模板”决定已由 ADR 0017 替代。
-
-- [ADR 0001: Monorepo with Static Client Apps and a Separate API](./0001-monorepo-static-apps-and-api.md) — use a pnpm workspace with independently built referee/admin SPAs and a separately deployed lightweight API.
+- [ADR 0001: Monorepo with Static Client Apps and a Separate API](./0001-monorepo-static-apps-and-api.md) — use a pnpm workspace with a referee SPA and a separately deployed lightweight API.
 - [ADR 0002: Direct Browser-to-Object-Storage Media Flow](./0002-direct-to-object-storage-media-flow.md) — issue short-lived scoped upload/read access while keeping media bytes off the 2C2G API host.
 - [ADR 0003: Scoped RBAC with Explicit Assignment Workflow](./0003-scoped-rbac-and-assignment-workflow.md) — combine baseline roles, explicit scope bindings, separate qualification attributes, and audited assignment state transitions.
 - [ADR 0004：API、数据库与认证技术基线](./0004-api-database-and-auth-stack.md) — use Fastify/TypeScript, PostgreSQL, and revocable server-side sessions.

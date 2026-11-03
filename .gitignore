@@ -41,6 +41,12 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
+# 上游模板公开配置与构建源码；不放行其他本地环境文件。
+!/apps/admin-web/build/
+!/apps/admin-web/.env
+!/apps/admin-web/.env.development
+!/apps/admin-web/.env.production
+
 # Private keys and certificates
 *.pem
 *.key

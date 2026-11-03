@@ -1,7 +1,7 @@
 # FS-0008：裁判端内容型首页与内置阅读
 
 - 状态：内容门户式首页已实现；本轮验证记录见第 6 节。第 5 节保留上一版验收历史，不代表本轮布局已通过浏览器复验。
-- 范围：裁判端首页、内置内容阅读、共享导航图标；不改管理端。
+- 范围：裁判端首页、内置内容阅读与共享导航图标。
 - 业务与导航基础：[FS-0006](0006-home-navigation.md)。
 - 视觉基线：[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)，保持原规范不变。
 - 工程约束：[编码规约](../agents/coding-standards.md)。
@@ -78,7 +78,7 @@
 ### 自动化
 
 - 新增内置内容筛选、唯一标识与目录、五条阅读路由、示例真实性及锚点滚动回归测试，共 5 项。
-- 最终低内存全仓库单测：39 文件、210 项通过；包含同时开发的管理端测试。以 `node --max-old-space-size=192 --require ./.cache/home-navigation/memory.cjs node_modules/vitest/vitest.mjs run --config vitest.config.ts` 执行，进程峰值 RSS 142.8 MiB，低于 300 MB；浏览器不参与单测。
+- 最终低内存全仓库单测：39 文件、210 项通过。以 `node --max-old-space-size=192 --require ./.cache/home-navigation/memory.cjs node_modules/vitest/vitest.mjs run --config vitest.config.ts` 执行，进程峰值 RSS 142.8 MiB，低于 300 MB；浏览器不参与单测。
 - `pnpm typecheck`、裁判端生产 `build`、`test:styles`、`git diff --check` 通过。构建检查额外验证三级内容布局、sticky 目录、展开箭头与预览缩放工具类。
 - 所有裁判端 Vue 文件均未超过 230 行；组件内无新增 HTTP、持久化或主题硬编码。主视觉是唯一自绘 SVG，为原创插图而非产品图标。
 - Node `gzipSync` 逐文件统计 `dist/assets`：CSS 22,515 → 28,280 bytes，gzip 4,947 → 5,917；JS 470,700 → 504,173 bytes，gzip 162,405 → 175,827。差异含并行任务维护的根组件全局主题同步，不单独归因于图标。首页 chunk 14,771 bytes 左右，正文内容独立 chunk 8,528 bytes 左右，阅读页约 4,549 bytes，工作台仍约 95,414 bytes。

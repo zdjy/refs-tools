@@ -79,24 +79,22 @@ docker compose --profile test down
 
 **只有确认可以清空所有联调数据时**才执行 `docker compose --profile test down -v`；它会同时删除数据库和证书 volume，再次启动后需更新本机证书信任。修改 `.env` 的数据库密码不会自动修改已初始化 volume 中的密码；需显式修改数据库账号密码，或确认数据可丢弃后重建。原有 `referee_*` 容器不属于此 Compose 项目；如它们启动后占用相同端口，先停旧服务或调整 `.env`。
 
-## 管理端
+## 上游模板快照
 
-独立管理端源码位于 `apps/admin-web`，设计、接入范围及后续验收见 [FS-0007](docs/specs/0007-admin-console.md)，开发 tickets 位于 `.scratch/admin-console/issues/`。参考 GitHub 后台的信息架构，但未整套引入第三方模板。
+`apps/admin-web` 完整保留 [jekip/naive-ui-admin](https://github.com/jekip/naive-ui-admin) 的 `main` 分支源码，版本 `3.0.0`，commit `c9db4cde447240eaa17fbe439f507680819add3d`；MIT 许可、上游 README、锁文件、示例和 Mock 均保留。本地只修改 UI 颜色，使用[共享 FIBA 配色](docs/ui/fiba_about_ui_specification.md)，不改布局、字体、尺寸、路由、登录逻辑或构建配置。
 
-- 完整 HTTPS 入口：**https://localhost:8443/admin/**；修改后执行 `docker compose up -d --build web`。
-- 首批真实接入：密码登录、同源 Cookie 会话恢复/退出、平台审计筛选和游标分页。
-- 组织、平台认证、内容考试、阅卷和社区治理目前为流程说明页，明确标注待接入，不提供假数据或模拟审核。
-- 尚未设置密码时，先在裁判端通过邮箱验证码登录并设置密码。管理员权限仍须通过[受控部署流程](apps/api/db/AUTHORIZATION_AUDIT.md)初始化；登录和可见菜单不等于获得业务权限。
+按本次“完整引入、仅改配色”的要求，该快照独立安装和构建，不纳入根 pnpm 工作区及 Docker/Nginx 部署；不对上游执行 Tailwind 4 迁移、组件拆分或业务接入。旧管理端源码、专属规格、ADR、tickets 及部署入口已移除，共用 API、账号、权限和审计能力保留。
 
 ```sh
-pnpm --filter @refs-tools/admin-web dev       # http://localhost:5174/admin/，只适合纯前端调试
-pnpm --filter @refs-tools/admin-web test
-pnpm --filter @refs-tools/admin-web typecheck
-pnpm --filter @refs-tools/admin-web test:styles
-pnpm --filter @refs-tools/admin-web build
+cd apps/admin-web
+# 禁用上游 Husky 安装脚本，避免改写外层仓库的 Git hooks。
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm dev          # http://localhost:8001/，默认使用上游 Mock
+pnpm type-check
+pnpm build
 ```
 
-生产构建为静态文件，与裁判端一起由 Nginx 提供；管理端子路径回退到自己的入口，无新增生产 Node.js 服务。`5174` 的 HTTP Origin 不能替代完整 HTTPS 登录联调，不要放宽 Cookie/Origin 安全配置。
+模板保留上游主题切换与演示交互，登录演示账号见其 [README](apps/admin-web/README.md)。它尚未接入本项目真实认证与业务，不能使用真实凭据或数据；原 `https://localhost:8443/admin/` 不再部署管理端。根目录测试与构建命令只覆盖裁判端、API 和共享包。
 
 ## 前端样式
 

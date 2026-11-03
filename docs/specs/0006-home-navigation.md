@@ -3,7 +3,7 @@
 > 后续改版：首页固定卡片编排由 [FS-0008：内容型首页与内置阅读](0008-editorial-home.md) 替代；本页保留首版实施历史。模块路径、建设状态、身份投影、工作台安全与离线边界继续有效。
 
 - 状态：首版首页与导航已实施，自动化及部分浏览器验收通过；剩余人工验收见文末记录，不代表各业务模块已上线。
-- 适用应用：`apps/referee-web`，不包含管理端首页。
+- 适用应用：`apps/referee-web`。
 - 任务入口：[首页开发任务](../../.scratch/home-navigation/spec.md)。
 - 业务依据：[MVP-001](0001-mvp-scope-and-business-rules.md)、[FS-0002](0002-mvp-platform-feature.md)、[队伍级记录台](0003-team-scorer-console.md)。
 - UI 依据：[共享 FIBA UI 规范](../ui/fiba_about_ui_specification.md)、[响应式规格](0005-responsive-layout.md)。
@@ -28,7 +28,7 @@
 - 不展示模拟待办、成绩、赛事、认证徽章、通知数量或用户画像。
 - 不建设学习完成率、排行榜、连续学习天数、AI 推荐、私信或支付入口。
 - 不修改现有登录成功与注册成功后进入 `/account` 的行为，不增加任意 `returnTo` 跳转。
-- 不建设个人中心或管理后台；“我的”暂时进入现有账号与安全页。
+- 不建设个人中心；“我的”暂时进入现有账号与安全页。
 
 ## 2. 已核对的实现现状与决策处理
 
@@ -277,9 +277,9 @@ pnpm --filter @refs-tools/referee-web dev
 
 ### 自动化与产物（A01～A08）
 
-- `pnpm test`：36 文件、201 项通过；包含工作区同时开发的管理端测试。本次裁判端新增身份投影/重试、导航目标/归属及工作台往返回归。工作台四项回归先失败再修正通过。
+- `pnpm test`：36 文件、201 项通过；本次裁判端新增身份投影/重试、导航目标/归属及工作台往返回归。工作台四项回归先失败再修正通过。
 - `node --max-old-space-size=192 --require ./.cache/home-navigation/memory.cjs node_modules/vitest/vitest.mjs run --config vitest.config.ts`：同样 201 项通过；进程峰值 RSS 158.8 MiB，低于 300 MB。浏览器不参与单测。
-- `pnpm typecheck`、裁判端生产 `build`、独立 `test:styles`、`git diff --check` 均通过。曾遇并行管理端文件尚未就绪导致类型失败，最终全仓库重跑通过；未修改管理端源码或依赖。
+- `pnpm typecheck`、裁判端生产 `build`、独立 `test:styles`、`git diff --check` 均通过。
 - 以 Node `gzipSync` 逐文件统计 `dist/assets`（bytes；与 Vite 压缩参数不同，不能混用数值）：CSS 合计 16,987 → 22,515，gzip 3,971 → 4,947；JS 合计 449,076 → 470,700，gzip 151,697 → 162,405。
 - 最终首页 chunk 2,626（gzip 1,386），工作台 chunk 95,414（gzip 29,537）；工作台基线 95,270（gzip 29,501）。首页、学习、工具、建设说明与工作台保留独立懒加载；HTTPS 首页实际资源列表不含 `WorkbenchView`，仅发起既有 auth session 请求。
 
