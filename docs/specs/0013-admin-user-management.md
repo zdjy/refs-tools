@@ -18,6 +18,7 @@
 
 ## 部署
 
-- 静态管理端与 API 需同源 HTTPS 部署，API 的 `AUTH_PUBLIC_ORIGIN` 必须匹配。API 不接受框架演示 token，不提供匿名管理账号初始化。
+- 静态管理端与 API 需同源 HTTPS 部署，API 的 `AUTH_PUBLIC_ORIGIN` 必须匹配。本地 Compose 入口为 `https://localhost:8443/admin/`，与裁判端共用同一 Origin（依据见 [ADR 0011](../decisions/0011-local-compose-environment.md) 的后续实施）。API 不接受框架演示 token，不提供匿名管理账号初始化。
+- 管理端真实 API 请求统一经 `src/api/http/platform-client.ts`（alova，禁用缓存与请求合并，仅同源 Cookie），不使用框架演示的 `utils/http/alova` 实例，依据见 [ADR 0023](../decisions/0023-alova-http-client-and-ddd-gateway.md)。
 - 首个平台管理员继续按 `apps/api/db/AUTHORIZATION_AUDIT.md` 受控初始化。
 - 新迁移 `0005_admin_users.sql` 添加逻辑删除与版本字段；后续组织扩展迁移改用下一个空闲编号，不改写既有迁移。

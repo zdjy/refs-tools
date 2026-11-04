@@ -16,3 +16,8 @@ playwright-report
 **/*.pem
 **/*.key
 **/*.crt
+
+# 管理端的 build/ 是 Vite 构建脚本源码，.env.production 只含公开的构建参数（无密钥），需放行；
+# 仓库根目录与其他位置的 .env* 仍被排除。
+!apps/admin-web/build
+!apps/admin-web/.env.production

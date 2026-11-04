@@ -2,7 +2,7 @@
 
 - 状态：已接受
 - 范围：FS-0013 管理端用户 CRUD
-- 关联：[FS-0013](../specs/0013-admin-user-management.md)、[ADR 0010](0010-email-auth-and-session-security.md)、[ADR 0014](0014-scoped-authorization-and-audit-foundation.md)
+- 关联：[FS-0013](../specs/0013-admin-user-management.md)、[ADR 0010](0010-email-auth-and-session-security.md)、[ADR 0014](0014-scoped-authorization-and-audit-foundation.md)、[ADR 0023](0023-alova-http-client-and-ddd-gateway.md)（管理端请求层实现）
 
 ## 背景
 

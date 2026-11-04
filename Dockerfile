@@ -36,10 +36,24 @@ EXPOSE 3000
 CMD ["node", "apps/api/dist/server.js"]
 
 FROM dependencies AS web-build
-RUN pnpm --filter @refs-tools/contracts run build && pnpm --filter @refs-tools/referee-web run build
+RUN pnpm --filter @refs-tools/contracts run build \
+  && pnpm --filter @refs-tools/domain run build \
+  && pnpm --filter @refs-tools/referee-web run build
+
+# 管理端不在 pnpm workspace 内（自带锁文件与 .npmrc），独立安装并构建，部署在 /admin/ 子路径。
+# 只 import type 引用 contracts，类型在打包时擦除，因此不需要先构建 contracts。
+FROM node:22-alpine AS admin-build
+WORKDIR /admin
+RUN npm install --global pnpm@12.16.1
+COPY apps/admin-web/package.json apps/admin-web/pnpm-lock.yaml apps/admin-web/pnpm-workspace.yaml apps/admin-web/.npmrc ./
+COPY packages/contracts /packages/contracts
+RUN pnpm install --frozen-lockfile --ignore-scripts
+COPY apps/admin-web ./
+RUN pnpm exec vite build --mode production && pnpm exec esno ./build/script/postBuild.ts
 
 FROM nginx:alpine AS web
 COPY --from=web-build /workspace/apps/referee-web/dist /usr/share/nginx/html
+COPY --from=admin-build /admin/dist /usr/share/nginx/html/admin
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 443
 

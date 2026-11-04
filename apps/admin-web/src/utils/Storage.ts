@@ -70,7 +70,11 @@ export default class Storage {
    * @memberOf Cache
    */
   clear(): void {
-    this.storage.clear();
+    // 只清理本实例前缀下的键；storage.clear() 会清空整个源，包括同源裁判端的数据。
+    const prefix = this.getKey('');
+    Object.keys(this.storage)
+      .filter((k) => k.startsWith(prefix))
+      .forEach((k) => this.storage.removeItem(k));
   }
 
   /**
@@ -121,4 +125,5 @@ export default class Storage {
   }
 }
 
-export const storage = new Storage('');
+// 与裁判端同源部署，键名加前缀并限定 clear() 范围，避免误删裁判端的本地工作台数据。
+export const storage = new Storage('ADMIN__');

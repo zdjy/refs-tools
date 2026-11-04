@@ -14,6 +14,7 @@
     "@lucide/vue": "1.66.0",
     "@refs-tools/contracts": "workspace:*",
     "@refs-tools/domain": "workspace:*",
+    "alova": "^3.5.5",
     "motion": "14.9.0",
     "naive-ui": "^2.45.3",
     "pinia": "^4.1.0",

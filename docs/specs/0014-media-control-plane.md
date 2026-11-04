@@ -59,7 +59,7 @@
 | 3 同连接事务 | 事务装配共用 client，存储 IO 在事务外，审计失败回滚已真实验证；基础设施事务未修改 |
 | 4 所有权/约束/并发 | 媒体表由 media 模块拥有；CHECK、唯一键、账号/媒体锁；迁移及真实集成测试通过 |
 | 5 Vue 行数 | 上传部件低于 230 行 |
-| 6 HTTP 分离 | `.vue` 无 fetch，统一 api/media.api.ts |
+| 6 HTTP 分离 | `.vue` 无 fetch，统一 api/media.api.ts；该网关经 alova 传输客户端发请求，直传使用独立无 Cookie 客户端（[ADR 0023](../decisions/0023-alova-http-client-and-ddd-gateway.md)） |
 | 7 共享载荷 | TypeBox DTO 在 contracts/media.ts |
 | 8 规则/Service 测试 | 媒体策略与控制面、状态转换有对应测试 |
 | 9 授权 | 复用实时 Casbin/成员端口，不新增角色策略副本或缓存，未知业务目标拒绝 |

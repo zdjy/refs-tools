@@ -35,7 +35,8 @@ docker compose ps -a
 
 | 服务 | 本机访问地址 / 端口 | 容器内部 | 用途 |
 | --- | --- | --- | --- |
-| 前端及同源 API | **https://localhost:8443** | `web:443` | 浏览器测试入口；`/api/` 自动代理至 API |
+| 裁判端及同源 API | **https://localhost:8443** | `web:443` | 浏览器测试入口；`/api/` 自动代理至 API |
+| 管理端 | **https://localhost:8443/admin/** | `web:443` | 与裁判端同源的子路径；平台管理员登录后使用用户管理 |
 | API 直连 | http://localhost:3000/api/v1/health | `api:3000` | 健康检查及 API 调试；浏览器认证仍走上面的 HTTPS 同源入口 |
 | PostgreSQL 联调库 | `127.0.0.1:5432` | `db:5432` | 数据库 `refs_tools`，用户 `refs_tools`，密码取 `.env` |
 | Mailpit 收件箱 | http://localhost:8025 | `mailpit:8025` | 查看测试注册/登录验证码邮件 |
@@ -83,7 +84,7 @@ docker compose --profile test down
 
 `apps/admin-web` 完整保留 [jekip/naive-ui-admin](https://github.com/jekip/naive-ui-admin) 的 `main` 分支源码，版本 `3.0.0`，commit `c9db4cde447240eaa17fbe439f507680819add3d`；MIT 许可、上游 README、锁文件、示例和 Mock 均保留。本地只修改 UI 颜色，使用[共享 UI 规范配色](docs/ui/macos_fiba.md)，不改布局、字体、尺寸、路由、登录逻辑或构建配置。
 
-按本次“完整引入、仅改配色”的要求，该快照独立安装和构建，不纳入根 pnpm 工作区及 Docker/Nginx 部署；不对上游执行 Tailwind 4 迁移、组件拆分或业务接入。旧管理端源码、专属规格、ADR、tickets 及部署入口已移除，共用 API、账号、权限和审计能力保留。
+该快照独立安装和构建，不纳入根 pnpm 工作区（自带锁文件与 `.npmrc`）；不对上游执行 Tailwind 4 迁移或组件拆分。真实登录、会话恢复与用户管理已接入本项目 API（见 [ADR 0022](docs/decisions/0022-admin-user-crud-and-cookie-boundary.md)），其余模板页面仍使用上游 Mock。Docker Compose 会随 `web` 镜像构建并部署管理端到 `/admin/`，依据见 [ADR 0011](docs/decisions/0011-local-compose-environment.md) 的后续实施。
 
 ```sh
 cd apps/admin-web
@@ -94,7 +95,9 @@ pnpm type-check
 pnpm build
 ```
 
-模板保留上游主题切换与演示交互，登录演示账号见其 [README](apps/admin-web/README.md)。它尚未接入本项目真实认证与业务，不能使用真实凭据或数据；原 `https://localhost:8443/admin/` 不再部署管理端。根目录测试与构建命令只覆盖裁判端、API 和共享包。
+**登录账号**：管理端没有内置账号。先在裁判端 `https://localhost:8443/register` 注册并验证邮箱，再按 [AUTHORIZATION_AUDIT.md](apps/api/db/AUTHORIZATION_AUDIT.md) 的“首个平台管理员”流程授权，之后在 `https://localhost:8443/admin/login` 用邮箱和密码登录。
+
+`pnpm dev` 的 `http://localhost:8001/` 没有 `/api` 代理，只能浏览 Mock 页面，不能真实登录；需要真实登录时使用 Compose 入口。根目录 `pnpm test` 会运行管理端 `test/` 下的单测，但根目录 `pnpm typecheck` 不覆盖管理端，需在 `apps/admin-web` 内运行 `pnpm type-check`。
 
 ## 前端样式
 

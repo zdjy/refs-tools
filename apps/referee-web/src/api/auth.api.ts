@@ -2,36 +2,35 @@ import type {
   AuthSessionResponse, EmailChallengeBody, EmailChallengeResponse, EmailCodeLoginBody,
   PasswordLoginBody, RegisterBody, SetPasswordBody,
 } from '@refs-tools/contracts/auth'
+import { HttpError } from './http/errors'
+import { createPlatformClient, type PlatformClient } from './http/platform-client'
 
 /** 将可预期的认证错误交给状态层，避免展示包含内部信息的原始响应。 */
 export class AuthApiError extends Error {
   constructor(readonly code: string, readonly status: number) { super(code) }
 }
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
-  let response: Response
-  try {
-    response = await fetch(`/api/v1/auth/${path}`, {
-      method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', cache: 'no-store',
-      headers: body === undefined ? { Accept: 'application/json' } : { Accept: 'application/json', 'Content-Type': 'application/json' },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(15_000),
-    })
-  } catch { throw new AuthApiError('NETWORK_ERROR', 0) }
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) throw new AuthApiError(payload?.error?.code ?? 'SERVICE_UNAVAILABLE', response.status)
-  if (!payload?.data) throw new AuthApiError('SERVICE_UNAVAILABLE', response.status)
-  return payload.data as T
+/** 网关防腐层：HttpError 在此翻译为认证上下文的错误码，alova 异常不会外泄。 */
+function toAuthError(error: unknown): AuthApiError {
+  if (!(error instanceof HttpError)) return new AuthApiError('SERVICE_UNAVAILABLE', 0)
+  if (error.kind === 'network') return new AuthApiError('NETWORK_ERROR', 0)
+  return new AuthApiError(error.code ?? 'SERVICE_UNAVAILABLE', error.status)
 }
 
-export const authApi = {
-  session: () => request<AuthSessionResponse['data']>('session'),
-  challenge: (body: EmailChallengeBody) => request<EmailChallengeResponse['data']>('email-challenges', body),
-  register: (body: RegisterBody) => request<AuthSessionResponse['data']>('register', body),
-  loginWithCode: (body: EmailCodeLoginBody) => request<AuthSessionResponse['data']>('login/email-code', body),
-  loginWithPassword: (body: PasswordLoginBody) => request<AuthSessionResponse['data']>('login/password', body),
-  setPassword: (body: SetPasswordBody) => request<AuthSessionResponse['data']>('password', body),
-  logout: () => request<unknown>('logout', {}),
+export function createAuthApi(client: PlatformClient) {
+  const call = <T>(task: Promise<T>) => task.catch((error) => { throw toAuthError(error) })
+  return {
+    session: () => call(client.get<AuthSessionResponse['data']>('/auth/session')),
+    challenge: (body: EmailChallengeBody) => call(client.post<EmailChallengeResponse['data']>('/auth/email-challenges', body)),
+    register: (body: RegisterBody) => call(client.post<AuthSessionResponse['data']>('/auth/register', body)),
+    loginWithCode: (body: EmailCodeLoginBody) => call(client.post<AuthSessionResponse['data']>('/auth/login/email-code', body)),
+    loginWithPassword: (body: PasswordLoginBody) => call(client.post<AuthSessionResponse['data']>('/auth/login/password', body)),
+    setPassword: (body: SetPasswordBody) => call(client.post<AuthSessionResponse['data']>('/auth/password', body)),
+    logout: () => call(client.post<unknown>('/auth/logout', {})),
+  }
 }
+
+export const authApi = createAuthApi(createPlatformClient({ baseURL: '/api/v1' }))
 export type AuthApi = typeof authApi
 
 /** 为当前操作提供稳定的中文反馈，不依赖服务端异常文本。 */

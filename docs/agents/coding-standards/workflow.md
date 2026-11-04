@@ -14,7 +14,7 @@
 
 4. **Step 4 - 路由接入层**：在 `apps/api/src/modules/<feature>/<feature>.routes.ts` 挂载端点并指定 schema 校验。
 
-5. **Step 5 - 前端组件化交付**：按需在 `apps/referee-web/src/api/` 写入 API 映射，在对应 `views/<feature>/` 下拆分 `use<Feature>.ts` 与单视图组件。按[前端规约](frontend.md#3-ui-组件框架与-ddd-边界)的边界接入 Naive UI，先复用集中主题与既有组件，仅将确有通用需求的封装放入 `components/ui/`；完成相关交互与构建检查。
+5. **Step 5 - 前端组件化交付**：按需在 `apps/referee-web/src/api/` 写入上下文网关（经 `api/http/` 传输客户端，遵循[请求层规约](frontend.md#4-请求层alova-与-ddd-网关封装)），在对应 `views/<feature>/` 下拆分 `use<Feature>.ts` 与单视图组件。按[前端规约](frontend.md#3-ui-组件框架与-ddd-边界)的边界接入 Naive UI，先复用集中主题与既有组件，仅将确有通用需求的封装放入 `components/ui/`；完成相关交互与构建检查。
 
 仅涉及 UI 或数据库基础设施的任务不必机械新增跨端契约、领域模型或后端五文件；先确认是否改变业务规则或跨端载荷，再执行实际涉及的步骤。
 
@@ -31,6 +31,8 @@
 * \[ \] 单个 `.vue` 文件总行数是否超过[前端规约](frontend.md#2-前端硬性约束)规定的统一上限？（如超过，必须拆分子组件）
 
 * \[ \] 前端 `.vue` 的 `<script setup>` 中是否含有直接的 HTTP 请求？（如有，必须抽至 `api/*.ts`）
+
+* \[ \] 请求层是否遵守[请求层规约](frontend.md#4-请求层alova-与-ddd-网关封装)？alova 实例是否只在 `api/http/` 创建且禁用缓存与请求合并，网关是否把 `HttpError` 翻译为上下文错误且不向外暴露 alova 类型、原始响应或签名 URL，预签名直传是否使用独立的无 Cookie 客户端？
 
 * \[ \] 跨端传输的数据接口是否在 `packages/contracts` 中统一定义？
 

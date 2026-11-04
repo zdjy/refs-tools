@@ -27,6 +27,17 @@ Mailpit 作为仅本地使用的邮件收件箱，不向外投递。OpenSSL 一�
 - Caddy / 额外代理 / Redis / 对象存储模拟器：当前 Nginx 足以满足静态托管与同源代理；其余组件无本任务需求，不新增。
 - 使用真实 SMTP：可用于独立环境，但依赖外部凭据、产生真实邮件，不适合作为默认本地测试方案。
 
+## 后续实施：管理端同源部署于 /admin/
+
+[ADR 0022](0022-admin-user-crud-and-cookie-boundary.md) 让管理端接入真实 Cookie 会话后，需要在同一套 Compose 内联调。认证强制精确匹配单个 `AUTH_PUBLIC_ORIGIN`，Cookie 不区分端口，因此管理端不使用独立端口或子域，而是与裁判端同源，部署在 `/admin/` 子路径：
+
+1. `web` 镜像增加独立的管理端构建阶段（管理端不在 pnpm workspace 内，自带锁文件），产物放入 `/usr/share/nginx/html/admin`。生产构建的 `VITE_PUBLIC_PATH` 为 `/admin/`，路由 `createWebHistory(import.meta.env.BASE_URL)`。
+2. Nginx 为 `/admin/` 配置独立的静态资源缓存与 SPA 回退，`/admin` 重定向到 `/admin/`，并关闭绝对重定向以保留宿主映射端口。
+3. 同源共享 localStorage：管理端 `Storage` 使用 `ADMIN__` 前缀，`clear()` 仅清理该前缀，避免模板的整体清理删除裁判端的本地工作台数据。
+4. `.dockerignore` 放行 `apps/admin-web/build`（Vite 构建脚本源码）和 `.env.production`（仅含公开构建参数）。
+
+本机 `pnpm dev` 的 `8001` 入口没有 API 代理且 Origin 不匹配，不能用于真实登录。
+
 ## 后果与限制
 
 - 一条 Compose 启动命令可重复执行迁移并联调注册登录，旧 `referee_*` 容器不被修改。

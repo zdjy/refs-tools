@@ -15,7 +15,8 @@ apps/referee-web/src/
 ├── styles/                      # Tailwind 入口、token 映射与全局基线（详见样式规约）
 ├── components/ui/               # 按实际复用需求建立的无业务基础组件
 ├── api/
-│   └── <feature>.api.ts          # 纯网络请求函数（Axios/Fetch 封装）
+│   ├── http/                     # 传输客户端：alova 实例、HttpError（详见第 4 节）
+│   └── <feature>.api.ts          # 限界上下文网关：create<Feature>Api(client) 与默认实例
 └── views/<feature>/
     ├── <Feature>View.vue          # 主视图（纯骨架、布局组装）
     ├── <feature>.css             # 仅在必要时保留有说明的局部 CSS 例外（详见样式规约）
@@ -30,9 +31,9 @@ apps/referee-web/src/
 
 * **禁止网络请求内联**：
 
-  * 严禁在 `.vue` 的 `<script setup>` 中直接书写 `fetch()` 或 `axios.post()`。
+  * 严禁在 `.vue` 的 `<script setup>`、Composable、Store 中直接书写 `fetch()`、`axios` 或创建 alova 实例。
 
-  * 所有网络通信必须通过 `src/api/<feature>.api.ts` 的函数调用。
+  * 所有网络通信必须通过 `src/api/<feature>.api.ts` 网关调用，网关再经 `src/api/http/` 的传输客户端发出，详见[第 4 节](#4-请求层alova-与-ddd-网关封装)。
 
 * **Composable 逻辑抽离**：
 
@@ -54,7 +55,8 @@ apps/referee-web/src/
 | --- | --- | --- |
 | `packages/contracts` | 跨端 DTO、请求/响应 Schema | 引入 Vue、Naive UI 或表单、表格等组件库类型 |
 | `packages/domain`（含应用内尚未迁出的纯领域模块） | 资格、计时、犯规、规则集等纯业务计算 | 引入 Vue、Naive UI、DOM 或任何 UI 状态；返回组件实例、提示框或带颜色的展示配置 |
-| `src/api/<feature>.api.ts` | 网络请求、按契约返回数据 | 引入 Naive UI；弹提示、控制弹窗、生成表格列或执行表单交互 |
+| `src/api/http/` | 创建 alova 实例、统一缓存/Cookie/超时/信封策略、抛出 `HttpError` | 引入 Vue 或 Naive UI；知道任何业务路径、业务错误码或文案 |
+| `src/api/<feature>.api.ts` | 本上下文的路径、请求组装、按契约返回数据；把 `HttpError` 翻译为上下文错误类型 | 引入 Naive UI；弹提示、控制弹窗、生成表格列或执行表单交互；向外暴露 alova 类型 |
 | `views/<feature>/use<Feature>.ts` | 调用 API/领域函数，编排页面状态、提交、错误和重试 | 依赖 Naive UI 的组件实例、表单/表格类型或通知 API；依赖组件内部 DOM |
 | `views/<feature>/components/` 与主视图 | 展示数据、绑定状态、处理组件事件、适配 UI 库类型 | 内联网络请求、持久化访问、业务规则或权限判定；直接改写领域对象 |
 | `src/components/ui/` | 跨页面通用交互、无业务基础组件适配 | 引用业务页面、业务 Composable、API 或领域模块；内置裁判资格、比赛状态等业务含义 |
@@ -99,3 +101,52 @@ apps/referee-web/src/
 * 领域状态与用例状态逻辑应可脱离 Pinia、Vue Router、DOM 和 UI 库进行单元测试；对 API 使用边界替身，保证纯领域测试不依赖 DOM。对 Pinia/Router 的适配只测试其装配、导航映射和生命周期行为，不重复验证框架本身。新增通用 UI 封装只测试自有行为（props/emits、禁用/加载、确认/取消和可访问性），不重复测试组件库内部实现。
 * 焦点管理、键盘操作、移动布局、弱网反馈与主题一致性在独立浏览器/集成检查中验证，不并入低内存纯逻辑单测；单测继续遵守低于 300 MB 的项目预算。
 * 接入、升级或新增组件后执行相关单测、`typecheck` 与生产构建，并比较构建产物变化；不得因使用 UI 框架增加生产期前端服务、远程组件 CDN 或敏感数据缓存。
+
+## 4. 请求层：alova 与 DDD 网关封装
+
+HTTP 客户端采用 **alova 3.x（`alova/fetch` 适配器）**，选型与取舍见 [ADR 0023](../../decisions/0023-alova-http-client-and-ddd-gateway.md)。请求层只返回 Promise，**不使用 `statesHook`、`useRequest` 等 UI 绑定**；加载、错误、重试状态属于页面 Composable 与应用状态层（见第 3 节）。
+
+### (1) 三层结构与依赖方向
+
+```
+Composable / Store / 状态工厂 → <feature>.api.ts（上下文网关，防腐层） → api/http/（传输客户端） → alova/fetch
+      只见上下文错误类型            翻译 HttpError → 上下文错误             只抛 HttpError
+```
+
+| 层 | 位置 | 职责 | 对外可见 |
+| --- | --- | --- | --- |
+| 传输客户端 | `src/api/http/` | 创建 alova 实例；同源 Cookie、`no-store`、超时、`{ data }` / `{ error: { code } }` 信封解包；失败统一抛 `HttpError` | `PlatformClient`、`ObjectStorageClient`、`HttpError`，均为 Promise 接口 |
+| 上下文网关 | `src/api/<feature>.api.ts` | 路径与参数编码、请求头（如幂等键）、业务语义的状态判断；把 `HttpError` 翻译为本上下文的错误类型与稳定错误码 | `create<Feature>Api(client)` 工厂、默认实例、`<Feature>ApiError`、`<Feature>Api` 类型 |
+| 应用层 | `use<Feature>.ts`、`stores/`、`application/` | 编排用例、保留输入、重试；通过注入的网关对象获得 IO | 不接触 alova、`HttpError` 或原始响应 |
+
+### (2) 硬性约束
+
+* **禁止缓存私有数据**：每个 alova 实例必须同时设置 `cacheFor: null`、`shareRequest: false`、`snapshots: 0`，并将 `l1Cache`、`l2Cache` 替换为不保存内容的适配器。alova 默认缓存 GET 5 分钟、合并并发相同请求并可写入 localStorage，与根级 `AGENTS.md` 禁止缓存私有 API 响应及签名 URL 的要求冲突。
+
+* **实例集中创建**：只允许在 `src/api/http/` 内调用 `createAlova`。业务网关、Composable 和组件不得自建实例或直接 `import 'alova'`。
+
+* **平台 API 与对象存储隔离**：访问 `/api/v1` 使用 `PlatformClient`（`credentials: 'same-origin'`）。预签名直传使用独立的 `ObjectStorageClient`（`credentials: 'omit'`、`referrerPolicy: 'no-referrer'`、`redirect: 'error'`、无超时、由 `AbortSignal` 取消），不得与平台实例共用配置；签名 URL 不写入日志、错误或缓存。
+
+* **防腐层必须翻译错误**：`HttpError` 与 alova 的原始异常不得穿过网关。网关抛出上下文错误类型（如 `AuthApiError`、`MediaApiError`）和稳定错误码；面向用户的文案由表现层或错误映射函数提供，不依赖服务端异常文本，也不暴露 URL、签名或响应体。
+
+* **网关通过工厂注入**：导出 `create<Feature>Api(client)` 与默认实例，并以 `export type <Feature>Api = typeof <feature>Api` 导出类型。状态层用 `api = <feature>Api` 形参注入，测试传入替身或注入 `fetch`，无需模拟 alova。
+
+* **契约类型来自 `packages/contracts`**：请求与响应的载荷类型从 contracts 导入；`{ data }` 信封只在传输客户端解包，网关返回已解包的 DTO。
+
+### (3) 使用 alova 的已知陷阱
+
+* `Method` 是惰性 thenable：只有 `await` 或 `send()` 后才发出请求。需要取消时必须先 `send()` 再绑定 `abort()`，否则取消是空操作。
+
+* fetch 适配器只透传 `string`、`Blob`、`FormData`、`ArrayBuffer`、`URLSearchParams`、`ReadableStream`，其他值（包括 `File`）会被 `JSON.stringify` 成 `{}`。直传文件必须以 `new Blob([file], { type: file.type })` 传入。
+
+* 无请求体的 POST 也会被适配器写入 `Content-Type: application/json`，Fastify 会拒绝空 JSON 体。传输客户端必须把此类请求的 `Content-Type` 设为空串（适配器会剔除空值头）。
+
+* 超时与网络失败都归一为 `HttpError('network')`；调用方需要区分用户取消时，使用 `AbortSignal` 的取消语义，不解析异常文本。
+
+### (4) 测试要求
+
+* 传输客户端：用注入的 `fetch` 验证信封解包、Cookie 与 `no-store` 配置、GET 不缓存不合并、无体 POST 头、错误码映射、网络失败与超时、取消。
+
+* 网关：用 `PlatformClient` 替身验证路径、方法、请求头和 `HttpError` → 上下文错误的翻译表；不引入真实网络或 alova。
+
+* 状态层与 Composable 继续使用网关替身，保持低内存纯逻辑单测。

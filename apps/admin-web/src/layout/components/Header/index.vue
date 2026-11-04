@@ -143,6 +143,7 @@
   import { useScreenLockStore } from '@/store/modules/screenLock';
   import { useUserStore } from '@/store/modules/user';
   import { TABS_ROUTES } from '@/store/mutation-types';
+  import { storage } from '@/utils/Storage';
   import { NDialogProvider, useDialog, useMessage } from 'naive-ui';
   import { computed, defineComponent, reactive, ref, toRefs, unref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
@@ -266,7 +267,7 @@
             userStore.logout().then(() => {
               message.success(t('layout.header.logoutSuccess'));
               // 移除标签页
-              localStorage.removeItem(TABS_ROUTES);
+              storage.remove(TABS_ROUTES);
               router
                 .replace({
                   name: 'Login',

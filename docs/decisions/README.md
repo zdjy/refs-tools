@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0023：前端请求层迁移至 alova，并按 DDD 封装网关](./0023-alova-http-client-and-ddd-gateway.md) — 统一使用 alova/fetch，禁用缓存与请求合并；传输客户端、上下文网关（防腐层）、应用层三层分离。
+
 - [ADR 0022：管理端用户 CRUD 与 Cookie 会话边界](./0022-admin-user-crud-and-cookie-boundary.md) — 管理端使用真实 Cookie 会话和最小用户投影，用户变更与实时授权、会话撤销及审计保持事务一致。
 
 - [ADR 0021：媒体控制面与不可覆盖上传](./0021-media-control-plane.md) — OSS SDK 隔离、短事务核验、默认拒绝未实现业务目标、可信事件桥与有界清理。
