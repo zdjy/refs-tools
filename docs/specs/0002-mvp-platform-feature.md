@@ -658,6 +658,7 @@ export type AuditEvent = {
 
 ### Task 5：对象存储 adapter 与媒体上传意图
 
+- **状态**：控制面已实现，真实 OSS 与后续业务授权接入待验收；具体可用范围及检查记录见 [FS-0014](0014-media-control-plane.md)，部署见[媒体说明](../../apps/api/db/MEDIA_DEPLOYMENT.md)。
 - **依赖**：Task 2、Task 4、Task 1 的供应商 ADR。
 - **实现**：媒体表、服务端 object key 生成、策略配置、短时签名、complete HEAD/stat 校验、事件幂等与孤儿清理接口。
 - **文件**：`apps/api/db/migrations/0004_media.sql`、`apps/api/src/modules/media/*`、`apps/api/src/providers/object-storage/*`、`packages/contracts/src/media.ts`。
@@ -665,6 +666,7 @@ export type AuditEvent = {
 
 ### Task 6：前端直传与客户端图片压缩工具
 
+- **状态**：已交付可复用状态用例、API、浏览器压缩和上传部件；尚无完整业务页面的预览/原图选择交互，不代表认证/考试/赛后流程已上线，见 [FS-0014](0014-media-control-plane.md)。
 - **依赖**：Task 5。
 - **实现**：客户端 file policy 校验、赛后预览压缩、可选原图、直传/重试/完成确认 UI；服务端限制仍为最终权威。
 - **文件**：`packages/domain/src/media-policy.ts`、`apps/referee-web/src/features/media/*`、`apps/referee-web/src/features/media/image-compression.ts`。

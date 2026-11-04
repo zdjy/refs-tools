@@ -1,4 +1,5 @@
 import { buildApp } from './app.js'
+import { buildMediaService } from './media-bootstrap.js'
 import { createDatabasePool, databaseConfigFromEnvironment } from './infrastructure/database/pool.js'
 import { createTransactionRunner } from './infrastructure/database/transaction.js'
 import { AuthService } from './modules/auth/auth.service.js'
@@ -27,8 +28,10 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
     email, secret, policy, now: () => new Date(),
   })
   try {
+    const media = buildMediaService(env, pool, permissions)
     return await buildApp({ logger: true }, {
       auth: { service, publicOrigin },
+      ...(media ? { media: { service: media.service, sessions: service, publicOrigin }, storageEvents: media } : {}),
       audit: { sessions: service, service: new AuditService({
         transaction: createTransactionRunner(pool, (client) => ({
           authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),

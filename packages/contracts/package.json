@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./media": {
+      "types": "./src/media.ts",
+      "development": "./src/media.ts",
+      "import": "./dist/media.js"
+    },
     "./authorization": {
       "types": "./src/authorization.ts",
       "development": "./src/authorization.ts",

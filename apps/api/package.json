@@ -8,6 +8,7 @@
     "db:migrate": "tsx src/infrastructure/database/migrate.ts up",
     "db:rollback": "tsx src/infrastructure/database/migrate.ts down",
     "auth:cleanup": "tsx src/infrastructure/database/auth-maintenance-cli.ts",
+    "media:cleanup": "tsx src/media-maintenance-cli.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json"
   },
@@ -15,12 +16,14 @@
     "@refs-tools/contracts": "workspace:*",
     "@refs-tools/domain": "workspace:*",
     "@sinclair/typebox": "^0.34.52",
+    "ali-oss": "^6.23.0",
     "casbin": "^5.51.1",
     "fastify": "^5.6.1",
     "nodemailer": "^10.3.1",
     "pg": "^8.16.3"
   },
   "devDependencies": {
+    "@types/ali-oss": "^6.23.4",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.15.5",
     "tsx": "^4.20.6"
