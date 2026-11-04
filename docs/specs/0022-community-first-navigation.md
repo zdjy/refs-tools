@@ -68,8 +68,9 @@
 
 自动化：
 
-- 全仓库低内存单测 73 文件、371 项通过（Node 堆上限 192 MiB）。`router.test.ts` 断言根路径为 `community`、`/forum` 为 404、两套导航顺序与标题、`/organizations` 的栏目归属；`editorial.test.ts` 断言讨论文章归入「community」；`community-presentation.test.ts` 覆盖改名后的社区展示与筛选。
-- `typecheck`、生产构建与 `test:styles` 未能完整执行：工作区存在与本次改动无关的进行中改动（`src/views/profile/*`、`src/features/account/*`、`src/api/http/platform-client.ts`）导致 `vue-tsc` 与 `vite build` 报错。本次改动的 15 个 SFC 单独用 `@vue/compiler-sfc` 编译通过；相关单测全部通过。以上检查需在该改动完成后重跑。
+- 全仓库低内存单测 76 文件、381 项通过（Node 堆上限 192 MiB）。`router.test.ts` 断言根路径为 `community`、`/forum` 为 404、两套导航顺序与标题、`/organizations` 的栏目归属；`editorial.test.ts` 断言讨论文章归入「community」；`community-presentation.test.ts` 覆盖改名后的社区展示与筛选。
+- `pnpm typecheck`（contracts、domain、api、referee-web 四个包）、裁判端生产 `build`、`test:styles` 均通过。首次执行时被同期进行中的账号设置改动阻塞，该改动合入后重跑全部通过。
+- 产物：`CommunityView` chunk 34.51 kB（gzip 10.97）、`ProfileSettingsView` 388.91 kB（gzip 100.03）、`WorkbenchView` 59.73 kB（gzip 19.81）；方形标 `mark-light.png` 8.1 kB。导航重构本身未引入新依赖，社区页 chunk 与重构前同一量级（原首页 chunk 亦在 30 kB 级）。
 
 浏览器（Chrome CSS viewport，本地 HTTPS 开发入口）：
 
