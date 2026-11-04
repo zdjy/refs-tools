@@ -59,7 +59,11 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
 ## 5. 页面与交互
 
 - 路由：`/profile-setting`，标题「账号设置」，导航归属 `account`（移动底栏「我的」高亮）；页面使用统一导航外壳。
-- 结构：个人资料（头像 + 档案字段）→ 登录邮箱（三步更换）→ 登录密码（共享部件）→ 指向 `/account` 会话概览的链接。
+- 结构：左侧分区导航 + 右侧面板，三个分区为「个人资料」「修改邮箱」「修改密码」，顺序固定。
+  - `tablet` 及以上：左侧 200px 纵向分区栏，右侧渲染对应面板；小于 `tablet`：分区栏变为顶部横向一排可滚动按钮，面板在其下方。
+  - 个人资料面板：头像 + 档案字段；修改邮箱面板：三步核验表单；修改密码面板：共享密码部件（`embedded` 模式，不再自带上外边距与分隔线）。
+  - 分区切换只改变渲染的面板，不重新请求档案、不丢失已填内容；页面底部保留指向 `/account` 会话概览的链接。
+  - 档案读取失败只影响个人资料面板，修改邮箱与修改密码仍可正常使用。
 - 保存仅在服务端确认后提示成功；失败保留输入，字段错误显示在对应输入下方并聚焦首个无效输入；版本冲突显示刷新提示并自动重读档案。
 - 头像上传复用直传链路：选择文件 → 本地压缩 → 申请 `avatar` 上传授权 → 直传 → 核验 → 以 `avatarMediaId` 保存档案。任一步失败保留重试入口，不上报为已保存。
 - 邮箱更换：旧邮箱与新邮箱各自独立申请验证码、独立 60 秒重发倒计时；未完成全部证明时不发请求，逐字段提示。
@@ -68,6 +72,8 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
 ## 6. 可访问性与响应式
 
 - 所有输入有显式 `<label>` 或 `aria-label`；错误通过 `aria-invalid` 与 `aria-describedby` 关联到说明文本，提交失败聚焦首个无效输入。
+- 分区栏使用 `role="tablist"` / `role="tab"` / `role="tabpanel"`，面板以 `aria-labelledby` 指向所属分区按钮；激活分区 `aria-selected="true"`，非激活分区 `tabindex="-1"`（roving tabindex）。
+- 方向键：`ArrowLeft`/`ArrowUp` 与 `ArrowRight`/`ArrowDown` 都按同一次序循环并移动焦点，`Home`/`End` 跳到首尾；因断点会改变视觉方向，不声明 `aria-orientation`。分区按钮可点击，也可 `Enter`/`Space` 触发。
 - 触控目标不小于 44×44 CSS px；文件选择使用原生 input + label，键盘可触发。
 - 320px 起无页面级横向溢出：三级地区选择在窄屏纵向堆叠，`sm` 起三列。
 - 不依赖颜色单独表达状态：保存结果、上传进度与错误均带文本。
@@ -79,10 +85,11 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
 - `apps/api/test/auth/email-change.test.ts`：三步成功后的会话轮换、无密码分支、密码错误不消费验证码、邮箱占用、用途/邮箱不匹配。
 - `apps/api/test/media/avatar-access.test.ts`：头像跨用户可读，其他用途维持私有；头像仅图片且目标必须本人。
 - `apps/referee-web/test/profile-settings.test.ts`、`email-change.test.ts`：字段 diff、无变化不发请求、冲突后重读、字段错误定位、两步验证码与密码分支。
+- `apps/referee-web/test/profile-tabs.test.ts`：分区顺序固定、方向键循环与 `Home`/`End`、非导航按键不拦截。
 
 ## 8. 验收记录
 
 - `pnpm typecheck`、`pnpm test`（76 文件 / 381 用例）、`pnpm build`、`pnpm --filter @refs-tools/referee-web test:styles` 通过。
 - `pnpm test:db`（14 文件 / 58 用例）在本地测试库通过，其中迁移测试覆盖 `0008` 的 up/down 与幂等重跑，`profiles.integration.test.ts` 覆盖空档案读取、昵称与档案同事务落库、陈旧版本拒绝、地区成对约束、手机号 E.164 约束与头像归属外键。
 - 行政区数据由 `pnpm regions:data` 生成（`scripts/generate-regions.mjs`，来源 `modood/Administrative-divisions-of-China`，MIT），仅保留省/市/区三级，按路由懒加载。
-- 未执行：浏览器验收（320px/960px 布局与横向溢出、键盘焦点顺序、头像上传与真实邮件链路），需在部署环境用真实对象存储与 SMTP 复核。
+- 未执行：浏览器验收（320px 分区栏横向滚动与无页面级横向溢出、960px 纵向分区栏、Tab 键盘焦点与 roving tabindex、头像上传与真实邮件链路），需在部署环境用真实对象存储与 SMTP 复核。

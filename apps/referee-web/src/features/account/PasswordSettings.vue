@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { NButton, NInput } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
 import { usePasswordSettings } from './usePasswordSettings'
+/** 嵌入分页面板时不再自带上外边距与分隔线，标题降为面板级 h2。 */
+const props = defineProps<{ embedded?: boolean }>()
 const auth = useAuthStore()
 const { fields, errors, success, challenge, busy, isInitialPassword, sendCode, savePassword } = usePasswordSettings(auth)
+const heading = computed(() => props.embedded ? 'h2' : 'h3')
 const { remaining, sending, notice, error: sendError, expired } = challenge
 const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)
@@ -19,8 +22,8 @@ async function submit() {
 </script>
 
 <template>
-  <section class="mt-6 border-0 border-t border-solid border-line pt-6" aria-labelledby="password-heading">
-    <h3 class="mt-0 mr-0 mb-2 ml-0 text-[18px]" id="password-heading">{{ isInitialPassword ? '设置登录密码' : '更换登录密码' }}</h3>
+  <section :class="embedded ? 'grid gap-4' : 'mt-6 border-0 border-t border-solid border-line pt-6'" aria-labelledby="password-heading">
+    <component :is="heading" class="mt-0 mr-0 mb-2 ml-0 text-[18px]" id="password-heading">{{ isInitialPassword ? '设置登录密码' : '更换登录密码' }}</component>
     <p class="mt-0 mr-0 mb-5 ml-0 text-[13px] leading-[1.8] text-body">{{ isInitialPassword ? '邮箱已验证，无需再次获取验证码。设置密码即可完成注册，以后也可使用邮箱和密码登录。' : '先验证当前邮箱。更新密码后，其他旧登录会话将失效。' }}</p>
     <form ref="form" novalidate :aria-busy="busy" @submit.prevent="submit">
       <div v-if="auth.error" ref="summary" class="mb-5 rounded-xl border border-solid border-red bg-soft px-4 py-3 text-[13px] leading-[1.7] text-red-hover" role="alert" tabindex="-1">
