@@ -17,6 +17,6 @@ import { learningEntries, modules } from '../../navigation/modules'
       <p class="mb-5 text-sm leading-relaxed text-body">以下模块均在建设中，可进入查看功能范围；目前不提供作答、考试报名或成绩查询。</p>
       <div class="grid grid-cols-[minmax(0,1fr)] gap-4 compact:grid-cols-2 xl:grid-cols-3"><ModuleCard v-for="id in learningEntries" :key="id" :module="modules[id]" /></div>
     </section>
-    <RouterLink to="/" class="mt-6 inline-flex min-h-11 min-w-11 items-center rounded-full bg-soft px-5 py-3 text-sm font-medium text-ink no-underline transition-all duration-200 hover:bg-sand active:scale-95">返回首页</RouterLink>
+    <RouterLink to="/" class="mt-6 inline-flex min-h-11 min-w-11 items-center rounded-full bg-soft px-5 py-3 text-sm font-medium text-ink no-underline transition-all duration-200 hover:bg-sand active:scale-95">返回社区</RouterLink>
   </NavigationShell>
 </template>

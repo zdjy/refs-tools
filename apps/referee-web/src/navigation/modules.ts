@@ -1,5 +1,5 @@
-export type NavigationSection = 'home' | 'learning' | 'tools' | 'forum' | 'account'
-export type ModuleId = 'learning' | 'practice' | 'wrong-questions' | 'exams' | 'results' | 'certifications' | 'organizations' | 'events' | 'tools' | 'workbench' | 'gb2312' | 'rules' | 'forum' | 'profile' | 'feedback'
+export type NavigationSection = 'community' | 'learning' | 'tools' | 'organizations' | 'account'
+export type ModuleId = 'learning' | 'practice' | 'wrong-questions' | 'exams' | 'results' | 'certifications' | 'organizations' | 'events' | 'tools' | 'workbench' | 'gb2312' | 'rules' | 'community' | 'profile' | 'feedback'
 export type Availability = 'planned' | 'partial' | 'available'
 export interface NavigationModule {
   id: ModuleId
@@ -25,7 +25,8 @@ export const modules = {
   // 占位工具：先给移动底栏扇形留出第三个入口，页面只展示建设状态，不提供任何查询能力。
   // 不选用工作台的子功能（计时、犯规、比分）作为占位，避免把子功能重复包装成独立模块，见 FS-0006 §3.2。
   rules: { id: 'rules', title: '规则速查', path: '/tools/rules', description: '按规则集版本查询暂停、犯规、计时等参数，仅作提示，不替代裁判最终判断', availability: 'planned', beta: true },
-  forum: { id: 'forum', title: '裁判社区', path: '/forum', description: '判例讨论、执裁心得与交流', availability: 'planned', beta: true },
+  // 社区即根路径页面，不再保留独立的 /forum 建设说明页，见 FS-0022。
+  community: { id: 'community', title: '裁判社区', path: '/', description: '判例讨论、执裁心得与交流', availability: 'available', beta: true },
   // 账号菜单的两项入口：只承诺后续范围，页面仍是建设说明，不假装已有个人主页或反馈工单。
   profile: { id: 'profile', title: '我的主页', path: '/me', description: '个人公开资料、执裁经历与近期动态', availability: 'planned' },
   feedback: { id: 'feedback', title: '意见反馈', path: '/feedback', description: '问题反馈、建议提交与处理进度查询', availability: 'planned' },
@@ -34,23 +35,30 @@ export const modules = {
 export const moduleGroups: readonly { title: string; items: readonly ModuleId[] }[] = [
   { title: '学习与备考', items: ['learning', 'practice', 'exams'] },
   { title: '资质与协作', items: ['certifications', 'organizations', 'events'] },
-  { title: '场边与交流', items: ['tools', 'forum'] },
+  { title: '场边与交流', items: ['tools', 'community'] },
 ]
 export const learningEntries: readonly ModuleId[] = ['practice', 'wrong-questions', 'exams', 'results']
 export const toolEntries: readonly ModuleId[] = ['workbench', 'gb2312', 'rules']
+
+/** 移动底栏（< tablet）顺序固定：社区、学习、工具、组织、我的，见 FS-0022。 */
 export const primaryNavigation: readonly { id: NavigationSection; title: string; path: string }[] = [
-  { id: 'home', title: '首页', path: '/' },
+  { id: 'community', title: '社区', path: modules.community.path },
   { id: 'learning', title: '学习', path: modules.learning.path },
   { id: 'tools', title: '工具', path: modules.tools.path },
-  { id: 'forum', title: '社区', path: modules.forum.path },
+  { id: 'organizations', title: '组织', path: modules.organizations.path },
   { id: 'account', title: '我的', path: '/account' },
 ]
 
 /**
- * 桌面主导航不含「我的」：账号入口由顶栏用户名菜单承担，移动底栏仍保留「我的」。
- * 依据见 FS-0020。
+ * 桌面主导航（≥ tablet）顺序固定：社区、学习、组织、工具。
+ * 不含「我的」：账号入口由顶栏用户名菜单承担，见 FS-0020；两套顺序不同，因此单独声明而非过滤。
  */
-export const desktopNavigation = primaryNavigation.filter((item) => item.id !== 'account')
+export const desktopNavigation: readonly { id: NavigationSection; title: string; path: string }[] = [
+  { id: 'community', title: '社区', path: modules.community.path },
+  { id: 'learning', title: '学习', path: modules.learning.path },
+  { id: 'organizations', title: '组织', path: modules.organizations.path },
+  { id: 'tools', title: '工具', path: modules.tools.path },
+]
 
 /** 仅关联真实存在的页面，不生成尚未实现的业务操作。 */
 export function relatedModules(id: ModuleId): readonly ModuleId[] {

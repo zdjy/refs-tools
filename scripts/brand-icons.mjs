@@ -339,6 +339,8 @@ export async function generateBrandIcons() {
   emit(join(refereeBrand, 'lockup-light.png'), lockupLight)
   emit(join(refereeBrand, 'lockup-dark.png'), await renderLockup(sources.lockupDark, { stripBackground: false }))
   emit(join(refereeBrand, 'lockup-compact.png'), await buildCompactLockup(lockupLight))
+  // 方形标用于移动底栏「工具」位：透明底、按高度缩放，与横版组合标同样走打包换肤。
+  emit(join(refereeBrand, 'mark-light.png'), await renderTransparentMark(markLight, TRANSPARENT_MARK_SIZE, FILL_TRANSPARENT_MARK))
 
   // 管理端：浏览器图标与侧边栏方形标（深色主题用带奶白外圈的版本，避免黑描边溶进深底）。
   emit(join(adminPublic, 'favicon.ico'), await buildFavicon(markLight, canvas))

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Search, SearchX } from '@lucide/vue'
-import { boardTabs } from '../home.presentation'
+import { boardTabs } from '../community.presentation'
 import { useThreadFeed } from '../useThreadFeed'
 import ForumBoards from './ForumBoards.vue'
 import ThreadCard from './ThreadCard.vue'

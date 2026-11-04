@@ -1,6 +1,7 @@
 # FS-0018：论坛为主的用户端首页
 
 - 状态：已实现，验证记录见文末。
+- 后续改版：按 [FS-0022](0022-community-first-navigation.md)，「首页」概念取消，根路径 `/` 即社区（本规格描述的论坛版式），`/forum` 下线为 404，登录后直接进入 `/`；下文涉及「首页」的文案与 `/forum` 链接描述保留为历史记录。
 - 范围：`apps/referee-web` 首页与阅读页返回入口。
 - 本规格替代 [FS-0011](0011-portal-motion-and-simulated-forum.md) 的首页编排；阅读页、示例真实性、静态路由及本地工作台边界继续沿用。
 - 视觉与工程依据：[共享 UI 规范](../ui/macos_fiba.md)、[编码规约](../agents/coding-standards.md)。

@@ -4,8 +4,7 @@ import { RouterLink } from 'vue-router'
 import NavigationIcon from '../../../components/navigation/NavigationIcon.vue'
 import { editorialNotice } from '../../../content/editorial'
 import { modules } from '../../../navigation/modules'
-import { moduleStatus } from '../../../navigation/navigation.presentation'
-import { communityEntries, homeGuides } from '../home.presentation'
+import { communityEntries, communityGuides } from '../community.presentation'
 </script>
 
 <template>
@@ -22,7 +21,7 @@ import { communityEntries, homeGuides } from '../home.presentation'
     <section class="rounded-2xl border border-solid border-line bg-surface p-5 shadow-card" aria-labelledby="guides-title">
       <h2 id="guides-title" class="mt-0 mb-3 flex items-center gap-2 text-base font-bold text-ink"><BookOpen class="size-4 text-body" aria-hidden="true" />案头导读</h2>
       <ul class="m-0 list-none p-0">
-        <li v-for="article in homeGuides" :key="article.id" class="border-0 border-b border-solid border-line last:border-b-0">
+        <li v-for="article in communityGuides" :key="article.id" class="border-0 border-b border-solid border-line last:border-b-0">
           <RouterLink :to="article.path" class="flex min-h-14 items-center justify-between gap-3 rounded-xl py-3 text-sm leading-relaxed text-ink no-underline transition-all hover:text-red-hover active:scale-[.98]">{{ article.title }}<ArrowUpRight class="size-4 shrink-0 text-body" aria-hidden="true" /></RouterLink>
         </li>
       </ul>
@@ -42,8 +41,7 @@ import { communityEntries, homeGuides } from '../home.presentation'
       <p class="mt-3 mb-0 text-xs leading-relaxed text-body">讨论时先描述可确认的事实，再列出依据与疑问；涉及具体罚则，请注明适用版本。</p>
       <details class="group mt-3 border-0 border-t border-solid border-line pt-2">
         <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-full text-xs font-medium text-body [&::-webkit-details-marker]:hidden">社区当前状态<ChevronDown class="size-4 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
-        <p class="mt-1 mb-2 text-xs leading-relaxed text-body">{{ moduleStatus(modules.forum) }}。当前仅展示内置讨论示例；人物、时间情境与回应均为自编，发帖、回复与点赞尚未开放。</p>
-        <RouterLink :to="modules.forum.path" class="inline-flex min-h-11 items-center rounded-full text-xs font-medium text-ink transition-all hover:text-red-hover active:scale-95">查看建设说明</RouterLink>
+        <p class="mt-1 mb-0 text-xs leading-relaxed text-body">当前仅展示内置讨论示例；人物、时间情境与回应均为自编，发帖、回复与点赞尚未开放。</p>
       </details>
     </section>
   </aside>

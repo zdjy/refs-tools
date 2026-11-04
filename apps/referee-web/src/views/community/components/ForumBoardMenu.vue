@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { ClipboardList, Layers, MessageSquare, NotebookPen, ScanLine, Sprout } from '@lucide/vue'
-import { RouterLink } from 'vue-router'
+import { ClipboardList, Layers, NotebookPen, ScanLine, Sprout } from '@lucide/vue'
 import type { BoardId } from '../../../content/threads.sample'
-import { modules } from '../../../navigation/modules'
-import { boardTabs } from '../home.presentation'
+import { boardTabs } from '../community.presentation'
 
 defineProps<{ board: BoardId | 'all' }>()
-defineEmits<{ select: [board: BoardId | 'all']; navigate: [] }>()
+defineEmits<{ select: [board: BoardId | 'all'] }>()
 const icons = { all: Layers, 'case-review': ScanLine, 'field-notes': NotebookPen, 'table-work': ClipboardList, 'rookie-notes': Sprout }
 </script>
 
@@ -20,7 +18,6 @@ const icons = { all: Layers, 'case-review': ScanLine, 'field-notes': NotebookPen
     </div>
     <div class="mt-6 border-0 border-t border-solid border-line px-3 pt-5">
       <p class="m-0 text-xs leading-relaxed text-body">从事实出发，核对适用规则，尊重不同视角。</p>
-      <RouterLink :to="modules.forum.path" class="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full text-xs font-medium text-body no-underline transition-all hover:text-red-hover active:scale-95" @click="$emit('navigate')"><MessageSquare class="size-4" aria-hidden="true" />论坛建设进展</RouterLink>
     </div>
   </nav>
 </template>

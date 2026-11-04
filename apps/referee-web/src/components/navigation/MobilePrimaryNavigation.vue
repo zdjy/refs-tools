@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import brandMark from '../../assets/brand/mark-light.png'
 import { primaryNavigation } from '../../navigation/modules'
 import { navigationCurrent } from '../../navigation/navigation.presentation'
 import NavigationIcon from './NavigationIcon.vue'
@@ -11,7 +12,10 @@ const route = useRoute()
 const trigger = ref<HTMLElement | null>(null)
 const { open, toggle, close } = useToolsFan(trigger)
 
-/** 工具按钮只展开扇面，不直接跳转；汇总页由扇形末项「更多」进入。 */
+/**
+ * 工具按钮只展开扇面，不直接跳转；汇总页由扇形末项「全部工具」进入。
+ * 该位置显示品牌方形标而非工具图标，因此按钮不渲染文字，可访问名称由 aria-label 提供。
+ */
 const toolsItem = primaryNavigation.find((item) => item.id === 'tools')!
 const current = (item: (typeof primaryNavigation)[number]) => navigationCurrent(route.meta.navigation, route.path, item)
 const toolsCurrent = () => navigationCurrent(route.meta.navigation, route.path, toolsItem)
@@ -30,14 +34,14 @@ function bindTrigger(element: unknown): void {
         v-if="item.id === 'tools'"
         :ref="bindTrigger"
         type="button"
+        :aria-label="item.title"
         :aria-expanded="open"
         :aria-controls="TOOLS_FAN_ID"
         :aria-current="toolsCurrent()"
-        :class="['flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-medium no-underline transition-all duration-200 ease-out hover:bg-soft hover:text-ink active:scale-95', toolsCurrent() ? 'bg-sand font-semibold text-ink shadow-selected' : 'text-body']"
+        :class="['flex min-h-11 min-w-11 cursor-pointer flex-col items-center justify-center rounded-xl border-0 px-1 py-2 no-underline transition-all duration-200 ease-out hover:bg-soft active:scale-95', toolsCurrent() ? 'bg-sand shadow-selected' : 'bg-transparent']"
         @click="toggle"
       >
-        <NavigationIcon name="tools" :class="['size-5', toolsCurrent() ? 'text-red' : '']" />
-        <span>{{ item.title }}</span>
+        <img :src="brandMark" alt="" aria-hidden="true" class="size-7" />
       </button>
       <RouterLink
         v-else

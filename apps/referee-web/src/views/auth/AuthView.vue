@@ -18,10 +18,12 @@ const { sending, remaining, notice, error: challengeError, expired } = challenge
 const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)
 watch(() => props.initialMode, (value) => { mode.value = value === 'register' ? 'register' : 'code' })
-watch(status, (value) => { if (value === 'authenticated') void router.replace('/account') })
+// 登录后直接进入社区（根路径）；注册后仍进账号页完成首次密码设置，见 FS-0022 与 ADR 0012。
+const landing = () => mode.value === 'register' ? '/account' : '/'
+watch(status, (value) => { if (value === 'authenticated') void router.replace(landing()) })
 onMounted(() => { void auth.restore() })
 async function onSubmit() {
-  if (await submit()) await router.replace('/account')
+  if (await submit()) await router.replace(landing())
   else {
     await nextTick()
     const invalidInput = form.value?.querySelector<HTMLElement>('input[aria-invalid="true"]')

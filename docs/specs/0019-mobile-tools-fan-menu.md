@@ -1,6 +1,7 @@
 # FS-0019：移动底栏工具扇形菜单
 
 - 状态：已实现；自动化与 Chrome CSS viewport 验收通过，未执行项见第 5 节。
+- 后续改版：按 [FS-0022](0022-community-first-navigation.md)，移动底栏「工具」仍为展开扇形的按钮，但外观改为项目方形品牌标、不显示文字，可访问名称由 `aria-label` 提供；本规格的扇形几何、入口顺序与收起规则不变。
 - 范围：`apps/referee-web` 移动底栏（小于 `tablet` 断点）的「工具」入口；桌面主导航、工具汇总页与各工具页面内容不变。
 - 前序规格：[FS-0006](0006-home-navigation.md) 的模块路由与建设状态、[FS-0018](0018-forum-first-home.md) 的首页编排继续有效；本规格调整移动底栏「工具」的展开方式，并为此在工具目录中加入一个明确的占位工具（见 §2.1）。
 - 视觉与工程依据：[共享 UI 规范](../ui/macos_fiba.md)、[样式规约](../agents/coding-standards/styles.md)、[前端规约](../agents/coding-standards/frontend.md)。

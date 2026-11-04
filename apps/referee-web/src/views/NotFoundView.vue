@@ -12,7 +12,7 @@ import { RouterLink } from 'vue-router'
       <h1 id="not-found-title" class="mx-0 my-2">页面不存在</h1>
       <p class="text-muted">该地址没有对应的页面。</p>
       <div class="flex flex-wrap gap-3">
-        <RouterLink class="inline-flex min-h-11 min-w-11 items-center rounded-full bg-ink px-5 py-3 font-medium text-surface no-underline transition-all duration-200 active:scale-95" to="/">返回首页</RouterLink>
+        <RouterLink class="inline-flex min-h-11 min-w-11 items-center rounded-full bg-ink px-5 py-3 font-medium text-surface no-underline transition-all duration-200 active:scale-95" to="/">返回社区</RouterLink>
         <RouterLink class="inline-flex min-h-11 min-w-11 items-center rounded-full bg-soft px-5 py-3 font-medium text-ink no-underline transition-all duration-200 active:scale-95" to="/workbench">进入本地工作台</RouterLink>
       </div>
     </section>

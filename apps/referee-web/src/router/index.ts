@@ -16,7 +16,7 @@ const readingRoutes: RouteRecordRaw[] = editorialRoutes.map((item) => ({
   name: `read-${item.id}`,
   component: () => import('../views/reading/ReadingView.vue'),
   props: { articleId: item.id },
-  meta: { title: item.title, navigation: item.kind === 'guide' ? 'learning' : 'forum' },
+  meta: { title: item.title, navigation: item.kind === 'guide' ? 'learning' : 'community' },
 }))
 
 /** 装配显式静态路由；导航元信息不承担业务授权。 */
@@ -24,7 +24,7 @@ export function createAppRouter(history: RouterHistory) {
   const router = createRouter({
     history,
     routes: [
-      { path: '/', name: 'home', component: () => import('../views/home/HomeView.vue'), meta: { title: '首页', navigation: 'home' } },
+      { path: '/', name: 'community', component: () => import('../views/community/CommunityView.vue'), meta: { title: '社区', navigation: 'community' } },
       ...readingRoutes,
       { path: modules.learning.path, name: 'learning', component: () => import('../views/learning/LearningEntryView.vue'), meta: { title: '学习中心', navigation: 'learning' } },
       { path: modules.practice.path, name: 'practice', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'practice' }, meta: { title: modules.practice.title, navigation: 'learning' } },
@@ -32,12 +32,11 @@ export function createAppRouter(history: RouterHistory) {
       { path: modules.exams.path, name: 'exams', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'exams' }, meta: { title: modules.exams.title, navigation: 'learning' } },
       { path: modules.results.path, name: 'results', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'results' }, meta: { title: modules.results.title, navigation: 'learning' } },
       { path: modules.certifications.path, name: 'certifications', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'certifications' }, meta: { title: modules.certifications.title } },
-      { path: modules.organizations.path, name: 'organizations', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'organizations' }, meta: { title: modules.organizations.title } },
+      { path: modules.organizations.path, name: 'organizations', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'organizations' }, meta: { title: modules.organizations.title, navigation: 'organizations' } },
       { path: modules.events.path, name: 'events', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'events' }, meta: { title: modules.events.title } },
       { path: modules.tools.path, name: 'tools', component: () => import('../views/tools/ToolsView.vue'), meta: { title: modules.tools.title, navigation: 'tools' } },
       { path: modules.gb2312.path, name: 'gb2312', component: () => import('../views/gb2312/Gb2312View.vue'), meta: { title: modules.gb2312.title, navigation: 'tools' } },
       { path: modules.rules.path, name: 'rules', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'rules' }, meta: { title: modules.rules.title, navigation: 'tools' } },
-      { path: modules.forum.path, name: 'forum', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'forum' }, meta: { title: modules.forum.title, navigation: 'forum' } },
       { path: modules.workbench.path, name: 'workbench', component: () => import('../views/workbench/WorkbenchView.vue'), meta: { title: '本地工作台', navigation: 'tools' } },
       { path: '/login', name: 'login', component: () => import('../views/auth/AuthView.vue'), props: { initialMode: 'login' }, meta: { title: '登录' } },
       { path: '/register', name: 'register', component: () => import('../views/auth/AuthView.vue'), props: { initialMode: 'register' }, meta: { title: '创建账号' } },

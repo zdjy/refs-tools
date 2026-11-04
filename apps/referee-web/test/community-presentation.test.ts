@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { editorialArticles, findEditorial } from '../src/content/editorial'
-import { useThreadFeed } from '../src/views/home/useThreadFeed'
+import { useThreadFeed } from '../src/views/community/useThreadFeed'
 import { createMemoryHistory } from 'vue-router'
 import { createAppRouter } from '../src/router'
 import { modules } from '../src/navigation/modules'
 import { boards, personas, sampleThreads } from '../src/content/threads.sample'
-import { boardTabs, communityEntries, homeGuides, threadsByBoard } from '../src/views/home/home.presentation'
+import { boardTabs, communityEntries, communityGuides, threadsByBoard } from '../src/views/community/community.presentation'
 import { readingMinutes, threadForArticle } from '../src/views/reading/reading.presentation'
 
 describe('论坛首页的展示与交互', () => {
   it('保留全部六篇导读与已存在的功能入口', () => {
-    expect(homeGuides).toEqual(editorialArticles.filter((article) => article.kind === 'guide'))
-    expect(homeGuides).toHaveLength(6)
+    expect(communityGuides).toEqual(editorialArticles.filter((article) => article.kind === 'guide'))
+    expect(communityGuides).toHaveLength(6)
     const router = createAppRouter(createMemoryHistory())
     for (const id of ['workbench', 'gb2312', 'tools', ...communityEntries] as const) expect(router.resolve(modules[id].path).name).not.toBe('not-found')
     expect(communityEntries).toEqual(['learning', 'practice', 'exams', 'certifications', 'organizations', 'events'])

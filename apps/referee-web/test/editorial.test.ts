@@ -35,7 +35,7 @@ describe('内置公开内容与阅读导航', () => {
       const route = router.resolve(article.path)
       expect(route.name).toBe(`read-${article.id}`)
       expect(route.meta.title).toBeTruthy()
-      expect(route.meta.navigation).toBe(article.kind === 'guide' ? 'learning' : 'forum')
+      expect(route.meta.navigation).toBe(article.kind === 'guide' ? 'learning' : 'community')
       expect(route.matched[0]?.props.default).toEqual({ articleId: article.id })
       expect(typeof route.matched[0]?.components?.default).toBe('function')
     }

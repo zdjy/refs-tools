@@ -3,7 +3,7 @@ import { Menu, X } from '@lucide/vue'
 import { NDrawer } from 'naive-ui'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import type { BoardId } from '../../../content/threads.sample'
-import { boardTabs } from '../home.presentation'
+import { boardTabs } from '../community.presentation'
 import ForumBoardMenu from './ForumBoardMenu.vue'
 
 defineProps<{ board: BoardId | 'all' }>()
@@ -47,7 +47,7 @@ onBeforeUnmount(() => observer?.disconnect())
           <!-- 显式 tabindex 兼容当前组件库的焦点候选检测，保证打开时优先聚焦关闭按钮。 -->
           <button type="button" tabindex="0" aria-label="关闭版块侧栏" class="flex size-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-body transition-all hover:bg-sand active:scale-95" @click="open = false"><X class="size-5" aria-hidden="true" /></button>
         </header>
-        <ForumBoardMenu :board="board" @select="select" @navigate="open = false" />
+        <ForumBoardMenu :board="board" @select="select" />
       </div>
     </NDrawer>
   </div>
