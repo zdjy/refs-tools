@@ -2,8 +2,6 @@ import { PageEnum } from '@/enums/pageEnum';
 import { ErrorPageRoute } from '@/router/base';
 import { useAsyncRoute } from '@/store/modules/asyncRoute';
 import { useUser } from '@/store/modules/user';
-import { ACCESS_TOKEN } from '@/store/mutation-types';
-import { storage } from '@/utils/Storage';
 import { tr } from '@/locales';
 import type { RouteRecordRaw } from 'vue-router';
 import { isNavigationFailure, Router } from 'vue-router';
@@ -30,9 +28,17 @@ export function createRouterGuards(router: Router) {
       return;
     }
 
-    const token = storage.get(ACCESS_TOKEN);
+    if (!asyncRouteStore.getIsDynamicRouteAdded) {
+      try {
+        await userStore.getInfo();
+      } catch {
+        next({ path: LOGIN_PATH, replace: true, query: { redirect: to.fullPath } });
+        Loading && Loading.finish();
+        return;
+      }
+    }
 
-    if (!token) {
+    if (!userStore.info.id) {
       // You can access without permissions. You need to set the routing meta.ignoreAuth to true
       if (to.meta.ignoreAuth) {
         next();
@@ -58,7 +64,7 @@ export function createRouterGuards(router: Router) {
       return;
     }
 
-    const userInfo = await userStore.getInfo();
+    const userInfo = { ...userStore.info, permissions: userStore.getPermissions };
 
     const routes = await asyncRouteStore.generateRoutes(userInfo);
 

@@ -7,7 +7,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/system',
     name: 'System',
-    redirect: '/system/menu',
+    redirect: '/system/user',
     component: Layout,
     meta: {
       title: 'route.system',
@@ -15,6 +15,12 @@ const routes: Array<RouteRecordRaw> = [
       sort: 1,
     },
     children: [
+      {
+        path: 'user',
+        name: 'system_user',
+        meta: { title: 'route.system_user' },
+        component: () => import('@/views/system/user/user.vue'),
+      },
       {
         path: 'menu',
         name: 'system_menu',

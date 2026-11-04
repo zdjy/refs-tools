@@ -2,9 +2,9 @@
 export default {
   title: 'Account login',
   subtitle: 'Welcome back, please sign in',
-  usernamePlaceholder: 'Enter username',
+  usernamePlaceholder: 'Enter email',
   passwordPlaceholder: 'Enter password',
-  usernameRequired: 'Please enter username',
+  usernameRequired: 'Please enter email',
   passwordRequired: 'Please enter password',
   rememberMe: 'Remember me',
   forgotPassword: 'Forgot password?',

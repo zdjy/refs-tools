@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0022：管理端用户 CRUD 与 Cookie 会话边界](./0022-admin-user-crud-and-cookie-boundary.md) — 管理端使用真实 Cookie 会话和最小用户投影，用户变更与实时授权、会话撤销及审计保持事务一致。
+
 - [ADR 0021：媒体控制面与不可覆盖上传](./0021-media-control-plane.md) — OSS SDK 隔离、短事务核验、默认拒绝未实现业务目标、可信事件桥与有界清理。
 
 - [ADR 0020：裁判端 UI 基线切换为 macOS 毛玻璃规范](./0020-macos-vibrancy-ui-baseline.md) — 唯一 UI 基线改为 macOS 毛玻璃（FIBA 暖沙金），圆角、阴影、动效与毛玻璃分层随之调整。

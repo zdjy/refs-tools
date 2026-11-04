@@ -5,6 +5,7 @@ const Uuid = Type.String({ pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{
 const NullableUuid = Type.Union([Uuid, Type.Null()])
 export const AuditActionSchema = Type.Union([
   Type.Literal('role.granted'), Type.Literal('role.revoked'), Type.Literal('audit.queried'),
+  Type.Literal('user.queried'), Type.Literal('user.created'), Type.Literal('user.updated'), Type.Literal('user.deleted'),
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
   Type.Literal('certification.decided'), Type.Literal('certification.revoked'), Type.Literal('certification.appealed'),
   Type.Literal('exam.published'), Type.Literal('question.versioned'), Type.Literal('grading.reviewed'), Type.Literal('grading.overridden'),
@@ -12,14 +13,14 @@ export const AuditActionSchema = Type.Union([
   Type.Literal('assignment.changed'), Type.Literal('attendance.corrected'), Type.Literal('post_game_record.changed'),
 ])
 export const AuditResourceTypeSchema = Type.Union([
-  Type.Literal('role_binding'), Type.Literal('audit_log'), Type.Literal('organization'),
+  Type.Literal('role_binding'), Type.Literal('audit_log'), Type.Literal('organization'), Type.Literal('user'),
   Type.Literal('certification'), Type.Literal('exam'), Type.Literal('question'), Type.Literal('attempt'),
   Type.Literal('media'), Type.Literal('forum_resource'), Type.Literal('assignment'), Type.Literal('attendance'), Type.Literal('post_game_record'),
 ])
 // 只允许状态、版本与关联标识，不接收任意业务整行或富文本/媒体内容。
 export const AuditSnapshotSchema = Type.Object({
   status: Type.Optional(Type.Union([
-    'draft', 'published', 'unpublished', 'closed', 'pending_review', 'active', 'frozen', 'rejected', 'dissolved',
+    'draft', 'published', 'unpublished', 'closed', 'pending_review', 'active', 'disabled', 'frozen', 'rejected', 'dissolved',
     'pending', 'left', 'removed', 'submitted', 'under_review', 'approved', 'suspended', 'revoked', 'appeal_pending',
     'needs_more_information', 'pending_upload', 'available', 'expired', 'deleted', 'in_progress', 'passed', 'failed',
     'pending_acceptance', 'accepted', 'declined', 'replacing', 'replaced', 'completed', 'cancelled',

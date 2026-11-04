@@ -39,7 +39,7 @@ describe('组织审计查询 HTTP 与真实 Cookie 会话', () => {
   it('平台级审计 HTTP 入口已移除，匿名组织查询 401', async () => {
     expect((await app.inject('/api/v1/admin/audit-events')).statusCode).toBe(404)
     expect((await app.inject({ url: `/api/v1/organizations/${fixture.ids.orgA}/audit-events`, headers: cookie('owner') })).statusCode).toBe(200)
-    expect((await app.inject({ url: `/api/v1/organizations/${fixture.ids.orgA}/audit-events`, headers: cookie('actor') })).statusCode).toBe(200)
+    expect((await app.inject({ url: `/api/v1/organizations/${fixture.ids.orgA}/audit-events`, headers: cookie('actor') })).statusCode).toBe(404)
     expect((await app.inject(`/api/v1/organizations/${fixture.ids.orgA}/audit-events`)).statusCode).toBe(401)
     for (const id of [fixture.ids.orgB, fixture.ids.actor]) {
       const response = await app.inject({ url: `/api/v1/organizations/${id}/audit-events`, headers: cookie('owner') })

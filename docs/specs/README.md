@@ -6,6 +6,8 @@
 
 ## 规格索引
 
+- [FS-0013：管理端用户 CRUD](./0013-admin-user-management.md)：基于真实 PostgreSQL 与 HttpOnly Cookie 会话的用户查询、创建、编辑、停用和逻辑删除；不包含角色 CRUD。
+
 - [FS-0014：媒体直传控制面与客户端上传部件](./0014-media-control-plane.md)：上传/核验/读取/删除、客户端重试与压缩、实际验收及后续业务接入限制。
 
 - [FS-0012：裁判端 macOS 毛玻璃 UI 改版](./0012-macos-vibrancy-ui.md)：以新 UI 规范重做圆角、阴影、动效、毛玻璃导航与激活态，范围与验收标准。

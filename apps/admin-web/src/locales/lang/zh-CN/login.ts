@@ -2,9 +2,9 @@
 export default {
   title: '账号登录',
   subtitle: '欢迎回来，请登录您的账号',
-  usernamePlaceholder: '请输入用户名',
+  usernamePlaceholder: '请输入邮箱',
   passwordPlaceholder: '请输入密码',
-  usernameRequired: '请输入用户名',
+  usernameRequired: '请输入邮箱',
   passwordRequired: '请输入密码',
   rememberMe: '记住我',
   forgotPassword: '忘记密码？',

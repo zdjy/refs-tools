@@ -3,6 +3,9 @@ import { buildMediaService } from './media-bootstrap.js'
 import { createDatabasePool, databaseConfigFromEnvironment } from './infrastructure/database/pool.js'
 import { createTransactionRunner } from './infrastructure/database/transaction.js'
 import { AuthService } from './modules/auth/auth.service.js'
+import { AdminUsersService } from './modules/auth/admin-users.service.js'
+import { PgAdminUsersRepository } from './modules/auth/admin-users.repository.js'
+import { hashPassword } from './modules/auth/auth.security.js'
 import { PgAuthRepository } from './modules/auth/auth.repository.js'
 import { authPolicyFromEnvironment } from './modules/auth/auth.config.js'
 import { createSmtpEmailProvider } from './providers/email/smtp.js'
@@ -31,6 +34,12 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
     const media = buildMediaService(env, pool, permissions)
     return await buildApp({ logger: true }, {
       auth: { service, publicOrigin },
+      adminUsers: { sessions: service, publicOrigin, service: new AdminUsersService({
+        transaction: createTransactionRunner(pool, (client) => ({
+          users: new PgAdminUsersRepository(client), sessions: new PgAuthRepository(client),
+          authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
+        })), permissions, now: () => new Date(), passwordMinLength: policy.passwordMinLength, hashPassword,
+      }) },
       ...(media ? { media: { service: media.service, sessions: service, publicOrigin }, storageEvents: media } : {}),
       audit: { sessions: service, service: new AuditService({
         transaction: createTransactionRunner(pool, (client) => ({

@@ -4,11 +4,12 @@ import { ApiError, apiError, apiResponse } from '@refs-tools/contracts'
 import { DomainError } from './application/errors.js'
 import { authRoutes, type AuthRouteDependencies } from './modules/auth/auth.routes.js'
 import { auditRoutes, type AuditRouteDependencies } from './modules/audit/audit.routes.js'
+import { adminUsersRoutes, type AdminUsersRouteDependencies } from './modules/auth/admin-users.routes.js'
 import { mediaRoutes, type MediaRouteDependencies } from './modules/media/media.routes.js'
 import { storageEventRoutes, type StorageEventDependencies } from './providers/object-storage/event-routes.js'
 
 type AppOptions = FastifyServerOptions
-type AppDependencies = { auth?: AuthRouteDependencies; audit?: AuditRouteDependencies; media?: MediaRouteDependencies;
+type AppDependencies = { auth?: AuthRouteDependencies; audit?: AuditRouteDependencies; adminUsers?: AdminUsersRouteDependencies; media?: MediaRouteDependencies;
   storageEvents?: StorageEventDependencies; close?: () => Promise<void> }
 
 class SafeLogController extends LogController {
@@ -62,6 +63,7 @@ export async function buildApp(options: AppOptions = {}, dependencies: AppDepend
   if (dependencies.close) app.addHook('onClose', dependencies.close)
   if (dependencies.auth) await app.register(authRoutes(dependencies.auth), { prefix: '/api/v1/auth' })
   if (dependencies.audit) await app.register(auditRoutes(dependencies.audit), { prefix: '/api/v1' })
+  if (dependencies.adminUsers) await app.register(adminUsersRoutes(dependencies.adminUsers), { prefix: '/api/v1/admin' })
 
   if (dependencies.media) await app.register(mediaRoutes(dependencies.media), { prefix: '/api/v1/media' })
   if (dependencies.storageEvents) await app.register(storageEventRoutes(dependencies.storageEvents), { prefix: '/api/v1/media/provider-events' })

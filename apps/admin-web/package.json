@@ -29,6 +29,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@refs-tools/contracts": "link:../../packages/contracts",
     "@alova/mock": "^2.0.22",
     "@vicons/antd": "^0.13.0",
     "@vicons/ionicons5": "^0.13.0",

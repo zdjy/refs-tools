@@ -149,7 +149,7 @@
   const loading = ref(false);
   const rememberMe = ref(true);
   const currentYear = new Date().getFullYear();
-  const formInline = reactive<FormState>({ username: 'admin', password: '123456' });
+  const formInline = reactive<FormState>({ username: '', password: '' });
   const rules = computed<FormRules>(() => ({
     username: { required: true, message: t('login.usernameRequired'), trigger: 'blur' },
     password: { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
@@ -172,7 +172,7 @@
       return;
     }
     loading.value = true;
-    message.loading(t('login.loggingIn'));
+    const pendingMessage = message.loading(t('login.loggingIn'), { duration: 0 });
     try {
       const { code, message: msg } = await userStore.login({
         username: formInline.username,
@@ -185,10 +185,10 @@
       } else {
         message.info(msg || t('login.loginFailed'));
       }
-    } catch {
-      message.error(t('login.loginFailedRetry'));
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : t('login.loginFailedRetry'));
     } finally {
-      message.destroyAll();
+      pendingMessage.destroy();
       loading.value = false;
     }
   }
