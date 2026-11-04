@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./organization-members": {
+      "types": "./src/organization-members.ts",
+      "development": "./src/organization-members.ts",
+      "import": "./dist/organization-members.js"
+    },
     "./organizations": {
       "types": "./src/organizations.ts",
       "development": "./src/organizations.ts",
@@ -13,6 +18,11 @@
       "types": "./src/admin-users.ts",
       "development": "./src/admin-users.ts",
       "import": "./dist/admin-users.js"
+    },
+    "./admin-media": {
+      "types": "./src/admin-media.ts",
+      "development": "./src/admin-media.ts",
+      "import": "./dist/admin-media.js"
     },
     "./media": {
       "types": "./src/media.ts",

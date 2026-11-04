@@ -1,5 +1,7 @@
 import type { Pool } from 'pg'
 import { createTransactionRunner } from './infrastructure/database/transaction.js'
+import { AdminMediaService } from './modules/media/admin-media.service.js'
+import { PgAdminMediaRepository } from './modules/media/admin-media.repository.js'
 import { PgMediaRepository } from './modules/media/media.repository.js'
 import { PgAuthorizationRepository } from './modules/authorization/authorization.repository.js'
 import { PgAuditRepository } from './modules/audit/audit.repository.js'
@@ -17,10 +19,12 @@ export function buildMediaService(env: NodeJS.ProcessEnv, pool: Pool, permission
   const provider = env['MEDIA_STORAGE_PROVIDER'] || 'oss'
   if (!['oss', 's3'].includes(provider)) throw new Error('MEDIA_STORAGE_PROVIDER must be oss or s3')
   const { storage, bucket } = provider === 's3' ? createS3Storage(env) : createOssStorage(env)
-  const service = new MediaCompletionService({
+  const dependencies = {
     transaction: createTransactionRunner(pool, (client) => ({
-      media: new PgMediaRepository(client), authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
+      media: new PgMediaRepository(client), adminMedia: new PgAdminMediaRepository(client),
+      authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
     })), storage, bucket, permissions, now: () => new Date(),
-  })
-  return { service, secret, now: () => new Date() }
+  }
+  const service = new MediaCompletionService(dependencies)
+  return { service, adminService: new AdminMediaService(dependencies), secret, now: () => new Date() }
 }

@@ -22,7 +22,7 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('组织治理 PostgreSQL', ()
       authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
     })), permissions: seed.permissions, now: () => now })
     input = { name: '市篮球裁判协会', region: '上海', purpose: '培训与赛事', ownerUserId: seed.ids.outsider,
-      ownerLegalName: '负责人', contact: 'private@example.com' }
+      contact: 'private@example.com' }
   })
   const permission = (org: string) => seed.transaction.run(({ authorization }) => requirePermission(authorization, {
     subjectUserId: input.ownerUserId, permission: 'event.manage', resource: { type: 'organization', id: org },
@@ -30,7 +30,8 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('组织治理 PostgreSQL', ()
 
   it('代录、审批、冻结、解冻真实落库并实时控制运营权限', async () => {
     const created = await service.create(seed.ids.admin, input)
-    expect(created.status).toBe('pending_review'); await expect(permission(created.id)).rejects.toMatchObject({ statusCode: 404 })
+    expect(created.status).toBe('pending_review'); expect(created.ownerUserId).toBe(input.ownerUserId)
+    expect(created.ownerLegalName).toBe(''); await expect(permission(created.id)).rejects.toMatchObject({ statusCode: 404 })
     const approved = await service.decide(seed.ids.admin, created.id, { action: 'approve', expectedVersion: 1, reason: '资料齐全' })
     expect(approved.reviewedBy).toBe(seed.ids.admin); expect(approved.reviewedAt).toBe(now.toISOString())
     await expect(permission(created.id)).resolves.toMatchObject({ organizationId: created.id })

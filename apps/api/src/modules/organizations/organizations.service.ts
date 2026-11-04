@@ -46,9 +46,9 @@ export class OrganizationsService {
   }
 
   async create(actor: string, input: CreateOrganization) {
-    const normalized = { ...input, name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim(),
-      ownerLegalName: input.ownerLegalName.trim(), contact: input.contact.trim() }
-    if ([normalized.name, normalized.region, normalized.purpose, normalized.ownerLegalName, normalized.contact].some((value) => !value)) {
+    const normalized = { name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim(),
+      ownerUserId: input.ownerUserId, contact: input.contact.trim() }
+    if ([normalized.name, normalized.region, normalized.purpose, normalized.contact].some((value) => !value)) {
       throw new DomainError('INVALID_ORGANIZATION', '请完整填写组织与负责人资料', 422)
     }
     const now = this.dependencies.now(), id = randomUUID()

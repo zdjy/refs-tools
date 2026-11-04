@@ -1,3 +1,4 @@
+import type { AdminMedia, AdminMediaList, AdminMediaQuery } from '@refs-tools/contracts/admin-media'
 import type { MediaObject, MediaProviderEvent, MediaTarget, UploadAuthorization } from '@refs-tools/contracts/media'
 import type { TransactionRunner } from '../../application/transaction.js'
 import type { AuthorizationRepository, PermissionEvaluator } from '../authorization/authorization.types.js'
@@ -7,6 +8,12 @@ export type StoredMedia = MediaObject & {
   objectKey: string; target: MediaTarget | { type: 'self'; id: string }; createdAt: string
   etag: string | null; cleanedAt: string | null
 }
+export interface AdminMediaRepository {
+  list(query: AdminMediaQuery): Promise<AdminMediaList>
+  detail(id: string): Promise<AdminMedia | null>
+}
+export type AdminMediaRepositories = MediaRepositories & { adminMedia: AdminMediaRepository }
+export type AdminMediaDependencies = Omit<MediaDependencies, 'transaction'> & { transaction: TransactionRunner<AdminMediaRepositories> }
 export type ObjectStat = { sizeBytes: number; contentType: string; etag: string; mediaId: string; ownerUserId: string }
 export interface ObjectStorage {
   signUpload(media: StoredMedia, expiresSeconds: number): Promise<UploadAuthorization>

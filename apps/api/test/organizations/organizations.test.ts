@@ -23,7 +23,7 @@ function fixture() {
   }
   const permissions = { isPermitted: vi.fn(() => true) }
   const service = new OrganizationsService({ transaction: { run: async (work) => work(repositories) }, permissions, now: () => now })
-  const input = { name: ' 市裁判协会 ', region: ' 上海 ', purpose: ' 裁判培训 ', ownerUserId: owner, ownerLegalName: '负责人', contact: 'owner@example.com' }
+  const input = { name: ' 市裁判协会 ', region: ' 上海 ', purpose: ' 裁判培训 ', ownerUserId: owner, contact: 'owner@example.com' }
   return { actor, id, owner, now, organization, repositories, permissions, service, input }
 }
 
@@ -38,7 +38,7 @@ describe('平台组织治理', () => {
   })
   it('代录申请不创建成员或绑定，资料和审计投影最小化', async () => {
     const f = fixture(); await f.service.create(f.actor, f.input)
-    expect(f.repositories.organizations.create).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ name: '市裁判协会', region: '上海' }), f.now)
+    expect(f.repositories.organizations.create).toHaveBeenCalledWith(expect.any(String), { ...f.input, name: '市裁判协会', region: '上海', purpose: '裁判培训' }, f.now)
     expect(f.repositories.organizations.activateOwnerMembership).not.toHaveBeenCalled()
     expect(f.repositories.authorization.insertBinding).not.toHaveBeenCalled()
     expect(JSON.stringify(vi.mocked(f.repositories.audit.append).mock.calls)).not.toContain('owner@example.com')

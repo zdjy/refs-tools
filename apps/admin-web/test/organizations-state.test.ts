@@ -34,6 +34,13 @@ describe('组织管理页面状态', () => {
     expect(f.state.form.contact).toBe('contact'); expect(f.state.formError.value).toContain('负责人');
     await f.state.save(); expect(f.state.mode.value).toBeNull(); expect(f.state.notice.value).toContain('等待审核');
   });
+  it('代录仅提交所选负责人 ID 与组织资料，不携带手填实名', async () => {
+    const f = fixture(); f.state.create();
+    Object.assign(f.state.form, { name: '协会', region: '上海', purpose: '培训', ownerUserId: 'selected-owner', contact: '联系方式' });
+    await f.state.save();
+    expect(f.api.create).toHaveBeenCalledWith({ name: '协会', region: '上海', purpose: '培训', ownerUserId: 'selected-owner', contact: '联系方式' });
+    expect(f.state.form.ownerUserId).toBe('');
+  });
   it('治理需理由和二次确认，版本冲突保留输入', async () => {
     const f = fixture(); await f.state.open(f.organization.id); f.state.action.value = 'approve';
     f.state.requestDecision(); expect(f.state.confirming.value).toBe(false);

@@ -49,6 +49,7 @@ export default {
   system_role: 'Role',
   system_user: 'User',
   system_organization: 'Organizations',
+  system_file: 'Files',
   login: 'Login',
   errorPage: 'Error Page',
 };

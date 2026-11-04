@@ -38,9 +38,9 @@ export class PgOrganizationsRepository implements OrganizationsRepository {
   }
 
   async create(id: string, input: CreateOrganization, now: Date): Promise<void> {
-    await this.connection.query(`INSERT INTO organizations(id,name,region,purpose,owner_user_id,owner_legal_name,contact,status,created_at)
-      VALUES($1,$2,$3,$4,$5,$6,$7,'pending_review',$8)`,
-    [id, input.name, input.region, input.purpose, input.ownerUserId, input.ownerLegalName, input.contact, now])
+    await this.connection.query(`INSERT INTO organizations(id,name,region,purpose,owner_user_id,contact,status,created_at)
+      VALUES($1,$2,$3,$4,$5,$6,'pending_review',$7)`,
+    [id, input.name, input.region, input.purpose, input.ownerUserId, input.contact, now])
   }
 
   async changeStatus(id: string, version: number, status: OrganizationDetail['status'], actor: string, reason: string, review: boolean, now: Date): Promise<boolean> {

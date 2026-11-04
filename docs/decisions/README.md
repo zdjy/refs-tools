@@ -6,6 +6,10 @@
 
 ## 决策索引
 
+- [ADR 0027：独立的平台媒体治理入口](./0027-admin-media-governance.md) — 独立 media.manage 权限与治理 API，保留业务媒体权限和证据留存边界。
+
+- [ADR 0028：组织成员关系、定向邀请与实时撤权](./0028-organization-members-and-invitations.md) — 平台只读治理与组织运营分离，邀请确认入会，成员结束时原子撤销下属角色。
+
 - [ADR 0026：本机热更新开发环境](./0026-local-hot-reload-dev-environment.md) — Vite 开发服务器提供 https://localhost:8443 同源入口，API 在宿主机用 tsx watch 运行，基础设施仍由 Compose 提供；不放宽认证边界。
 
 - [ADR 0025：平台组织治理与首次运营授权边界](./0025-admin-organization-governance.md) — 组织审核、成员/默认角色与审计原子提交，冻结保留历史且解冻不恢复已撤销授权。

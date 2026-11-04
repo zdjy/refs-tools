@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import { NButton, NTag, type DataTableColumns } from 'naive-ui';
+import { NButton, NSpace, NTag, type DataTableColumns } from 'naive-ui';
 import type { Organization, OrganizationDecision } from '@refs-tools/contracts/organizations';
 
 export const statusLabels: Record<Organization['status'], string> = {
@@ -13,6 +13,13 @@ export const actionOptions: Record<Organization['status'], { label: string; valu
   pending_review: [{ label: '审核通过', value: 'approve' }, { label: '驳回申请', value: 'reject' }],
   active: [{ label: '冻结组织', value: 'freeze' }], frozen: [{ label: '解冻组织', value: 'unfreeze' }], rejected: [], dissolved: [],
 };
+/**
+ * 治理操作的颜色语义：通过/解冻用 success，驳回/冻结用 error。
+ * 不用 primary：管理端品牌色本身是朱红（FS-0010），与 error 同值，无法区分肯定与破坏性操作。
+ */
+export const actionTypes: Record<OrganizationDecision['action'], 'success' | 'error'> = {
+  approve: 'success', reject: 'error', freeze: 'error', unfreeze: 'success',
+};
 export const actionDescriptions: Record<OrganizationDecision['action'], string> = {
   approve: '通过后，负责人将成为正式成员并获得组织所有者与组织者角色。',
   reject: '驳回后组织不能运营，申请资料和历史记录保留。',
@@ -21,7 +28,7 @@ export const actionDescriptions: Record<OrganizationDecision['action'], string> 
 };
 
 /** 列表仅显示组织摘要；实名与联系方式只在详情中读取。 */
-export function organizationColumns(open: (id: string) => void): DataTableColumns<Organization> {
+export function organizationColumns(open: (id: string) => void, members?: (organization: Organization) => void): DataTableColumns<Organization> {
   return [
     { title: '组织名称', key: 'name', width: 230, ellipsis: { tooltip: true } },
     { title: '地区', key: 'region', width: 140, render: row => row.region || '未填写' },
@@ -29,6 +36,9 @@ export function organizationColumns(open: (id: string) => void): DataTableColumn
     { title: '状态', key: 'status', width: 120, render: row => h(NTag, { bordered: false,
       type: row.status === 'active' ? 'success' : row.status === 'pending_review' ? 'warning' : 'default' }, () => statusLabels[row.status]) },
     { title: '创建时间', key: 'createdAt', width: 190, render: row => new Date(row.createdAt).toLocaleString() },
-    { title: '操作', key: 'actions', width: 140, render: row => h(NButton, { size: 'large', onClick: () => open(row.id) }, () => '查看 / 管理') },
+    { title: '操作', key: 'actions', width: 270, render: row => h(NSpace, {}, { default: () => [
+      h(NButton, { size: 'large', onClick: () => open(row.id) }, () => '查看 / 管理'),
+      ...(members ? [h(NButton, { size: 'large', onClick: () => members(row) }, () => '成员管理')] : []),
+    ] }) },
   ];
 }

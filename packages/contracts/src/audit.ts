@@ -6,14 +6,16 @@ const NullableUuid = Type.Union([Uuid, Type.Null()])
 export const AuditActionSchema = Type.Union([
   Type.Literal('role.granted'), Type.Literal('role.revoked'), Type.Literal('audit.queried'),
   Type.Literal('user.queried'), Type.Literal('user.created'), Type.Literal('user.updated'), Type.Literal('user.deleted'),
+  Type.Literal('membership.queried'), Type.Literal('membership.changed'), Type.Literal('invitation.queried'), Type.Literal('invitation.changed'),
   Type.Literal('organization.queried'), Type.Literal('organization.created'), Type.Literal('organization.unfrozen'),
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
   Type.Literal('certification.decided'), Type.Literal('certification.revoked'), Type.Literal('certification.appealed'),
   Type.Literal('exam.published'), Type.Literal('question.versioned'), Type.Literal('grading.reviewed'), Type.Literal('grading.overridden'),
-  Type.Literal('media.read_authorized'), Type.Literal('media.deleted'), Type.Literal('moderation.decided'),
+  Type.Literal('media.queried'), Type.Literal('media.read_authorized'), Type.Literal('media.deleted'), Type.Literal('moderation.decided'),
   Type.Literal('assignment.changed'), Type.Literal('attendance.corrected'), Type.Literal('post_game_record.changed'),
 ])
 export const AuditResourceTypeSchema = Type.Union([
+  Type.Literal('membership'), Type.Literal('organization_invitation'),
   Type.Literal('role_binding'), Type.Literal('audit_log'), Type.Literal('organization'), Type.Literal('user'),
   Type.Literal('certification'), Type.Literal('exam'), Type.Literal('question'), Type.Literal('attempt'),
   Type.Literal('media'), Type.Literal('forum_resource'), Type.Literal('assignment'), Type.Literal('attendance'), Type.Literal('post_game_record'),

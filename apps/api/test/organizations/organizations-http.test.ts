@@ -36,8 +36,11 @@ describe('组织治理 HTTP 门禁', () => {
       const response = await f.app.inject({ url: '/api/v1/admin/organizations?status=pending_review&page=1', headers: f.headers })
       expect(response.statusCode).toBe(200); expect(response.json().data.items[0]).not.toHaveProperty('contact')
       expect((await f.app.inject({ url: `/api/v1/admin/organizations/${f.id}`, headers: f.headers })).json().data.contact).toBe('private@example.com')
-      const input = { name: '协会', region: '上海', purpose: '培训', ownerUserId: f.actor, ownerLegalName: '负责人', contact: 'email@example.com' }
+      const input = { name: '协会', region: '上海', purpose: '培训', ownerUserId: f.actor, contact: 'email@example.com' }
       expect((await f.app.inject({ method: 'POST', url: '/api/v1/admin/organizations', headers: f.headers, payload: input })).statusCode).toBe(201)
+      expect(f.service.create).toHaveBeenCalledWith(f.actor, input)
+      expect((await f.app.inject({ method: 'POST', url: '/api/v1/admin/organizations', headers: f.headers,
+        payload: { ...input, ownerLegalName: '不应手填实名' } })).statusCode).toBe(400)
       const decision = { action: 'approve', expectedVersion: 1, reason: '材料齐全' }
       expect((await f.app.inject({ method: 'POST', url: `/api/v1/admin/organizations/${f.id}/decision`, headers: f.headers, payload: decision })).statusCode).toBe(200)
       expect(f.service.decide).toHaveBeenCalledWith(f.actor, f.id, decision)

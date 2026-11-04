@@ -4,6 +4,9 @@ import { createDatabasePool, databaseConfigFromEnvironment } from './infrastruct
 import { createTransactionRunner } from './infrastructure/database/transaction.js'
 import { AuthService } from './modules/auth/auth.service.js'
 import { AdminUsersService } from './modules/auth/admin-users.service.js'
+import { OrganizationMembersService } from './modules/organizations/organization-members.service.js'
+import { OrganizationInvitationsService } from './modules/organizations/organization-invitations.service.js'
+import { PgOrganizationMembersRepository } from './modules/organizations/organization-members.repository.js'
 import { OrganizationsService } from './modules/organizations/organizations.service.js'
 import { PgOrganizationsRepository } from './modules/organizations/organizations.repository.js'
 import { PgAdminUsersRepository } from './modules/auth/admin-users.repository.js'
@@ -34,7 +37,15 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
   })
   try {
     const media = buildMediaService(env, pool, permissions)
+    const memberDependencies = {
+      transaction: createTransactionRunner(pool, client => ({
+        members: new PgOrganizationMembersRepository(client), organizations: new PgOrganizationsRepository(client),
+        identities: new PgAdminUsersRepository(client), authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
+      })), permissions, now: () => new Date(),
+    }
     return await buildApp({ logger: true }, {
+      organizationMembers: { sessions: service, publicOrigin, members: new OrganizationMembersService(memberDependencies),
+        invitations: new OrganizationInvitationsService(memberDependencies) },
       auth: { service, publicOrigin },
       adminUsers: { sessions: service, publicOrigin, service: new AdminUsersService({
         transaction: createTransactionRunner(pool, (client) => ({
@@ -48,7 +59,8 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
           authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
         })), permissions, now: () => new Date(),
       }) },
-      ...(media ? { media: { service: media.service, sessions: service, publicOrigin }, storageEvents: media } : {}),
+      ...(media ? { media: { service: media.service, sessions: service, publicOrigin },
+        adminMedia: { service: media.adminService, sessions: service, publicOrigin }, storageEvents: media } : {}),
       audit: { sessions: service, service: new AuditService({
         transaction: createTransactionRunner(pool, (client) => ({
           authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),

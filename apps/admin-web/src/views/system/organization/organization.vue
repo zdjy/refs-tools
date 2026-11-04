@@ -1,13 +1,16 @@
 <script setup lang="ts">
+  import { ref } from 'vue';
   import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NPagination, NSelect, NSpace, NSpin } from 'naive-ui';
   import { useOrganizations } from './useOrganizations';
-  import { actionDescriptions, actionLabels, organizationColumns, statusOptions } from './organizations.presentation';
+  import { actionDescriptions, actionLabels, actionTypes, organizationColumns, statusOptions } from './organizations.presentation';
   import OrganizationCreateForm from './components/OrganizationCreateForm.vue';
   import OrganizationDetail from './components/OrganizationDetail.vue';
+  import OrganizationMembers from './components/OrganizationMembers.vue';
 
   const { items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError,
     notice, online, mode, action, reason, confirming, form, load, create, open, close, requestDecision, save, decide } = useOrganizations();
-  const columns = organizationColumns(open);
+  const memberPanel = ref<InstanceType<typeof OrganizationMembers> | null>(null);
+  const columns = organizationColumns(open, organization => memberPanel.value?.open(organization));
   function updateForm(value: typeof form) { Object.assign(form, value); }
 </script>
 
@@ -38,7 +41,7 @@
         {{ error }} <NButton size="large" :disabled="loading || !online" @click="load()">重试</NButton>
       </NAlert>
       <div class="min-w-0 overflow-x-auto">
-        <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1160" />
+        <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1290" />
       </div>
       <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
         <span>共 {{ total }} 个组织</span>
@@ -46,6 +49,7 @@
           :disabled="loading || !online" @update:page="load" />
       </div>
     </NCard>
+    <OrganizationMembers ref="memberPanel" />
     <NModal :show="!!mode" preset="card" :title="mode === 'create' ? '代录组织申请' : '组织详情与治理'"
       class="max-h-[calc(100dvh-32px)] overflow-y-auto"
       :style="{ width: 'min(680px, calc(100vw - 32px))' }" :mask-closable="!busy" :close-on-esc="!busy" :closable="false"
@@ -69,7 +73,7 @@
     <NModal :show="confirming" preset="dialog" :title="action ? `确认${actionLabels[action]}` : '确认操作'"
       :content="`${selected?.name ?? ''}：${action ? actionDescriptions[action] : ''}`" positive-text="确认操作" negative-text="取消"
       :loading="busy" :mask-closable="!busy" :close-on-esc="!busy" :closable="false"
-      :positive-button-props="{ size: 'large', disabled: !online || busy, type: action === 'freeze' || action === 'reject' ? 'error' : 'primary' }"
+      :positive-button-props="{ size: 'large', disabled: !online || busy, type: action ? actionTypes[action] : 'primary' }"
       :negative-button-props="{ size: 'large', disabled: busy }" @negative-click="confirming = false"
       @update:show="!busy && (confirming = false)" @positive-click="decide" />
   </section>

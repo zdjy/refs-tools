@@ -24,7 +24,7 @@ export const OrganizationQuerySchema = Type.Object({
 export const CreateOrganizationSchema = Type.Object({
   name: Type.String({ minLength: 1, maxLength: 120 }), region: Type.String({ minLength: 1, maxLength: 100 }),
   purpose: Type.String({ minLength: 1, maxLength: 1000 }), ownerUserId: Type.String({ format: 'uuid' }),
-  ownerLegalName: Type.String({ minLength: 1, maxLength: 80 }), contact: Type.String({ minLength: 1, maxLength: 200 }),
+  contact: Type.String({ minLength: 1, maxLength: 200 }),
 }, { additionalProperties: false })
 export const OrganizationDecisionSchema = Type.Object({
   action: Type.Union([Type.Literal('approve'), Type.Literal('reject'), Type.Literal('freeze'), Type.Literal('unfreeze')]),

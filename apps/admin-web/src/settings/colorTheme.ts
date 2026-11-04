@@ -150,6 +150,7 @@ function toNaiveTheme(palette: AdminPalette): GlobalThemeOverrides {
     Select: {
       peers: {
         InternalSelection: {
+          heightLarge: '44px',
           color: palette.surfaceMuted,
           textColor: palette.ink,
           placeholderColor: palette.muted,
@@ -157,7 +158,7 @@ function toNaiveTheme(palette: AdminPalette): GlobalThemeOverrides {
           borderHover: `1px solid ${palette.body}`,
           borderFocus: `1px solid ${palette.primary}`,
         },
-        InternalSelectMenu: { color: palette.surfaceRaised, optionTextColor: palette.ink },
+        InternalSelectMenu: { color: palette.surfaceRaised, optionTextColor: palette.ink, optionHeightLarge: '44px' },
       },
     },
     LoadingBar: { colorLoading: palette.primary },

@@ -6,6 +6,10 @@
 
 ## 规格索引
 
+- [FS-0017：管理端文件管理](./0017-admin-file-management.md)：平台媒体查询、详情、理由下载、留存约束与可重试删除。
+
+- [FS-0016：组织成员与定向邀请](./0016-organization-membership.md)：成员查询、入会审核、定向邀请及回应、移除/退出与实时角色撤销。
+
 - [FS-0015：管理端组织治理首期](./0015-admin-organization-management.md)：组织查询、代录申请、平台审核、冻结/解冻与原子运营授权。
 
 - [FS-0013：管理端用户 CRUD](./0013-admin-user-management.md)：基于真实 PostgreSQL 与 HttpOnly Cookie 会话的用户查询、创建、编辑、停用和逻辑删除；不包含角色 CRUD。

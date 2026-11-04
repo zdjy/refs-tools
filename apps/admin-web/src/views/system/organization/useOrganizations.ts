@@ -15,7 +15,7 @@ function message(error: unknown) {
   };
   return error instanceof OrganizationsApiError ? messages[error.code] ?? '操作失败，请稍后重试' : '操作失败，请稍后重试';
 }
-const emptyForm = (): CreateOrganization => ({ name: '', region: '', purpose: '', ownerUserId: '', ownerLegalName: '', contact: '' });
+const emptyForm = (): CreateOrganization => ({ name: '', region: '', purpose: '', ownerUserId: '', contact: '' });
 
 /** 页面局部状态；请求代次隔离筛选与详情，失败保留输入且不伪报成功。 */
 export function useOrganizations(api = organizationsApi) {

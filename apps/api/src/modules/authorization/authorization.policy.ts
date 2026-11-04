@@ -8,6 +8,8 @@ export const permissionRules = {
   'self.read': { roles: ['self'], targets: ['self'] },
   'self.write': { roles: ['self'], targets: ['self'] },
   'platform.manage': { roles: ['platform_admin'], targets: ['platform'] },
+  'media.manage': { roles: ['platform_admin'], targets: ['platform'] },
+  'organization.members.manage': { roles: ['owner', 'organizer'], targets: ['organization'] },
   'organization.manage': { roles: ['owner'], targets: ['organization'] },
   'role.manage': { roles: ['owner', 'platform_admin'], targets: ['platform', 'organization'] },
   'role.delegate': { roles: ['owner', 'organizer'], targets: ['event', 'match'] },

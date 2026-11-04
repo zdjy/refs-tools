@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { NAlert, NButton, NFormItem, NInput, NSpace } from 'naive-ui';
   import type { OrganizationDecision, OrganizationDetail } from '@refs-tools/contracts/organizations';
-  import { actionDescriptions, actionLabels, actionOptions, statusLabels } from '../organizations.presentation';
+  import { actionDescriptions, actionLabels, actionOptions, actionTypes, statusLabels } from '../organizations.presentation';
 
   defineProps<{ organization: OrganizationDetail; action: OrganizationDecision['action'] | null; reason: string; busy: boolean; online: boolean }>();
   const emit = defineEmits<{ 'update:action': [value: OrganizationDecision['action'] | null]; 'update:reason': [value: string]; request: []; close: [] }>();
@@ -26,7 +26,8 @@
     <NFormItem label="治理操作">
       <NSpace>
         <NButton v-for="option in actionOptions[organization.status]" :key="option.value" size="large"
-          :type="action === option.value ? 'primary' : 'default'" :aria-pressed="action === option.value" :disabled="busy"
+          :type="actionTypes[option.value]" :secondary="action !== option.value"
+          :aria-pressed="action === option.value" :disabled="busy"
           @click="emit('update:action', option.value)">{{ option.label }}</NButton>
       </NSpace>
     </NFormItem>
@@ -41,7 +42,7 @@
   </div>
   <NSpace justify="end" class="mt-4">
     <NButton size="large" :disabled="busy" @click="emit('close')">关闭</NButton>
-    <NButton v-if="action" size="large" :type="action === 'freeze' || action === 'reject' ? 'error' : 'primary'"
+    <NButton v-if="action" size="large" :type="actionTypes[action]"
       :disabled="busy || !online" @click="emit('request')">{{ actionLabels[action] }}</NButton>
   </NSpace>
 </template>

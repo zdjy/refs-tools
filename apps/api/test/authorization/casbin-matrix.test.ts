@@ -9,17 +9,17 @@ type MatrixCase = {
 }
 const matrix: MatrixCase[] = [
   { role: 'platform_admin', scopeType: 'platform', scopeId: null, allowed: {
-    platform: ['platform.manage', 'role.manage', 'platform.certification.review', 'content.unpublish', 'results.override', 'audit.read'],
+    platform: ['platform.manage', 'media.manage', 'role.manage', 'platform.certification.review', 'content.unpublish', 'results.override', 'audit.read'],
   } },
   { role: 'content_editor', scopeType: 'platform', scopeId: null, allowed: { platform: ['content.edit', 'content.unpublish'] } },
   { role: 'grader', scopeType: 'platform', scopeId: null, allowed: { platform: ['grading.review'] } },
   { role: 'moderator', scopeType: 'platform', scopeId: null, allowed: { platform: ['moderation.manage'] } },
   { role: 'owner', scopeType: 'organization', scopeId: 'org-a', allowed: {
-    organization: ['organization.manage', 'role.manage', 'event.manage', 'audit.read'],
+    organization: ['organization.manage', 'organization.members.manage', 'role.manage', 'event.manage', 'audit.read'],
     event: ['role.delegate', 'event.manage'], match: ['role.delegate', 'match.manage', 'match.operate'],
   } },
   { role: 'organizer', scopeType: 'organization', scopeId: 'org-a', allowed: {
-    organization: ['event.manage'], event: ['role.delegate', 'event.manage'], match: ['role.delegate', 'match.manage', 'match.operate'],
+    organization: ['event.manage', 'organization.members.manage'], event: ['role.delegate', 'event.manage'], match: ['role.delegate', 'match.manage', 'match.operate'],
   } },
   { role: 'organizer', scopeType: 'event', scopeId: 'event-a', allowed: {
     event: ['role.delegate', 'event.manage'], match: ['role.delegate', 'match.manage', 'match.operate'],

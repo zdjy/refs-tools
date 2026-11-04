@@ -28,6 +28,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/system/organization/organization.vue'),
       },
       {
+        path: 'file',
+        name: 'system_file',
+        meta: { title: 'route.system_file' },
+        component: () => import('@/views/system/file/file.vue'),
+      },
+      {
         path: 'menu',
         name: 'system_menu',
         meta: {
