@@ -48,6 +48,7 @@ export default {
   system_menu: 'Menu',
   system_role: 'Role',
   system_user: 'User',
+  system_organization: 'Organizations',
   login: 'Login',
   errorPage: 'Error Page',
 };

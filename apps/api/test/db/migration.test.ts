@@ -11,7 +11,7 @@ const migrations = await loadMigrations(migrationsDirectory)
 
 describe('迁移文件', () => {
   it('加载可执行及可回滚的核心迁移', () => {
-    expect(migrations.map(({ id }) => id)).toEqual(['0001', '0002', '0003', '0004', '0005'])
+    expect(migrations.map(({ id }) => id)).toEqual(['0001', '0002', '0003', '0004', '0005', '0006'])
     expect(migrations[0]?.up).toContain('CREATE FUNCTION set_updated_at()')
     expect(migrations[0]?.down).toContain('DROP FUNCTION set_updated_at()')
   })
@@ -29,8 +29,10 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
   afterAll(async () => { await database?.close() })
 
   it('空 schema 可迁移、幂等重跑、回滚后重新应用', async () => {
-    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002', '0003', '0004', '0005'])
+    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002', '0003', '0004', '0005', '0006'])
     expect(await applyTestMigrations(pool)).toEqual([])
+    expect(await migrateDown(pool, migrations)).toBe('0006')
+    expect((await pool.query("SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='organizations' AND column_name='version'")).rows).toEqual([])
     expect(await migrateDown(pool, migrations)).toBe('0005')
     expect((await pool.query("SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='users' AND column_name='deleted_at'")).rows).toEqual([])
     expect(await migrateDown(pool, migrations)).toBe('0004')
@@ -45,13 +47,13 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
     expect(result.rows[0].function).toBeNull()
     expect(await appliedMigrations(pool)).toEqual([])
     expect(await migrateDown(pool, migrations)).toBeNull()
-    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002', '0003', '0004', '0005'])
+    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002', '0003', '0004', '0005', '0006'])
   })
 
   it('并发迁移只应用一次', async () => {
     const results = await Promise.all([applyTestMigrations(pool), applyTestMigrations(pool)])
-    expect(results.flat()).toEqual(['0001', '0002', '0003', '0004', '0005'])
-    expect(await appliedMigrations(pool)).toHaveLength(5)
+    expect(results.flat()).toEqual(['0001', '0002', '0003', '0004', '0005', '0006'])
+    expect(await appliedMigrations(pool)).toHaveLength(6)
   })
 
   it('失败的迁移连同 DDL 一起回滚', async () => {
@@ -63,7 +65,7 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
     }])).rejects.toMatchObject({ code: '22012' })
     const result = await pool.query("SELECT to_regclass('failed_migration') AS table")
     expect(result.rows[0].table).toBeNull()
-    expect(await appliedMigrations(pool)).toHaveLength(5)
+    expect(await appliedMigrations(pool)).toHaveLength(6)
   })
 
   it('唯一约束及外键拒绝非法写入', async () => {

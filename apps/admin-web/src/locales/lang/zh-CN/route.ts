@@ -48,6 +48,7 @@ export default {
   system_menu: '菜单权限',
   system_role: '角色权限',
   system_user: '用户管理',
+  system_organization: '组织管理',
   login: '登录',
   errorPage: '错误页',
 };

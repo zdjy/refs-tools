@@ -4,6 +4,8 @@ import { createDatabasePool, databaseConfigFromEnvironment } from './infrastruct
 import { createTransactionRunner } from './infrastructure/database/transaction.js'
 import { AuthService } from './modules/auth/auth.service.js'
 import { AdminUsersService } from './modules/auth/admin-users.service.js'
+import { OrganizationsService } from './modules/organizations/organizations.service.js'
+import { PgOrganizationsRepository } from './modules/organizations/organizations.repository.js'
 import { PgAdminUsersRepository } from './modules/auth/admin-users.repository.js'
 import { hashPassword } from './modules/auth/auth.security.js'
 import { PgAuthRepository } from './modules/auth/auth.repository.js'
@@ -39,6 +41,12 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
           users: new PgAdminUsersRepository(client), sessions: new PgAuthRepository(client),
           authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
         })), permissions, now: () => new Date(), passwordMinLength: policy.passwordMinLength, hashPassword,
+      }) },
+      organizations: { sessions: service, publicOrigin, service: new OrganizationsService({
+        transaction: createTransactionRunner(pool, (client) => ({
+          organizations: new PgOrganizationsRepository(client), identities: new PgAdminUsersRepository(client),
+          authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
+        })), permissions, now: () => new Date(),
       }) },
       ...(media ? { media: { service: media.service, sessions: service, publicOrigin }, storageEvents: media } : {}),
       audit: { sessions: service, service: new AuditService({

@@ -22,6 +22,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/system/user/user.vue'),
       },
       {
+        path: 'organization',
+        name: 'system_organization',
+        meta: { title: 'route.system_organization' },
+        component: () => import('@/views/system/organization/organization.vue'),
+      },
+      {
         path: 'menu',
         name: 'system_menu',
         meta: {

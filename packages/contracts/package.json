@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./organizations": {
+      "types": "./src/organizations.ts",
+      "development": "./src/organizations.ts",
+      "import": "./dist/organizations.js"
+    },
     "./admin-users": {
       "types": "./src/admin-users.ts",
       "development": "./src/admin-users.ts",

@@ -1,1 +1,12 @@
 @import url('./transition/index.less');
+
+// 管理页与 Naive UI 弹窗沿用框架动效；系统要求减弱动态时关闭这些容器的过渡。
+@media (prefers-reduced-motion: reduce) {
+  :root .main-view,
+  :root .n-modal,
+  :root .n-modal-mask,
+  :root .n-base-wave {
+    animation: none;
+    transition: none;
+  }
+}

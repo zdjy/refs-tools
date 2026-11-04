@@ -6,6 +6,7 @@ const NullableUuid = Type.Union([Uuid, Type.Null()])
 export const AuditActionSchema = Type.Union([
   Type.Literal('role.granted'), Type.Literal('role.revoked'), Type.Literal('audit.queried'),
   Type.Literal('user.queried'), Type.Literal('user.created'), Type.Literal('user.updated'), Type.Literal('user.deleted'),
+  Type.Literal('organization.queried'), Type.Literal('organization.created'), Type.Literal('organization.unfrozen'),
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
   Type.Literal('certification.decided'), Type.Literal('certification.revoked'), Type.Literal('certification.appealed'),
   Type.Literal('exam.published'), Type.Literal('question.versioned'), Type.Literal('grading.reviewed'), Type.Literal('grading.overridden'),
