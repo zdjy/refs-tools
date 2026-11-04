@@ -303,17 +303,6 @@
       // 图标列表
       const iconList = computed(() => [
         {
-          icon: 'SearchOutlined',
-          tips: t('layout.header.search'),
-        },
-        {
-          icon: 'GithubOutlined',
-          tips: t('layout.header.github'),
-          eventObject: {
-            click: () => window.open('https://github.com/jekip/naive-ui-admin'),
-          },
-        },
-        {
           icon: 'LockOutlined',
           tips: t('layout.header.lock'),
           eventObject: {
