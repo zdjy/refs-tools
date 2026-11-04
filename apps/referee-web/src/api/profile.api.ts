@@ -43,3 +43,11 @@ export function profileErrorMessage(error: unknown): string {
   return error instanceof ProfileApiError && messages[error.code]
     ? messages[error.code]! : '服务暂时不可用，请稍后重试。已填写的内容仍保留在页面上。'
 }
+
+/** 读取失败时没有任何输入需要保留，文案只说明可重试，不暗示已保存或已填写。 */
+export function profileLoadErrorMessage(error: unknown): string {
+  const code = error instanceof ProfileApiError ? error.code : ''
+  if (code === 'NETWORK_ERROR') return '连接失败，请检查网络后重试。'
+  if (code === 'UNAUTHENTICATED') return '登录已失效，请重新登录后查看账号资料。'
+  return '暂时无法读取账号资料，请稍后重试。若持续失败，请联系平台管理员。'
+}

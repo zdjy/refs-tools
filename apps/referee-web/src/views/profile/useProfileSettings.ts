@@ -1,7 +1,7 @@
 import { reactive, ref, shallowRef } from 'vue'
 import type { Profile, UpdateProfileBody } from '@refs-tools/contracts/profile'
 import { validateProfile } from '@refs-tools/domain'
-import { ProfileApiError, profileApi, profileErrorMessage, type ProfileApi } from '../../api/profile.api'
+import { ProfileApiError, profileApi, profileErrorMessage, profileLoadErrorMessage, type ProfileApi } from '../../api/profile.api'
 import { mediaApi, type MediaApi } from '../../api/media.api'
 import { createDirectUpload, type UploadState } from '../../features/media/direct-upload'
 import { compressPreview } from '../../features/media/image-compression'
@@ -86,7 +86,7 @@ export function useProfileSettings(api: ProfileApi = profileApi, media: MediaApi
     loading.value = true
     loadError.value = ''
     try { apply(await api.read()) }
-    catch (error) { loadError.value = profileErrorMessage(error) }
+    catch (error) { loadError.value = profileLoadErrorMessage(error) }
     finally { loading.value = false }
   }
 

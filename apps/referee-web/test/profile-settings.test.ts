@@ -30,6 +30,14 @@ describe('账号设置档案状态', () => {
     expect(h.state.loading.value).toBe(false)
   })
 
+  it('读取失败只提示重试，不暗示有已填写内容', async () => {
+    const h = harness({ read: vi.fn(async () => { throw new ProfileApiError('INTERNAL_ERROR', 500) }) })
+    await h.state.load()
+    expect(h.state.loadError.value).toContain('请稍后重试')
+    expect(h.state.loadError.value).not.toContain('已填写')
+    expect(h.state.loading.value).toBe(false)
+  })
+
   it('只提交改动字段并带上版本号，成功后刷新本地状态', async () => {
     const h = harness()
     await h.state.load()
