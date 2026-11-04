@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0026：本机热更新开发环境](./0026-local-hot-reload-dev-environment.md) — Vite 开发服务器提供 https://localhost:8443 同源入口，API 在宿主机用 tsx watch 运行，基础设施仍由 Compose 提供；不放宽认证边界。
+
 - [ADR 0025：平台组织治理与首次运营授权边界](./0025-admin-organization-governance.md) — 组织审核、成员/默认角色与审计原子提交，冻结保留历史且解冻不恢复已撤销授权。
 
 - [ADR 0024：开发阶段使用 pgsty/minio，上线切换云对象存储](./0024-local-minio-and-cloud-storage-switch.md) — 本地私有 S3 直传、独立 TLS/CORS 入口与配置化供应商切换，保留 OSS 适配器。

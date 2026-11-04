@@ -42,7 +42,7 @@ docker compose ps -a
 | Mailpit 收件箱 | http://localhost:8025 | `mailpit:8025` | 查看测试注册/登录验证码邮件 |
 | MinIO 私有对象存储 | https://localhost:9443 | `storage:443` → `minio:9000` | 浏览器签名直传 HTTPS 入口，复用本地证书；媒体不经过 API |
 | MinIO 控制台 | http://localhost:9001 | `minio:9001` | 使用 `.env` 中 root 凭据管理合成测试资源 |
-| SMTP | 不发布本机端口 | `mailpit:1025` | API 通过 STARTTLS 发信到本地收件箱，不发送到真实邮箱 |
+| SMTP | `127.0.0.1:1025` | `mailpit:1025` | API 通过 STARTTLS 发信到本地收件箱，不发送到真实邮箱；发布端口供[本机热更新开发](#本机热更新开发日常迭代)中的宿主机 API 使用 |
 | PostgreSQL 测试库 | `127.0.0.1:5433` | `test-db:5432` | 仅启用 `test` profile 时启动，独立于联调库 |
 
 所有发布端口只绑定 `127.0.0.1`，默认不允许局域网或手机访问。可在 `.env` 调整 `WEB_PORT`、`API_PORT`、`POSTGRES_PORT`、`MAILPIT_PORT`、`TEST_POSTGRES_PORT`、`MINIO_PORT`、`MINIO_CONSOLE_PORT`；调整前端端口时 Compose 会同步设置 API 的 `AUTH_PUBLIC_ORIGIN`。浏览器使用 `localhost`，不要替换为 `127.0.0.1`，否则认证写请求的 Origin 校验会失败。
@@ -88,6 +88,46 @@ docker compose --profile test down
 
 **只有确认可以清空所有联调数据时**才执行 `docker compose --profile test down -v`；它会同时删除数据库、证书和对象存储 volume，再次启动后需更新本机证书信任。修改 `.env` 的数据库密码不会自动修改已初始化 volume 中的密码；需显式修改数据库账号密码，或确认数据可丢弃后重建。原有 `referee_*` 容器不属于此 Compose 项目；如它们启动后占用相同端口，先停旧服务或调整 `.env`。
 
+## 本机热更新开发（日常迭代）
+
+改代码即可在浏览器看到最新程序，不需要重建镜像：API 在宿主机用 `tsx watch` 运行，裁判端与管理端用 Vite 开发服务器，PostgreSQL、Mailpit、MinIO 等基础设施仍由 Compose 提供。浏览器入口仍是 **https://localhost:8443**，与 Compose 入口同源，因此认证 Origin 校验、`__Host-` 会话 Cookie 和对象存储 CORS 都不需要放宽。取舍与备选方案见 [ADR 0026](docs/decisions/0026-local-hot-reload-dev-environment.md)。
+
+前提：本机安装 Node.js 20.19+、pnpm 12、Docker Engine / Docker Desktop，以及 `openssl`（Git for Windows 自带）。
+
+```sh
+# 一次性准备
+pnpm install
+cd apps/admin-web && pnpm install --frozen-lockfile --ignore-scripts && cd ../..
+cp .env.example .env          # 已有 .env 时不要覆盖
+
+# 1) 只启动基础设施容器；api/web 与宿主机进程抢端口，不启动
+pnpm dev:infra
+
+# 2) 首次生成开发证书并信任其公开证书（只做一次）
+pnpm dev:cert
+certutil -user -addstore Root ".cache/dev-certs/localhost.crt"
+
+# 3) 首次启动或迁移有变更时，在宿主机执行数据库迁移
+pnpm dev:api:migrate
+
+# 4) 一键启动 API、裁判端与管理端（Ctrl+C 结束全部进程）
+pnpm dev
+```
+
+| 地址 | 内容 |
+| --- | --- |
+| https://localhost:8443/ | 裁判端，保存即热更新 |
+| https://localhost:8443/admin/ | 管理端，经裁判端 Vite 代理后与裁判端同源 |
+| http://localhost:3000/api/v1/health | 宿主机 API，保存后自动重启 |
+| http://localhost:8025 | Mailpit 收件箱 |
+
+- 前端保存后由 Vite HMR 局部更新，API 保存后由 `tsx watch` 重启；数据库结构变更需重新执行 `pnpm dev:api:migrate`。
+- 从 Compose 联调模式切到开发模式前先执行 `docker compose stop api web`；`pnpm dev` 发现 3000、8443、8001 被占用会直接报错退出，不静默换端口。
+- 真实登录只在 `https://localhost:8443` 成立。`http://localhost:5173`、`http://localhost:8001` 或局域网地址既不受开发证书覆盖，也不匹配 `AUTH_PUBLIC_ORIGIN`，只能用于不依赖登录的页面调试。
+- 开发证书有效期一年，`pnpm dev:cert -- --force` 可重新生成（需重新导入信任）；停用后执行 `certutil -user -delstore Root "refs-tools local dev (vite)"` 移除信任。私钥只保存在已忽略提交的 `.cache/`，不进入镜像或仓库。
+- API 读取根 `.env` 中的本地密钥，只把容器主机名换成 `127.0.0.1`，不复制密钥文件；`NODE_EXTRA_CA_CERTS` 指向从 Compose 容器复制的公开证书，SMTP 与对象存储仍完整校验 TLS。
+- 需要验收镜像产物（Nginx 静态托管、容器网络、生产构建）时，仍使用上一节的 `docker compose up -d --build --wait`。
+
 ## 上游模板快照
 
 `apps/admin-web` 完整保留 [jekip/naive-ui-admin](https://github.com/jekip/naive-ui-admin) 的 `main` 分支源码，版本 `3.0.0`，commit `c9db4cde447240eaa17fbe439f507680819add3d`；MIT 许可、上游 README、锁文件、示例和 Mock 均保留。本地只修改 UI 颜色，使用[共享 UI 规范配色](docs/ui/macos_fiba.md)，不改布局、字体、尺寸、路由、登录逻辑或构建配置。
@@ -105,7 +145,7 @@ pnpm build
 
 **登录账号**：管理端没有内置账号。先在裁判端 `https://localhost:8443/register` 注册并验证邮箱，再按 [AUTHORIZATION_AUDIT.md](apps/api/db/AUTHORIZATION_AUDIT.md) 的“首个平台管理员”流程授权，之后在 `https://localhost:8443/admin/login` 用邮箱和密码登录。
 
-`pnpm dev` 的 `http://localhost:8001/` 没有 `/api` 代理，只能浏览 Mock 页面，不能真实登录；需要真实登录时使用 Compose 入口。根目录 `pnpm test` 会运行管理端 `test/` 下的单测，但根目录 `pnpm typecheck` 不覆盖管理端，需在 `apps/admin-web` 内运行 `pnpm type-check`。
+`pnpm dev` 的 `http://localhost:8001/admin/` 没有 `/api` 代理，只能浏览 Mock 页面，不能真实登录；真实登录使用 `https://localhost:8443/admin/`（见[本机热更新开发](#本机热更新开发日常迭代)与 Compose 入口）。根目录 `pnpm test` 会运行管理端 `test/` 下的单测，但根目录 `pnpm typecheck` 不覆盖管理端，需在 `apps/admin-web` 内运行 `pnpm type-check`。
 
 ## 前端样式
 
@@ -170,4 +210,4 @@ Git Bash / Linux / macOS：
 TEST_DATABASE_URL=postgres://refs_tools_test:local-test-only@127.0.0.1:5433/refs_tools_test pnpm test:db
 ```
 
-更改 `TEST_POSTGRES_PORT` 后同步修改上面的 URL。本机 API 的迁移、SMTP 和安全环境变量见[数据库说明](apps/api/db/README.md)及[认证部署说明](apps/api/db/AUTH_DEPLOYMENT.md)；根目录 `.env` 供 Compose 插值，不会被本机 Node.js 进程自动加载。
+更改 `TEST_POSTGRES_PORT` 后同步修改上面的 URL。本机 API 的迁移、SMTP 和安全环境变量见[数据库说明](apps/api/db/README.md)及[认证部署说明](apps/api/db/AUTH_DEPLOYMENT.md)；根目录 `.env` 供 Compose 插值，`pnpm dev` 会读取它并为宿主机 API 改写主机名（见 [ADR 0026](docs/decisions/0026-local-hot-reload-dev-environment.md)）。

@@ -5,6 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "node scripts/dev-api.mjs",
+    "dev:api:migrate": "node scripts/dev-api.mjs migrate",
+    "dev:cert": "node scripts/dev-cert.mjs",
+    "dev:infra": "docker compose up -d --wait --wait-timeout 120 db mailpit minio minio-init storage certificates",
     "typecheck": "pnpm --recursive run typecheck",
     "test": "vitest run --config vitest.config.ts",
     "test:db": "vitest run --config vitest.database.config.ts"

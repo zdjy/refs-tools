@@ -36,7 +36,7 @@ Mailpit 作为仅本地使用的邮件收件箱，不向外投递。OpenSSL 一�
 3. 同源共享 localStorage：管理端 `Storage` 使用 `ADMIN__` 前缀，`clear()` 仅清理该前缀，避免模板的整体清理删除裁判端的本地工作台数据。
 4. `.dockerignore` 放行 `apps/admin-web/build`（Vite 构建脚本源码）和 `.env.production`（仅含公开构建参数）。
 
-本机 `pnpm dev` 的 `8001` 入口没有 API 代理且 Origin 不匹配，不能用于真实登录。
+本机 `pnpm dev` 的 `8001` 入口没有 API 代理且 Origin 不匹配，不能用于真实登录；真实登录使用同源入口（Compose 的 `https://localhost:8443/admin/`，或[热更新开发环境](0026-local-hot-reload-dev-environment.md)中经裁判端 Vite 代理的同一地址）。
 
 ## 后续实施：本地对象存储
 
@@ -47,5 +47,5 @@ Mailpit 作为仅本地使用的邮件收件箱，不向外投递。OpenSSL 一�
 - 一条 Compose 启动命令可重复执行迁移并联调注册登录，旧 `referee_*` 容器不被修改。
 - 本地收件箱无鉴权，账号权限、证书和回环绑定均为本机测试假设，禁止直接用于公网部署或存储真实敏感数据。
 - 证书有效期一年，更新需停止服务、单独重建证书 volume 并更新宿主信任；删除全部 volume 会清空联调数据。
-- 静态前端没有热更新，修改源码后需重建镜像；Vite 本机开发入口继续保留，但不自动具备完整 HTTPS 登录环境。
+- 静态前端没有热更新，修改源码后需重建镜像；Vite 本机开发入口继续保留，但不自动具备完整 HTTPS 登录环境。日常迭代改用[本机热更新开发环境](0026-local-hot-reload-dev-environment.md)：Vite 开发服务器直接提供 `https://localhost:8443` 同源入口，API 在宿主机 `tsx watch` 运行，本 ADR 的 Compose 入口继续用于验收镜像产物。
 - 镜像基线采用版本/发行线标签而非 digest，构建需联网；后续生产发布需独立制定镜像固定、安全更新、密钥、备份和 TLS 方案。

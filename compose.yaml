@@ -73,6 +73,8 @@ services:
       MP_QUIET: "true"
     ports:
       - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+      # 宿主机直跑 API 时通过该端口投递验证码邮件；Compose 内仍用 mailpit:1025。
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
     volumes:
       - certificates:/certs:ro
     depends_on:
