@@ -74,7 +74,8 @@ export function useOrganizationMembers(api = organizationMembersApi) {
       const input = { expectedVersion: selected.version, reason: reason.value.trim() };
       if (selected.kind === 'revoke') await api.revoke(organization.value!.id, selected.id, input);
       else await api.decide(organization.value!.id, selected.id, { ...input, action: selected.kind });
-      action.value = null; reason.value = ''; notice.value = '成员记录已更新';
+      const labels = { approve: '入会申请已通过', reject: '入会申请已驳回', remove: '成员已移除，历史记录保留', revoke: '邀请已撤销' };
+      action.value = null; reason.value = ''; notice.value = labels[selected.kind];
     } catch (e) {
       error.value = errorText(e);
       if (e instanceof OrganizationMembersApiError && e.status === 409) ready.value = false;

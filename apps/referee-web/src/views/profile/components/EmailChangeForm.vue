@@ -4,10 +4,12 @@ import { NAlert, NButton, NInput } from 'naive-ui'
 import { useAuthStore } from '../../../stores/auth'
 import { useEmailChange } from '../../../features/account/useEmailChange'
 import UiSteps from '../../../components/ui/UiSteps.vue'
+import { useUiFeedback } from '../../../components/ui/useUiFeedback'
 
 const auth = useAuthStore()
 const { fields, errors, success, busy, requiresPassword, steps, step, index, isFirst, isLast,
   oldChallenge, newChallenge, sendOld, sendNew, next, back, submit } = useEmailChange(auth)
+useUiFeedback(success)
 const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)
 const hint = (key: string, fallback: string) => errors.value[key] || fallback

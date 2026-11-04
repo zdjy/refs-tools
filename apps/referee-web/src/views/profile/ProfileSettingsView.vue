@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { NAlert, NButton } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
 import { useAvatarStore } from '../../stores/avatar'
+import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
 import ProfileAvatar from './components/ProfileAvatar.vue'
@@ -16,6 +17,7 @@ const auth = useAuthStore()
 const avatarStore = useAvatarStore()
 const { profile, fields, avatarUrl, avatar, loading, saving, loadError, saveError, saved, fieldError,
   load, save, pickAvatar, retryAvatar, removeAvatar } = useProfileSettings()
+useUiFeedback(saved, 'info')
 const tablist = ref<HTMLElement | null>(null)
 const { active, select, onKeydown } = useProfileTabs(tablist)
 const formArea = ref<HTMLElement | null>(null)

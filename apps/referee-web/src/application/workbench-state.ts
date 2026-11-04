@@ -76,7 +76,8 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     if (changed) persist()
   }
 
-  function updateSession(updater: (session: WorkbenchSession, at: number) => WorkbenchSession) {
+  function updateSession(updater: (session: WorkbenchSession, at: number) => WorkbenchSession, notice = '') {
+    sessionNotice.value = ''
     settle()
     if (!activeSession.value) return
     const at = Date.now()
@@ -87,7 +88,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
       history.value[previous.id] = [...(history.value[previous.id] ?? []), pauseSession(previous, at)].slice(-40)
       sessions.value = sessions.value.map((session) => session.id === previous.id ? updated : session)
       commandError.value = ''
-      persist()
+      if (persist()) sessionNotice.value = notice
     } catch (error) {
       commandError.value = error instanceof Error ? error.message : '操作失败，请重试。'
     }
@@ -100,9 +101,9 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     const at = Date.now()
     const restored = { ...pauseSession(snapshot, at), updatedAt: at }
     sessions.value = sessions.value.map((session) => session.id === activeId.value ? restored : session)
-    sessionNotice.value = '已撤销上一步，计时器保持暂停，请核对后手动恢复。'
+    sessionNotice.value = ''
     commandError.value = ''
-    persist()
+    if (persist()) sessionNotice.value = '已撤销上一步并保存，计时器保持暂停，请核对后手动恢复。'
   }
 
   /** 返回 false 表示恢复失败，未创建会话且调用方应保留当前表单。 */
@@ -113,7 +114,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     sessions.value = [session, ...sessions.value]
     activeId.value = session.id
     sessionNotice.value = ''
-    persist()
+    if (persist()) sessionNotice.value = '本地比赛已创建并保存到此设备。'
     return true
   }
 
@@ -125,7 +126,8 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     persist()
   }
 
-  function deleteSessions(ids: string[]) {
+  function deleteSessions(ids: string[], notice: string) {
+    sessionNotice.value = ''
     const next = sessions.value.filter((session) => !ids.includes(session.id))
     const nextId = next.some((session) => session.id === activeId.value) ? activeId.value : next[0]?.id ?? ''
     try {
@@ -135,7 +137,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
       activeId.value = nextId
       restoreFailed.value = false
       storageError.value = ''
-      sessionNotice.value = ''
+      sessionNotice.value = notice
     } catch {
       storageError.value = '无法访问本地存储，未能删除记录。当前会话仍然保留，请重试。'
     }
@@ -143,6 +145,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
 
   function exportSession() {
     if (!activeSession.value) return
+    sessionNotice.value = ''
     try {
       ports.download(activeSession.value)
       sessionNotice.value = '已发起会话导出，请确认浏览器已保存文件。文件可能包含比赛数据，请妥善保管。'
@@ -170,24 +173,29 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     toggleLink: () => updateSession(toggleLink),
     editClock: (kind: ClockKind, seconds: number) => updateSession((session, at) => editClock(session, kind, seconds, at)),
     retryStorage: () => {
-      if (!restoreFailed.value) return persist()
+      if (!restoreFailed.value) {
+        sessionNotice.value = ''
+        const saved = persist()
+        if (saved) sessionNotice.value = '本地记录已重新保存到此设备。'
+        return saved
+      }
       restore()
       if (!restoreFailed.value) settle()
     },
-    removeSession: (id: string) => deleteSessions([id]),
-    clearAll: () => deleteSessions(sessions.value.map((session) => session.id)),
+    removeSession: (id: string) => deleteSessions([id], '本地比赛已删除。'),
+    clearAll: () => deleteSessions(sessions.value.map((session) => session.id), '本设备的全部比赛记录已清空。'),
     resetMatch: () => updateSession((session, at) => {
       const empty = createSession(at, { ...session.rules, scorerRules: session.scorer.rules })
       empty.scorer.teams.home.name = session.scorer.teams.home.name
       empty.scorer.teams.away.name = session.scorer.teams.away.name
       return scorerEvent({ ...empty, id: session.id, title: session.title, createdAt: session.createdAt, events: [] }, '重置整场比赛', at)
-    }),
+    }, '整场比赛已重置并保存，队名与规则保留。'),
     switchPeriod: () => updateSession(advancePeriod),
     onFoul: (team: keyof FoulCount) => updateSession((session, at) => adjustFoul(session, team, 1, at)),
     applyPreset: (seconds: number) => updateSession((session, at) => setShotPreset(session, seconds, at)),
     toggleClock: (kind: ClockKind) => updateSession((session, at) => kind === 'game' ? toggleGame(session, at) : changeSessionClock(session, kind, 'toggle', at)),
     resetClock: (kind: ClockKind) => updateSession((session, at) => changeSessionClock(session, kind, 'reset', at)),
-    clearEventLog: () => updateSession((session, at) => ({ ...session, events: [], updatedAt: at })),
+    clearEventLog: () => updateSession((session, at) => ({ ...session, events: [], updatedAt: at }), '本地事件流水已清空并保存。'),
   }
 }
 

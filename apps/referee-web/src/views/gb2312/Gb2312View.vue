@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { NButton } from 'naive-ui'
+import { NAlert, NButton } from 'naive-ui'
+import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import { Eraser, Search } from '@lucide/vue'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import Gb2312Batch from './components/Gb2312Batch.vue'
@@ -7,9 +8,11 @@ import Gb2312Result from './components/Gb2312Result.vue'
 import { useGb2312 } from './useGb2312'
 
 const {
-  characterInput, codeInput, batchInput, characterResult, codeResult, batchResult, batchRows, copiedLabel,
+  characterInput, codeInput, batchInput, characterResult, codeResult, batchResult, batchRows, copyError, copyNotice,
   lookupCharacter, lookupCode, convertBatch, clearAll, copy,
 } = useGb2312()
+useUiFeedback(copyNotice)
+useUiFeedback(copyError, 'error')
 </script>
 
 <template>
@@ -24,6 +27,9 @@ const {
         <n-button secondary @click="clearAll"><Eraser :size="16" aria-hidden="true" />清空</n-button>
       </div>
     </header>
+
+    <n-alert v-if="copyError" type="error" role="alert" class="mt-4">{{ copyError }}</n-alert>
+    <p v-if="copyNotice" role="status" class="mt-4 text-sm text-green">{{ copyNotice }}</p>
 
     <section class="mt-6 grid grid-cols-1 gap-4 tablet:grid-cols-2" aria-label="单字符查询">
       <article class="rounded-xl border border-solid border-line bg-surface p-5 shadow-card compact:p-6">
@@ -46,7 +52,7 @@ const {
     </section>
 
     <section class="mt-4 rounded-xl border border-solid border-line bg-surface p-5 shadow-card compact:p-6" aria-labelledby="gb-batch-title">
-      <div class="flex flex-wrap items-start justify-between gap-3"><div><p class="m-0 text-xs font-bold uppercase tracking-wider text-red-hover">文本 → 逐字符结果</p><h2 id="gb-batch-title" class="mt-2 mb-0 text-xl font-bold text-ink">批量转换</h2><p class="mt-2 mb-0 text-sm leading-relaxed text-body">空格、英文和标点会保留并标注类型；不支持字符仍会保留在结果中。</p></div><span v-if="copiedLabel" class="text-sm text-green" role="status">已复制</span></div>
+      <div class="flex flex-wrap items-start justify-between gap-3"><div><p class="m-0 text-xs font-bold uppercase tracking-wider text-red-hover">文本 → 逐字符结果</p><h2 id="gb-batch-title" class="mt-2 mb-0 text-xl font-bold text-ink">批量转换</h2><p class="mt-2 mb-0 text-sm leading-relaxed text-body">空格、英文和标点会保留并标注类型；不支持字符仍会保留在结果中。</p></div></div>
       <form class="mt-5" @submit.prevent="convertBatch">
         <label for="gb-batch" class="sr-only">批量文本</label>
         <textarea id="gb-batch" v-model="batchInput" class="min-h-32 w-full resize-y rounded-xl border border-transparent bg-soft px-4 py-3 text-base leading-relaxed text-ink outline-none transition-all placeholder:text-muted focus:border-red/40 focus:ring-2 focus:ring-red/30" maxlength="2000" placeholder="输入要检查的文本，例如：中国 A-1" />

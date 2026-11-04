@@ -82,8 +82,10 @@ export function useOrganizations(api = organizationsApi) {
     if (busy.value || !ready.value || !online.value || !selected.value || !action.value || !confirming.value) return;
     busy.value = true; formError.value = ''; notice.value = '';
     try {
+      const labels = { approve: '组织申请已通过', reject: '组织申请已驳回', freeze: '组织已冻结', unfreeze: '组织已解冻' };
+      const done = labels[action.value];
       selected.value = await api.decide(selected.value.id, { action: action.value, expectedVersion: selected.value.version, reason: reason.value.trim() });
-      action.value = null; reason.value = ''; notice.value = '组织状态已更新'; await load();
+      action.value = null; reason.value = ''; notice.value = done; await load();
     } catch (e) { formError.value = message(e); }
     finally { busy.value = false; confirming.value = false; }
   }

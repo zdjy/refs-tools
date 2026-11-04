@@ -31,7 +31,7 @@ function confirmLogout(): void {
     // 取消后焦点回到触发按钮，避免键盘用户在弹框关闭后丢失位置。
     onAfterLeave: () => trigger.value?.focus(),
     onPositiveClick: async () => {
-      if (await auth.logout()) return
+      if (await auth.logout()) { message.success('已退出登录，本地比赛记录仍保留在此设备。'); return }
       message.error(auth.error || '退出未完成，请检查网络后重试；当前登录可能仍然有效。')
     },
   })

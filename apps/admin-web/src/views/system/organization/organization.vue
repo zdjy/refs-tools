@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ref } from 'vue';
   import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NPagination, NSelect, NSpace, NSpin } from 'naive-ui';
+  import { useUiFeedback } from '../../../components/ui/useUiFeedback';
   import { useOrganizations } from './useOrganizations';
   import { actionDescriptions, actionLabels, actionTypes, organizationColumns, statusOptions } from './organizations.presentation';
   import OrganizationCreateForm from './components/OrganizationCreateForm.vue';
@@ -9,6 +10,7 @@
 
   const { items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError,
     notice, online, mode, action, reason, confirming, form, load, create, open, close, requestDecision, save, decide } = useOrganizations();
+  useUiFeedback(notice);
   const memberPanel = ref<InstanceType<typeof OrganizationMembers> | null>(null);
   const columns = organizationColumns(open, organization => memberPanel.value?.open(organization));
   function updateForm(value: typeof form) { Object.assign(form, value); }
@@ -20,7 +22,7 @@
       <p class="m-0">审核组织申请，管理运营状态。组织通过审核后，负责人才能开展组织业务。</p>
     </NCard>
     <NAlert v-if="!online" type="warning" title="当前离线">暂不能读取或提交，数据可能已陈旧。恢复连接后请刷新。</NAlert>
-    <NAlert v-if="notice" type="success" role="status">{{ notice }}</NAlert>
+    <p v-if="notice" role="status" class="rounded border border-admin-line bg-admin-surface p-4 text-admin-success">{{ notice }}</p>
     <NCard :bordered="false">
       <NForm inline size="large" @submit.prevent="load(1)">
         <div class="flex w-full flex-wrap items-end gap-3">
@@ -59,6 +61,11 @@
         <NButton v-if="mode === 'detail'" size="large" :disabled="detailLoading || busy || !online" @click="open(selectedId)">重新读取</NButton>
       </NAlert>
       <NAlert v-if="!online" type="warning" class="mb-4">当前离线，无法提交；输入暂时保留。</NAlert>
+      <p v-if="notice" role="status" class="mb-4 rounded border border-admin-line bg-admin-surface p-4 text-admin-success">{{ notice }}</p>
+      <NAlert v-if="error" type="warning" role="alert" class="mb-4">
+        操作结果以详情为准，列表刷新失败：{{ error }}
+        <NButton size="large" :disabled="busy || loading || !online" @click="load()">重试刷新列表</NButton>
+      </NAlert>
       <OrganizationCreateForm v-if="mode === 'create'" :form="form" :busy="busy" :online="online"
         @update:form="updateForm" @save="save" @close="close" />
       <NSpin v-else :show="detailLoading">

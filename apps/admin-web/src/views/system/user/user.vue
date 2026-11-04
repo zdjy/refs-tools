@@ -2,6 +2,7 @@
   import { computed } from 'vue';
   import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NPagination, NSelect, NSpace } from 'naive-ui';
   import { useUserStore } from '@/store/modules/user';
+  import { useUiFeedback } from '../../../components/ui/useUiFeedback';
   import { useUsers } from './useUsers';
   import { statusOptions, userColumns } from './users.presentation';
   import UserDialog from './components/UserDialog.vue';
@@ -9,6 +10,7 @@
   const actor = useUserStore();
   const { items, total, page, keyword, status, loading, busy, detailLoading, detailReady, error, formError, notice, online,
     selected, mode, confirm, form, load, create, open, close, save, remove } = useUsers();
+  useUiFeedback(notice);
   const columns = computed(() => userColumns(open, actor.info.id));
   function updateForm(value: typeof form) { Object.assign(form, value); }
 </script>
@@ -19,7 +21,7 @@
       <p class="mb-0 mt-0">管理账号资料、登录状态与账号生命周期，查看当前平台角色。</p>
     </NCard>
     <NAlert v-if="!online" type="warning" title="当前离线">暂不能读取或提交，页面数据可能已陈旧。恢复连接后请刷新。</NAlert>
-    <NAlert v-if="notice" type="success" role="status">{{ notice }}</NAlert>
+    <p v-if="notice" role="status" class="rounded border border-admin-line bg-admin-surface p-4 text-admin-success">{{ notice }}</p>
     <NCard :bordered="false">
       <NForm inline size="large" @submit.prevent="load(1)">
         <div class="flex w-full flex-wrap items-end gap-3">

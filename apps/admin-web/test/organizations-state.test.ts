@@ -61,7 +61,7 @@ describe('组织管理页面状态', () => {
     const first = f.state.decide(); await f.state.decide(); f.state.close();
     expect(f.api.decide).toHaveBeenCalledTimes(1); expect(f.state.mode.value).toBe('detail');
     resolve({ ...f.organization, status: 'active', version: 2 }); await first;
-    expect(f.state.selected.value?.version).toBe(2); expect(f.state.notice.value).toContain('已更新');
+    expect(f.state.selected.value?.version).toBe(2); expect(f.state.notice.value).toBe('组织申请已通过');
   });
   it('关闭弹窗清除详情和敏感输入', async () => {
     const f = fixture(); await f.state.open(f.organization.id); f.state.reason.value = '治理依据'; f.state.close();

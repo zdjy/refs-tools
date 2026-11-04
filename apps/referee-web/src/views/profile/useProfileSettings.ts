@@ -109,7 +109,12 @@ export function useProfileSettings(api: ProfileApi = profileApi, media: MediaApi
       return true
     } catch (error) {
       const code = error instanceof ProfileApiError ? error.code : ''
-      if (code === 'VERSION_CONFLICT') { saveError.value = profileErrorMessage(error); await load() }
+      if (code === 'VERSION_CONFLICT') {
+        const draft = { ...fields }
+        saveError.value = profileErrorMessage(error)
+        await load()
+        Object.assign(fields, draft)
+      }
       else if (fieldOfCode[code]) fieldError.value = { field: fieldOfCode[code]!, message: profileErrorMessage(error) }
       else saveError.value = profileErrorMessage(error)
       return false

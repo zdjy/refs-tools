@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import SkipLink from '../../components/navigation/SkipLink.vue'
+import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { refereeControlThemes } from '../../ui-theme'
@@ -28,6 +29,7 @@ const {
   recordStat, correctScore, renameTeam, adjustFoul, setPossession, callTimeout, endTimeout, restoreTimeout, toggleLink, editClock, undo, resetMatch,
 } = workbench
 const { boxScoreVisible, shortcutsEnabled, muted, feedback, sound, toggleMute, exportCsv } = useScorerConsole(workbench)
+useUiFeedback(sessionNotice, 'info')
 onMounted(initialize)
 </script>
 
@@ -52,10 +54,10 @@ onMounted(initialize)
           {{ storageError }}
           <div class="mt-2"><n-button secondary @click="retryStorage">{{ restoreFailed ? '重试读取' : '重试保存' }}</n-button></div>
         </n-alert>
-        <n-alert v-if="sessionNotice" class="mb-3" type="info" :show-icon="false">
+        <div v-if="sessionNotice" class="mb-3 rounded-xl border border-solid border-line bg-soft p-4 text-sm text-body" role="status">
           {{ sessionNotice }}
           <div class="mt-2"><n-button quaternary @click="sessionNotice = ''">关闭提示</n-button></div>
-        </n-alert>
+        </div>
         <template v-if="activeSession">
           <header class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>

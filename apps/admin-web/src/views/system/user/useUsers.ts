@@ -29,12 +29,14 @@ export function useUsers(api = adminUsersApi) {
   }
 
   function create() {
+    if (busy.value) return;
     detailSequence++; detailLoading.value = false; detailReady.value = true;
     selected.value = null; formError.value = ''; notice.value = '';
     Object.assign(form, { email: '', displayName: '', password: '', status: 'active' }); mode.value = 'create';
   }
 
   async function open(user: AdminUser, nextMode: 'edit' | 'detail') {
+    if (busy.value) return;
     const sequence = ++detailSequence;
     selected.value = user; mode.value = nextMode; formError.value = ''; notice.value = '';
     detailLoading.value = true; detailReady.value = false;
@@ -52,7 +54,8 @@ export function useUsers(api = adminUsersApi) {
   }
 
   async function save(confirmed = false) {
-    if (busy.value || detailLoading.value || !detailReady.value || !online.value) return;
+    if (busy.value || detailLoading.value || !detailReady.value || !online.value ||
+      (mode.value !== 'create' && (mode.value !== 'edit' || !selected.value))) return;
     if (mode.value === 'edit' && form.status === 'disabled' && selected.value?.status === 'active' && !confirmed) {
       confirm.value = 'disable'; return;
     }
@@ -63,7 +66,7 @@ export function useUsers(api = adminUsersApi) {
       else if (selected.value) await api.update(selected.value.id, {
         displayName: form.displayName.trim(), status: form.status, version: selected.value.version,
       });
-      form.password = ''; mode.value = null; confirm.value = null; notice.value = '用户已保存';
+      form.password = ''; mode.value = null; confirm.value = null; notice.value = creating ? '用户已创建' : '用户修改已保存';
       await load(creating ? 1 : page.value);
     } catch (e) { formError.value = message(e); confirm.value = null; }
     finally { busy.value = false; }

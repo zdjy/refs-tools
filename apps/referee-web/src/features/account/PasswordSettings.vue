@@ -3,6 +3,7 @@ import { computed, nextTick, ref, type InputHTMLAttributes } from 'vue'
 import { NButton, NInput } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
 import UiSteps from '../../components/ui/UiSteps.vue'
+import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import { usePasswordSettings } from './usePasswordSettings'
 
 /** 嵌入分页面板时不再自带上外边距与分隔线，标题降为面板级 h2。 */
@@ -10,6 +11,7 @@ const props = defineProps<{ embedded?: boolean }>()
 const auth = useAuthStore()
 const { fields, errors, success, challenge, busy, isInitialPassword, steps, step, index, isFirst, isLast,
   sendCode, next, back, submit } = usePasswordSettings(auth)
+useUiFeedback(success)
 const { remaining, sending, notice, error: sendError, expired } = challenge
 const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)

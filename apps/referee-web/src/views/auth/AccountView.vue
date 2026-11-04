@@ -2,12 +2,17 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { NAlert, NButton, NPopconfirm } from 'naive-ui'
+import { NAlert, NButton, NPopconfirm, useMessage } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
 import AuthShell from './components/AuthShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
 import './auth.css'
 const auth = useAuthStore()
+const message = useMessage()
+async function logout() {
+  if (await auth.logout()) message.success('已退出登录，本地比赛记录仍保留在此设备。')
+  else message.error(auth.error)
+}
 const { user, session, status, error, busy } = storeToRefs(auth)
 onMounted(() => { void auth.restore() })
 </script>
@@ -35,10 +40,11 @@ onMounted(() => { void auth.restore() })
         </dl>
         <n-alert v-if="!user.emailVerified" type="info" :show-icon="false">邮箱尚未验证。请使用邮箱验证码重新登录，完成验证后才能进行考试、认证等核心操作。</n-alert>
         <PasswordSettings />
+        <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>
         <section class="mt-6 border-0 border-t border-solid border-line pt-6" aria-labelledby="session-heading">
           <h3 class="mt-0 mr-0 mb-2 ml-0 text-[18px]" id="session-heading">当前登录</h3>
           <p class="mt-0 mr-0 mb-5 ml-0 text-[13px] leading-[1.8] text-body">共享设备使用完毕后，请退出账号。本地比赛记录仍保存在此设备。</p>
-          <n-popconfirm positive-text="退出登录" negative-text="取消" :disabled="busy" @positive-click="auth.logout">
+          <n-popconfirm positive-text="退出登录" negative-text="取消" :disabled="busy" @positive-click="logout">
             <template #trigger><n-button secondary block :loading="busy" :disabled="busy">退出登录</n-button></template>
             确认结束当前账号的登录会话？
           </n-popconfirm>

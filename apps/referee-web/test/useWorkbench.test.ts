@@ -23,6 +23,38 @@ afterEach(() => {
 })
 
 describe('工作台应用状态（不挂载组件库）', () => {
+  it('创建、重置、清空流水、删除和清空全部在持久化成功后明确反馈', () => {
+    const { state } = setup()
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
+    expect(state.sessionNotice.value).toContain('已创建并保存')
+    state.resetMatch()
+    expect(state.sessionNotice.value).toContain('已重置并保存')
+    state.clearEventLog()
+    expect(state.sessionNotice.value).toContain('流水已清空并保存')
+    state.removeSession(state.activeId.value)
+    expect(state.sessionNotice.value).toContain('已删除')
+    state.clearAll()
+    expect(state.sessionNotice.value).toContain('全部比赛记录已清空')
+  })
+
+  it('持久化失败不提示创建、重置、撤销或删除成功，重试后明确已保存', () => {
+    const save = vi.fn<WorkbenchPorts['save']>()
+    const { state } = setup({ save })
+    state.startSession(rulesFromInput(defaultRuleInput(), 100))
+    save.mockImplementation(() => { throw new Error('quota') })
+    state.resetMatch()
+    expect(state.sessionNotice.value).toBe('')
+    state.undo()
+    expect(state.sessionNotice.value).toBe('')
+    state.removeSession(state.activeId.value)
+    expect(state.sessionNotice.value).toBe('')
+    expect(state.storageError.value).toContain('未能删除')
+    state.startSession(rulesFromInput(defaultRuleInput(), 200))
+    expect(state.sessionNotice.value).toBe('')
+    save.mockImplementation(() => undefined)
+    state.retryStorage()
+    expect(state.sessionNotice.value).toContain('重新保存')
+  })
   it('成功读取空快照后往返只读取一次，并保持单个周期任务', () => {
     vi.useFakeTimers()
     const { state, ports, scope } = setup()

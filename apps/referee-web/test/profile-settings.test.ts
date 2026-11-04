@@ -65,6 +65,8 @@ describe('账号设置档案状态', () => {
     expect(await h.state.save()).toBe(false)
     expect(h.state.saveError.value).toContain('刷新')
     expect(h.api.read).toHaveBeenCalledTimes(2)
+    expect(h.state.fields.nickname).toBe('裁判乙')
+    expect(h.state.saved.value).toBe('')
   })
 
   it('字段错误落到对应输入，清空头像提交 null', async () => {

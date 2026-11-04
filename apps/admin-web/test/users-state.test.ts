@@ -12,6 +12,18 @@ function fixture() {
 }
 
 describe('用户 CRUD 页面状态', () => {
+  it('只读详情不能伪报保存成功', async () => {
+    const f = fixture(); await f.state.open(f.user, 'detail'); await f.state.save();
+    expect(f.api.update).not.toHaveBeenCalled(); expect(f.state.notice.value).toBe('');
+  });
+  it('写入失败不发成功通知；写入成功但刷新失败保留成功与陈旧说明', async () => {
+    const f = fixture(); f.state.create();
+    f.api.create.mockRejectedValueOnce(new Error('写入失败')); await f.state.save();
+    expect(f.state.notice.value).toBe('');
+    f.api.list.mockRejectedValueOnce(new Error('刷新失败')); await f.state.save();
+    expect(f.state.notice.value).toBe('用户已创建'); expect(f.state.error.value).toBe('刷新失败');
+    expect(f.state.mode.value).toBeNull();
+  });
   it('读取失败不伪装为空列表', async () => {
     const f = fixture(); await f.state.load();
     f.api.list.mockRejectedValue(new Error('读取失败')); await f.state.load();
@@ -47,7 +59,8 @@ describe('用户 CRUD 页面状态', () => {
     await f.state.save(); expect(f.api.update).not.toHaveBeenCalled();
     f.state.online.value = true; let resolve!: (user: AdminUser) => void;
     f.api.update.mockImplementationOnce(() => new Promise((r) => { resolve = r; }));
-    const first = f.state.save(); await f.state.save(); expect(f.api.update).toHaveBeenCalledTimes(1);
+    const first = f.state.save(); await f.state.save(); f.state.create(); await f.state.open(f.user, 'detail');
+    expect(f.api.update).toHaveBeenCalledTimes(1); expect(f.state.mode.value).toBe('edit');
     resolve(f.user); await first;
   });
 });

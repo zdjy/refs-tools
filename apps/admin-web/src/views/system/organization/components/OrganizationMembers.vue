@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { computed } from 'vue';
   import { NAlert, NButton, NDataTable, NForm, NFormItem, NInput, NInputNumber, NModal, NPagination, NSpace, NTabPane, NTabs } from 'naive-ui';
+  import { useUiFeedback } from '../../../../components/ui/useUiFeedback';
   import { useUserStore } from '../../../../store/modules/user';
   import { useOrganizationMembers } from '../useOrganizationMembers';
   import { invitationColumns, memberActionLabels, memberColumns } from '../members.presentation';
@@ -8,6 +9,7 @@
   const state = useOrganizationMembers();
   const { organization, members, invitations, memberPage, invitePage, memberTotal, inviteTotal, loading, busy, ready, canManage,
     error, notice, userId, validDays, action, reason, confirming, online, load, open, close, invite, select, requestConfirm, commit } = state;
+  useUiFeedback(notice);
   const user = useUserStore();
   const enabled = computed(() => ready.value && canManage.value && online.value && !busy.value && !loading.value);
   const memberTable = memberColumns(() => enabled.value, select, () => organization.value?.ownerUserId ?? '', () => user.info.id ?? '');
@@ -25,7 +27,7 @@
       <NAlert v-if="error" type="error" title="操作未完成，数据可能已陈旧" role="alert">
         {{ error }} <NButton size="large" :disabled="busy || loading || !online" @click="reload">重新读取</NButton>
       </NAlert>
-      <NAlert v-if="notice" type="success" role="status">{{ notice }}</NAlert>
+      <p v-if="notice" role="status" class="rounded border border-admin-line bg-admin-surface p-4 text-admin-success">{{ notice }}</p>
       <NAlert v-if="ready && !canManage" type="info">当前为平台治理只读视图。邀请、入会审核和移除操作需要该组织的所有者或组织者权限。</NAlert>
       <NForm v-if="canManage" label-placement="top" @submit.prevent="invite">
         <div class="flex flex-wrap items-end gap-3">
