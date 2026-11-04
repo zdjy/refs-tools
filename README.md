@@ -95,24 +95,22 @@ docker compose --profile test down
 前提：本机安装 Node.js 20.19+、pnpm 12、Docker Engine / Docker Desktop，以及 `openssl`（Git for Windows 自带）。
 
 ```sh
-# 一次性准备
+# 仅首次：安装依赖、配置本地密钥
 pnpm install
 cd apps/admin-web && pnpm install --frozen-lockfile --ignore-scripts && cd ../..
-cp .env.example .env          # 已有 .env 时不要覆盖
+cp .env.example .env                                  # 已有 .env 时不要覆盖
 
-# 1) 只启动基础设施容器；api/web 与宿主机进程抢端口，不启动
-pnpm dev:infra
-
-# 2) 首次生成开发证书并信任其公开证书（只做一次）
+# 仅首次：生成开发证书并信任其公开证书
 pnpm dev:cert
 certutil -user -addstore Root ".cache/dev-certs/localhost.crt"
 
-# 3) 首次启动或迁移有变更时，在宿主机执行数据库迁移
-pnpm dev:api:migrate
-
-# 4) 一键启动 API、裁判端与管理端（Ctrl+C 结束全部进程）
+# 日常：一条命令即可（重启电脑后也是这一条）
 pnpm dev
 ```
+
+`pnpm dev` 会先确认基础设施容器就绪（`db`、`mailpit`、`minio`、`minio-init`、`storage`、`certificates`，已运行则秒过），再启动 API、裁判端与管理端；`api`、`web` 容器不启动，避免与宿主机进程抢 3000/8443 端口。只想重启三个开发进程、不碰容器时用 `pnpm dev -- --no-infra`；只起容器用 `pnpm dev:infra`。
+
+数据库迁移不在 `pnpm dev` 里自动执行：新增或修改迁移后单独运行 `pnpm dev:api:migrate`。
 
 | 地址 | 内容 |
 | --- | --- |
@@ -122,7 +120,7 @@ pnpm dev
 | http://localhost:8025 | Mailpit 收件箱 |
 
 - 前端保存后由 Vite HMR 局部更新，API 保存后由 `tsx watch` 重启；数据库结构变更需重新执行 `pnpm dev:api:migrate`。
-- 从 Compose 联调模式切到开发模式前先执行 `docker compose stop api web`；`pnpm dev` 发现 3000、8443、8001 被占用会直接报错退出，不静默换端口。
+- 从 Compose 联调模式切回开发模式前先执行 `docker compose stop api web`；`pnpm dev` 发现 3000、8443、8001 被占用会直接报错退出，不静默换端口（常见原因是上一次的 `pnpm dev` 窗口没关）。
 - 真实登录只在 `https://localhost:8443` 成立。`http://localhost:5173`、`http://localhost:8001` 或局域网地址既不受开发证书覆盖，也不匹配 `AUTH_PUBLIC_ORIGIN`，只能用于不依赖登录的页面调试。
 - 开发证书有效期一年，`pnpm dev:cert -- --force` 可重新生成（需重新导入信任）；停用后执行 `certutil -user -delstore Root "refs-tools local dev (vite)"` 移除信任。私钥只保存在已忽略提交的 `.cache/`，不进入镜像或仓库。
 - API 读取根 `.env` 中的本地密钥，只把容器主机名换成 `127.0.0.1`，不复制密钥文件；`NODE_EXTRA_CA_CERTS` 指向从 Compose 容器复制的公开证书，SMTP 与对象存储仍完整校验 TLS。

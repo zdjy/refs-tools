@@ -25,7 +25,7 @@
 4. `scripts/dev-api.mjs` 在宿主机用 `tsx watch` 运行 API：读取根 `.env` 的本地密钥，仅把容器主机名改写为 `127.0.0.1`（数据库、Mailpit SMTP、对象存储），不复制密钥文件、不改认证代码。`NODE_EXTRA_CA_CERTS` 指向从 Compose 容器复制到 `.cache/` 的公开证书，SMTP STARTTLS 与对象存储 TLS 仍完整校验。
 5. 对象存储仍走已发布的 `https://localhost:9443`，`S3_ENDPOINT` 与 `S3_PUBLIC_ENDPOINT` 相同，签名 Host 与浏览器一致。
 6. `compose.yaml` 为 Mailpit 增加回环绑定的 SMTP 发布端口（`MAILPIT_SMTP_PORT`，默认 1025），供宿主机 API 投递验证码邮件；容器内仍用 `mailpit:1025`。
-7. `scripts/dev.mjs` 编排三个进程（API、裁判端、管理端），统一加日志前缀并在 Ctrl+C 时结束全部子进程；`pnpm dev:infra` 只启动基础设施容器。
+7. `scripts/dev.mjs` 编排三个进程（API、裁判端、管理端），统一加日志前缀并在 Ctrl+C 时结束全部子进程；启动前先执行 `docker compose up -d --wait` 确保基础设施容器就绪（`--no-infra` 可跳过，`pnpm dev:infra` 只起容器），使重启电脑后仍只需一条 `pnpm dev`。
 
 开发模式下不启动 `web`、`api` 容器（8443/3000 与宿主机进程冲突），基础设施（`db`、`mailpit`、`minio`、`minio-init`、`storage`、`certificates`）继续由 Compose 提供。
 
