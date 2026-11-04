@@ -1,5 +1,5 @@
 import { computed, getCurrentScope, onScopeDispose, ref } from 'vue'
-import type { AuthSessionResponse, EmailCodeLoginBody, PasswordLoginBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
+import type { AuthSessionResponse, EmailChangeBody, EmailCodeLoginBody, PasswordLoginBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
 import { AuthApiError, authErrorMessage, type AuthApi } from '../api/auth.api'
 
 /** 只在内存中拥有跨页面会话投影；凭据由浏览器管理，不进入持久存储。 */
@@ -80,5 +80,6 @@ export function createAuthState(api: AuthApi, now: () => number = Date.now) {
     loginWithCode: (input: EmailCodeLoginBody) => authenticate(() => api.loginWithCode(input)),
     loginWithPassword: (input: PasswordLoginBody) => authenticate(() => api.loginWithPassword(input)),
     setPassword: (input: SetPasswordBody) => authenticate(() => api.setPassword(input)),
+    changeEmail: (input: EmailChangeBody) => authenticate(() => api.changeEmail(input)),
   }
 }

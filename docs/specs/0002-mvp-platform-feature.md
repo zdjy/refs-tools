@@ -348,7 +348,7 @@ export type AuditEvent = {
 | 表 | 关键字段（类型） | 数据库注释/约束 |
 | --- | --- | --- |
 | `users` | `id uuid PK`, `email citext UNIQUE NULL`, `email_verified_at timestamptz NULL`, `password_hash text NULL`, `phone_e164 text UNIQUE NULL`, `status text`, `created_at`, `deleted_at` | 至少有一个可登录凭据；密码只存强哈希；验证码不得存明文。邮箱/手机号唯一，禁止跨用户重复绑定。 |
-| `referee_profiles` | `user_id uuid PK/FK`, `display_name text`, `legal_name text`, `avatar_media_id uuid NULL`, `region text`, `updated_at` | 实名字段受限访问；列表使用目的限定投影，不返回整行。 |
+| `referee_profiles` | `user_id uuid PK/FK`, `legal_name text NULL`, `phone_e164 text NULL`, `region_code text NULL`, `region_label text NULL`, `address_detail text NULL`, `birth_date date NULL`, `avatar_media_id uuid NULL`, `created_at`, `updated_at` | 实名字段受限访问；列表使用目的限定投影，不返回整行。昵称唯一来源为 `users.display_name`，不在本表重复；未验证手机号暂不加唯一约束，见 FS-0023 §3.1。 |
 | `organizations` | `id uuid PK`, `name text`, `region text`, `purpose text`, `owner_user_id uuid FK`, `status text`, `reviewed_by uuid NULL`, `reviewed_at timestamptz NULL` | `status=active` 才允许业务操作；冻结/驳回保留历史。 |
 | `organization_memberships` | `id uuid PK`, `organization_id uuid FK`, `user_id uuid FK`, `status text`, `invited_by uuid NULL`, `joined_at NULL`, `ended_at NULL` | `(organization_id,user_id)` 对当前 active/pending 关系唯一；所有者不得被删除到组织无所有者。 |
 | `role_bindings` | `id uuid PK`, `subject_user_id uuid FK`, `role text`, `scope_type text`, `scope_id uuid NULL`, `granted_by uuid FK`, `starts_at`, `expires_at NULL`, `revoked_at NULL` | 平台与业务角色统一存储，平台绑定 scope ID 为 NULL；角色/范围组合受 CHECK 约束。作用域由服务端解析，授予者必须有覆盖该 scope 的授权，见 ADR 0014。 |

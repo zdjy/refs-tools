@@ -1,7 +1,7 @@
 import { randomInt, randomUUID } from 'node:crypto'
-import type { ChallengeProof, ChallengePurpose, EmailChallengeBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
+import type { ChallengeProof, ChallengePurpose, EmailChallengeBody, EmailChangeBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
 import { DomainError } from '../../application/errors.js'
-import { challengeDigest, digest, equalDigest, hashPassword } from './auth.security.js'
+import { challengeDigest, digest, equalDigest, hashPassword, verifyPassword } from './auth.security.js'
 import type { AuthAccount, AuthDependencies, AuthRepository, EmailChallenge, SessionGrant } from './auth.types.js'
 import { SessionService } from './session.service.js'
 
@@ -76,6 +76,33 @@ export class AuthService extends SessionService {
     })
   }
 
+  /**
+   * 更换登录邮箱：旧邮箱验证码 + 当前密码（无密码账号省略）+ 新邮箱验证码三者全过才切换。
+   * 会话在事务外先解析、锁内重验；切换后邮箱立即标记已验证，其他设备会话全部失效。
+   */
+  async changeEmail(token: string | undefined, input: EmailChangeBody): Promise<SessionGrant> {
+    const session = await this.requireSession(token)
+    const email = input.newEmail.trim().toLowerCase()
+    const result = await this.dependencies.transaction.run(async ({ auth }) => {
+      const now = this.dependencies.now()
+      const account = await auth.lockAccount(session.user.id)
+      const current = await auth.findSession(digest(token!), now)
+      if (!account || account.status !== 'active' || !current || account.email !== session.user.email) return this.invalidChallenge()
+      if (email === account.email) return new DomainError('EMAIL_UNCHANGED', '新邮箱与当前邮箱相同', 422)
+      if (account.passwordHash !== null && !await verifyPassword(input.password ?? '', account.passwordHash)) {
+        return new DomainError('INVALID_CREDENTIALS', '当前密码不正确', 401)
+      }
+      // 先验密码再消费验证码，避免密码输错时连带烧掉两个验证码。
+      if (!await this.verifyChallenge(auth, input.oldChallengeId, input.oldCode, account.email, now)
+        || !await this.verifyChallenge(auth, input.newChallengeId, input.newCode, email, now)) return this.invalidChallenge()
+      if (!await auth.changeEmail(account.id, email, now)) return new DomainError('EMAIL_TAKEN', '该邮箱已被其他账号使用', 409)
+      await auth.revokeUserSessions(account.id, now)
+      return this.createSession(auth, { ...account, email, emailVerified: true })
+    })
+    if (result instanceof DomainError) throw result
+    return result
+  }
+
   private async updatePassword(auth: AuthRepository, account: AuthAccount, password: string): Promise<SessionGrant> {
     const passwordHash = await this.passwordHash(password)
     await auth.setPassword(account.id, passwordHash)
@@ -107,6 +134,17 @@ export class AuthService extends SessionService {
 
   private invalidChallenge(): DomainError {
     return new DomainError('INVALID_CHALLENGE', '验证码无效或无法完成操作', 400)
+  }
+
+  /** 锁内校验并消费单个 challenge；失败次数无论结果都随事务提交，防止回滚恢复可猜测次数。 */
+  private async verifyChallenge(auth: AuthRepository, id: string, code: string, email: string, now: Date): Promise<boolean> {
+    const challenge = await auth.lockChallenge(id)
+    if (!challenge || challenge.consumedAt || challenge.expiresAt <= now
+      || challenge.attempts >= this.dependencies.policy.challengeAttempts) return false
+    const valid = challenge.purpose === 'email_change' && challenge.email === email
+      && equalDigest(challenge.codeHash, challengeDigest(this.dependencies.secret, challenge.id, code))
+    await auth.recordChallengeAttempt(challenge.id, valid ? now : null)
+    return valid
   }
 
   private async passwordHash(password: string): Promise<string> {

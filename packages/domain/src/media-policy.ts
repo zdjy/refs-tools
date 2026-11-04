@@ -16,7 +16,7 @@ export type MediaPolicyError = 'MEDIA_TYPE_NOT_ALLOWED' | 'MEDIA_TOO_LARGE' | 'I
 export function validateMediaPolicy(input: UploadIntentBody): MediaPolicyError | null {
   const format = formats[input.contentType]
   const image = input.contentType.startsWith('image/')
-  if (!format || (['exam_answer', 'post_game_record'].includes(input.purpose) && !image)
+  if (!format || (['exam_answer', 'post_game_record', 'avatar'].includes(input.purpose) && !image)
     || (input.purpose === 'certification_evidence' && !image && input.contentType !== 'application/pdf')
     || (input.imageKind && !image)) return 'MEDIA_TYPE_NOT_ALLOWED'
   if (!Number.isSafeInteger(input.sizeBytes) || input.sizeBytes < 1) return 'INVALID_MEDIA_SIZE'

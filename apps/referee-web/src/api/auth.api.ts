@@ -1,5 +1,5 @@
 import type {
-  AuthSessionResponse, EmailChallengeBody, EmailChallengeResponse, EmailCodeLoginBody,
+  AuthSessionResponse, EmailChallengeBody, EmailChallengeResponse, EmailChangeBody, EmailCodeLoginBody,
   PasswordLoginBody, RegisterBody, SetPasswordBody,
 } from '@refs-tools/contracts/auth'
 import { HttpError } from './http/errors'
@@ -26,6 +26,7 @@ export function createAuthApi(client: PlatformClient) {
     loginWithCode: (body: EmailCodeLoginBody) => call(client.post<AuthSessionResponse['data']>('/auth/login/email-code', body)),
     loginWithPassword: (body: PasswordLoginBody) => call(client.post<AuthSessionResponse['data']>('/auth/login/password', body)),
     setPassword: (body: SetPasswordBody) => call(client.post<AuthSessionResponse['data']>('/auth/password', body)),
+    changeEmail: (body: EmailChangeBody) => call(client.post<AuthSessionResponse['data']>('/auth/email-change', body)),
     logout: () => call(client.post<unknown>('/auth/logout', {})),
   }
 }
@@ -42,6 +43,8 @@ export function authErrorMessage(error: unknown): string {
     RATE_LIMITED: '操作过于频繁，请稍后再试。',
     EMAIL_UNAVAILABLE: '邮件暂时无法发送，请稍后重新获取验证码。',
     WEAK_PASSWORD: '密码不符合当前安全策略，请使用更长的密码后重试。',
+    EMAIL_TAKEN: '该邮箱已被其他账号使用，请更换后重试。',
+    EMAIL_UNCHANGED: '新邮箱与当前邮箱相同，无需更换。',
     PASSWORD_VERIFICATION_REQUIRED: '账号已设置密码，请刷新页面并验证邮箱后再更换密码。',
     EMAIL_NOT_VERIFIED: '请先使用邮箱验证码登录，验证邮箱后再设置密码。',
     AUTH_BUSY: '登录服务繁忙，请稍后重试。',

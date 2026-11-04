@@ -41,6 +41,8 @@ export function createAppRouter(history: RouterHistory) {
       { path: '/login', name: 'login', component: () => import('../views/auth/AuthView.vue'), props: { initialMode: 'login' }, meta: { title: '登录' } },
       { path: '/register', name: 'register', component: () => import('../views/auth/AuthView.vue'), props: { initialMode: 'register' }, meta: { title: '创建账号' } },
       { path: '/account', name: 'account', component: () => import('../views/auth/AccountView.vue'), meta: { title: '账号与安全', navigation: 'account' } },
+      // 账号设置承载可修改的档案与登录方式，/account 保留会话概览，见 FS-0021。
+      { path: '/profile-setting', name: 'profile-setting', component: () => import('../views/profile/ProfileSettingsView.vue'), meta: { title: '账号设置', navigation: 'account' } },
       // 账号菜单的两项入口：先给出准确的建设状态，不伪装成已上线的个人主页或反馈工单，见 FS-0020。
       { path: modules.profile.path, name: 'profile', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'profile' }, meta: { title: modules.profile.title, navigation: 'account' } },
       { path: modules.feedback.path, name: 'feedback', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'feedback' }, meta: { title: modules.feedback.title } },

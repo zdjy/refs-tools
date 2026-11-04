@@ -31,6 +31,7 @@ export type AlovaClient = {
   get<T>(url: string): RequestMethod<T>
   post<T>(url: string, body?: unknown, headers?: Record<string, string>): RequestMethod<T>
   put<T>(url: string, body: Blob, headers: Record<string, string>): RequestMethod<T>
+  patch<T>(url: string, body?: unknown): RequestMethod<T>
 }
 
 /**
@@ -59,5 +60,6 @@ export function createAlovaInstance(options: AlovaInstanceOptions): AlovaClient 
     get: (url) => alova.Get(url) as never,
     post: (url, body, headers) => alova.Post(url, body as never, headers ? { headers } : {}) as never,
     put: (url, body, headers) => alova.Put(url, body, { headers }) as never,
+    patch: (url, body) => alova.Patch(url, body as never) as never,
   }
 }

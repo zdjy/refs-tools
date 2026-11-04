@@ -11,7 +11,7 @@ export const AuditActionSchema = Type.Union([
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
   Type.Literal('certification.decided'), Type.Literal('certification.revoked'), Type.Literal('certification.appealed'),
   Type.Literal('exam.published'), Type.Literal('question.versioned'), Type.Literal('grading.reviewed'), Type.Literal('grading.overridden'),
-  Type.Literal('media.queried'), Type.Literal('media.read_authorized'), Type.Literal('media.deleted'), Type.Literal('moderation.decided'),
+  Type.Literal('profile.updated'), Type.Literal('media.queried'), Type.Literal('media.read_authorized'), Type.Literal('media.deleted'), Type.Literal('moderation.decided'),
   Type.Literal('assignment.changed'), Type.Literal('attendance.corrected'), Type.Literal('post_game_record.changed'),
 ])
 export const AuditResourceTypeSchema = Type.Union([

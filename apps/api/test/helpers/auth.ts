@@ -38,6 +38,12 @@ export function createAuthHarness() {
     async findAccountByEmail(email) { return [...accounts.values()].find((a) => a.email === email) ?? null },
     async lockAccount(id) { return accounts.get(id) ?? null },
     async setPassword(id, hash) { accounts.get(id)!.passwordHash = hash },
+    async changeEmail(id, email) {
+      if ([...accounts.values()].some((a) => a.email === email && a.id !== id)) return false
+      const account = accounts.get(id)!
+      accounts.set(id, { ...account, email, emailVerified: true })
+      return true
+    },
     async verifyEmail(id) { accounts.get(id)!.emailVerified = true },
     async saveSession(s) { sessions.set(s.tokenHash, { ...s, revoked: false }) },
     async findSession(hash, now) {

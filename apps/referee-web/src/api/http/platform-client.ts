@@ -11,6 +11,7 @@ export type PlatformClientOptions = {
 export type PlatformClient = {
   get<T>(path: string): Promise<T>
   post<T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T>
+  patch<T>(path: string, body?: unknown): Promise<T>
 }
 
 /**
@@ -38,5 +39,6 @@ export function createPlatformClient(options: PlatformClientOptions): PlatformCl
     get: async <T>(path: string) => await client.get<T>(path).send(),
     post: async <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
       await client.post<T>(path, body, headers).send(),
+    patch: async <T>(path: string, body?: unknown) => await client.patch<T>(path, body).send(),
   }
 }

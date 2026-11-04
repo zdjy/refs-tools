@@ -4,7 +4,7 @@ import { HttpError } from '../src/api/http/errors'
 import { MediaApiError, createMediaApi } from '../src/api/media.api'
 import type { PlatformClient } from '../src/api/http/platform-client'
 
-const platform = (): PlatformClient => ({ get: vi.fn(), post: vi.fn() })
+const platform = (): PlatformClient => ({ get: vi.fn(), post: vi.fn(), patch: vi.fn() })
 const intent = (url = 'https://oss.example/o') => ({
   mediaId: 'm1',
   upload: { method: 'PUT', url, headers: { 'Content-Type': 'text/plain' }, expiresAt: '2030-01-01T00:00:00.000Z' },

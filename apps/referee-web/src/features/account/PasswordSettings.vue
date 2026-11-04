@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
 import { NButton, NInput } from 'naive-ui'
-import { useAuthStore } from '../../../stores/auth'
-import { useAccount } from '../useAccount'
+import { useAuthStore } from '../../stores/auth'
+import { usePasswordSettings } from './usePasswordSettings'
 const auth = useAuthStore()
-const { fields, errors, success, challenge, busy, isInitialPassword, sendCode, savePassword } = useAccount(auth)
+const { fields, errors, success, challenge, busy, isInitialPassword, sendCode, savePassword } = usePasswordSettings(auth)
 const { remaining, sending, notice, error: sendError, expired } = challenge
 const form = ref<HTMLFormElement | null>(null)
 const summary = ref<HTMLElement | null>(null)

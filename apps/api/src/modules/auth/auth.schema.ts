@@ -1,5 +1,5 @@
 import {
-  AuthSessionResponseSchema, EmailChallengeBodySchema, EmailChallengeResponseSchema,
+  AuthSessionResponseSchema, EmailChallengeBodySchema, EmailChallengeResponseSchema, EmailChangeBodySchema,
   EmailCodeLoginBodySchema, PasswordLoginBodySchema, RegisterBodySchema, SetPasswordBodySchema,
 } from '@refs-tools/contracts/auth'
 
@@ -8,4 +8,5 @@ export const registerSchema = { body: RegisterBodySchema, response: { 201: AuthS
 export const codeLoginSchema = { body: EmailCodeLoginBodySchema, response: { 200: AuthSessionResponseSchema } }
 export const passwordLoginSchema = { body: PasswordLoginBodySchema, response: { 200: AuthSessionResponseSchema } }
 export const setPasswordSchema = { body: SetPasswordBodySchema, response: { 200: AuthSessionResponseSchema } }
+export const emailChangeSchema = { body: EmailChangeBodySchema, response: { 200: AuthSessionResponseSchema } }
 export const sessionSchema = { response: { 200: AuthSessionResponseSchema } }

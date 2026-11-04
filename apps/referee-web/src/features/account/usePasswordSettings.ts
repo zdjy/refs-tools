@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useEmailChallenge } from './useEmailChallenge'
 
 /** 密码更新成功后采用服务器轮换的会话；失败保留输入供重试。 */
-export function useAccount(auth: ReturnType<typeof useAuthStore>) {
+export function usePasswordSettings(auth: ReturnType<typeof useAuthStore>) {
   const fields = reactive({ code: '', password: '', confirmation: '' })
   const errors = ref<Record<string, string>>({})
   const success = ref('')

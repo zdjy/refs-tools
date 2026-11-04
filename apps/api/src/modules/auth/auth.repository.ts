@@ -87,6 +87,14 @@ export class PgAuthRepository implements AuthRepository {
     await this.connection.query('UPDATE users SET email_verified_at = COALESCE(email_verified_at, $2) WHERE id = $1', [userId, now])
   }
 
+  async changeEmail(userId: string, email: string, now: Date): Promise<boolean> {
+    // 唯一冲突不抛错而是返回 false：由 Service 转为业务错误，避免把驱动异常当作 500。
+    const result = await this.connection.query(`UPDATE users SET email=$2,email_verified_at=$3
+      WHERE id=$1 AND NOT EXISTS (SELECT 1 FROM users other WHERE other.email=$2 AND other.id<>$1) RETURNING id`,
+    [userId, email, now])
+    return result.rows.length > 0
+  }
+
   async saveSession(s: StoredSession): Promise<void> {
     await this.connection.query('INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)',
       [s.tokenHash, s.userId, s.expiresAt])

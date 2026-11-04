@@ -2,7 +2,7 @@ import { Type, type Static } from '@sinclair/typebox'
 
 const uuid = Type.String({ pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' })
 const date = Type.String({ format: 'date-time' })
-export const MediaPurposeSchema = Type.Union((['learning', 'certification_evidence', 'exam_answer', 'forum_attachment', 'post_game_record'] as const).map((v) => Type.Literal(v)))
+export const MediaPurposeSchema = Type.Union((['learning', 'certification_evidence', 'exam_answer', 'forum_attachment', 'post_game_record', 'avatar'] as const).map((v) => Type.Literal(v)))
 export type MediaPurpose = Static<typeof MediaPurposeSchema>
 export const MediaStatusSchema = Type.Union((['pending_upload', 'available', 'rejected', 'expired', 'deleted'] as const).map((v) => Type.Literal(v)))
 export type MediaStatus = Static<typeof MediaStatusSchema>

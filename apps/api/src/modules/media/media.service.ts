@@ -107,7 +107,8 @@ export class MediaService {
     const valid = input.purpose === 'learning' ? target.type === 'platform' && target.id === null
       : input.purpose === 'certification_evidence' ? target.type === 'self' || (target.type === 'organization' && target.id !== null)
       : input.purpose === 'exam_answer' ? target.type === 'attempt' && target.id !== null
-      : input.purpose === 'post_game_record' ? target.type === 'match' && target.id !== null : target.type === 'self'
+      : input.purpose === 'post_game_record' ? target.type === 'match' && target.id !== null
+      : input.purpose === 'avatar' ? target.type === 'self' && target.id === actor : target.type === 'self'
     if (!valid) throw hidden()
     const now = this.dependencies.now()
     return { id, ownerUserId: actor, purpose: input.purpose, target, objectKey: `media/${actor}/${id}`,

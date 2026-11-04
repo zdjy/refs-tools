@@ -1,9 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { apiResponse } from '@refs-tools/contracts'
-import type { EmailChallengeBody, EmailCodeLoginBody, PasswordLoginBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
+import type { EmailChallengeBody, EmailChangeBody, EmailCodeLoginBody, PasswordLoginBody, RegisterBody, SetPasswordBody } from '@refs-tools/contracts/auth'
 import type { AuthService } from './auth.service.js'
 import { clearSessionCookie, requireSameOrigin, sendSession, sessionToken } from './auth.http.js'
-import { challengeSchema, codeLoginSchema, passwordLoginSchema, registerSchema, sessionSchema, setPasswordSchema } from './auth.schema.js'
+import { challengeSchema, codeLoginSchema, emailChangeSchema, passwordLoginSchema, registerSchema, sessionSchema, setPasswordSchema } from './auth.schema.js'
 
 export type AuthRouteDependencies = { service: AuthService; publicOrigin: string }
 
@@ -29,6 +29,9 @@ export function authRoutes({ service, publicOrigin }: AuthRouteDependencies): Fa
     })
     app.post<{ Body: SetPasswordBody }>('/password', { schema: setPasswordSchema, bodyLimit: 8192 }, async (request, reply) => {
       return sendSession(reply, await service.setPassword(sessionToken(request), request.body))
+    })
+    app.post<{ Body: EmailChangeBody }>('/email-change', { schema: emailChangeSchema, bodyLimit: 8192 }, async (request, reply) => {
+      return sendSession(reply, await service.changeEmail(sessionToken(request), request.body))
     })
     app.get('/session', { schema: sessionSchema }, async (request) => {
       return apiResponse(await service.requireSession(sessionToken(request)))

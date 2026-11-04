@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { useEmailChallenge } from '../src/views/auth/useEmailChallenge'
+import { useEmailChallenge } from '../src/features/account/useEmailChallenge'
 import type { AuthApi } from '../src/api/auth.api'
 
 const response = { challengeId: '00000000-0000-4000-8000-000000000001', expiresAt: '2030-01-01T00:01:00.000Z' }
 const api = (challenge: AuthApi['challenge']): AuthApi => ({
-  challenge, session: vi.fn(), register: vi.fn(), loginWithCode: vi.fn(), loginWithPassword: vi.fn(), setPassword: vi.fn(), logout: vi.fn(),
+  challenge, session: vi.fn(), register: vi.fn(), loginWithCode: vi.fn(), loginWithPassword: vi.fn(), setPassword: vi.fn(), changeEmail: vi.fn(), logout: vi.fn(),
 }) as AuthApi
 
 describe('useEmailChallenge', () => {

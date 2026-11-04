@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AuthApi } from '../src/api/auth.api'
 import { AuthApiError, authApi } from '../src/api/auth.api'
 import { createAuthStore } from '../src/stores/auth'
-import { useAccount } from '../src/views/auth/useAccount'
+import { usePasswordSettings } from '../src/features/account/usePasswordSettings'
 
 const cleanups: (() => void)[] = []
 afterEach(() => { cleanups.splice(0).forEach((cleanup) => cleanup()); vi.restoreAllMocks() })
@@ -17,14 +17,14 @@ async function setup(hasPassword = false) {
     challenge: vi.fn().mockResolvedValue({ challengeId: '00000000-0000-4000-8000-000000000001',
       expiresAt: new Date(Date.now() + 300_000).toISOString() }),
     setPassword: vi.fn().mockResolvedValue({ ...session, user: { ...session.user, hasPassword: true } }),
-    register: vi.fn(), loginWithCode: vi.fn(), loginWithPassword: vi.fn(), logout: vi.fn(),
+    register: vi.fn(), loginWithCode: vi.fn(), loginWithPassword: vi.fn(), changeEmail: vi.fn(), logout: vi.fn(),
   }
   vi.spyOn(authApi, 'challenge').mockImplementation(api.challenge)
   const pinia = createPinia()
   const auth = createAuthStore(api)(pinia)
   await auth.restore()
   const scope = effectScope()
-  const state = scope.run(() => useAccount(auth))!
+  const state = scope.run(() => usePasswordSettings(auth))!
   cleanups.push(() => { scope.stop(); disposePinia(pinia) })
   state.fields.password = 'a-long-password-123'
   state.fields.confirmation = state.fields.password

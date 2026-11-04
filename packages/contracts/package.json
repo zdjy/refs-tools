@@ -19,6 +19,11 @@
       "development": "./src/admin-users.ts",
       "import": "./dist/admin-users.js"
     },
+    "./profile": {
+      "types": "./src/profile.ts",
+      "development": "./src/profile.ts",
+      "import": "./dist/profile.js"
+    },
     "./admin-media": {
       "types": "./src/admin-media.ts",
       "development": "./src/admin-media.ts",

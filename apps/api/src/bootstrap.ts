@@ -9,6 +9,8 @@ import { OrganizationInvitationsService } from './modules/organizations/organiza
 import { PgOrganizationMembersRepository } from './modules/organizations/organization-members.repository.js'
 import { OrganizationsService } from './modules/organizations/organizations.service.js'
 import { PgOrganizationsRepository } from './modules/organizations/organizations.repository.js'
+import { ProfilesService } from './modules/profiles/profiles.service.js'
+import { PgProfilesRepository } from './modules/profiles/profiles.repository.js'
 import { PgAdminUsersRepository } from './modules/auth/admin-users.repository.js'
 import { hashPassword } from './modules/auth/auth.security.js'
 import { PgAuthRepository } from './modules/auth/auth.repository.js'
@@ -47,6 +49,11 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
       organizationMembers: { sessions: service, publicOrigin, members: new OrganizationMembersService(memberDependencies),
         invitations: new OrganizationInvitationsService(memberDependencies) },
       auth: { service, publicOrigin },
+      profiles: { sessions: service, publicOrigin, service: new ProfilesService({
+        transaction: createTransactionRunner(pool, (client) => ({
+          profiles: new PgProfilesRepository(client), audit: new PgAuditRepository(client),
+        })), now: () => new Date(),
+      }) },
       adminUsers: { sessions: service, publicOrigin, service: new AdminUsersService({
         transaction: createTransactionRunner(pool, (client) => ({
           users: new PgAdminUsersRepository(client), sessions: new PgAuthRepository(client),

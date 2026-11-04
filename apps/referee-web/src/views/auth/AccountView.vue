@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NPopconfirm } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
 import AuthShell from './components/AuthShell.vue'
-import PasswordSettings from './components/PasswordSettings.vue'
+import PasswordSettings from '../../features/account/PasswordSettings.vue'
 import './auth.css'
 const auth = useAuthStore()
 const { user, session, status, error, busy } = storeToRefs(auth)
@@ -27,6 +27,7 @@ onMounted(() => { void auth.restore() })
           <h2 class="mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">{{ user.displayName }}，你好</h2>
           <p class="m-0 text-[14px] leading-[1.7] text-body">管理你的登录方式与账号安全。</p>
         </header>
+        <RouterLink class="mb-6 inline-flex min-h-11 items-center rounded-full bg-soft px-4 text-[13px] font-semibold no-underline transition-[background] duration-200 ease-out hover:bg-line" to="/profile-setting">编辑账号资料</RouterLink>
         <dl class="m-0">
           <div class="mt-4"><dt class="mb-1.5 text-[12px] text-body">邮箱地址</dt><dd class="m-0 text-[14px] wrap-anywhere">{{ user.email }}</dd></div>
           <div class="mt-4"><dt class="mb-1.5 text-[12px] text-body">邮箱状态</dt><dd class="m-0 text-[14px] wrap-anywhere"><span class="inline-flex rounded-full border border-solid border-line bg-soft px-3 py-1 text-[12px]">{{ user.emailVerified ? '已验证' : '待验证' }}</span></dd></div>

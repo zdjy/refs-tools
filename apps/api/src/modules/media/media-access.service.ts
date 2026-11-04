@@ -9,6 +9,8 @@ export async function requireMediaAccess(repositories: MediaRepositories, actor:
   if (!account) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
   if (action !== 'read' && !account.verified) throw new DomainError('EMAIL_NOT_VERIFIED', '请先验证邮箱', 403)
   if (action === 'upload' && media.ownerUserId !== actor) throw hidden()
+  // 头像需要跨用户展示；仅 avatar 用途开放登录读，其余用途保持 owner/target 私有。
+  if (action === 'read' && media.purpose === 'avatar') return null
   const target = media.target
   if (target.type === 'attempt' || target.type === 'match') {
     if (!dependencies.businessAccess) throw hidden()

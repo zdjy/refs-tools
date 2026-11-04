@@ -20,6 +20,7 @@ export interface AuthRepository {
   findAccountByEmail(email: string): Promise<AuthAccount | null>
   lockAccount(id: string): Promise<AuthAccount | null>
   setPassword(userId: string, hash: string): Promise<void>
+  changeEmail(userId: string, email: string, now: Date): Promise<boolean>
   verifyEmail(userId: string, now: Date): Promise<void>
   saveSession(session: StoredSession): Promise<void>
   findSession(tokenHash: string, now: Date): Promise<{ account: AuthAccount; expiresAt: Date } | null>

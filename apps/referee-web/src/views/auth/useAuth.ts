@@ -1,6 +1,6 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { useEmailChallenge } from './useEmailChallenge'
+import { useEmailChallenge } from '../../features/account/useEmailChallenge'
 
 export type AuthMode = 'code' | 'password' | 'register'
 export type AuthFields = { email: string; code: string; displayName: string; password: string }
