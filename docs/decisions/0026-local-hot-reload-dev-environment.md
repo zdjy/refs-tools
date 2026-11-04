@@ -19,7 +19,7 @@
 
 浏览器入口固定为 **`https://localhost:8443`**，由裁判端 Vite 开发服务器直接提供 HTTPS：
 
-1. `scripts/dev-cert.mjs` 用 `openssl` 生成仅本机使用的自签名证书到 `.cache/dev-certs/`（已忽略提交，私钥不出本机、不进 Docker volume）。开发者一次性把公开证书导入当前用户根证书存储，可随时移除。
+1. `scripts/dev-cert.mjs` 用 `openssl` 在 `.cache/dev-certs/`（已忽略提交，私钥不出本机、不进 Docker volume）生成「本地 CA + localhost 叶子证书」两段证书：浏览器只信任 CA，叶子证书按需重签。不使用单张自签名证书作为服务端证书——`openssl req -addext` 会与系统 `openssl.cnf` 的默认扩展叠加出重复的 `basicConstraints`，Windows 的 CryptoAPI 容忍这种重复，但 Chrome 的证书校验会直接判为 `ERR_CERT_INVALID`。开发者一次性把 CA 公开证书导入当前用户根证书存储，可随时移除。
 2. `apps/referee-web/vite.config.ts` 在检测到该证书时以 `https` + `port 8443` + `strictPort` 启动，并把 `/api` 代理到 `http://127.0.0.1:3000`、`/admin` 代理到管理端开发服务器 `http://127.0.0.1:8001`（含 WebSocket）。端口被占用时直接失败，避免静默换端口导致 Origin 校验失败。
 3. 管理端开发服务器改用与生产一致的 `VITE_PUBLIC_PATH=/admin/`，经上述代理后与裁判端同源，Cookie 会话共用；也可单独访问 `http://localhost:8001/admin/` 调试不依赖登录的页面。
 4. `scripts/dev-api.mjs` 在宿主机用 `tsx watch` 运行 API：读取根 `.env` 的本地密钥，仅把容器主机名改写为 `127.0.0.1`（数据库、Mailpit SMTP、对象存储），不复制密钥文件、不改认证代码。`NODE_EXTRA_CA_CERTS` 指向从 Compose 容器复制到 `.cache/` 的公开证书，SMTP STARTTLS 与对象存储 TLS 仍完整校验。

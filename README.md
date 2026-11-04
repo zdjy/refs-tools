@@ -100,9 +100,9 @@ pnpm install
 cd apps/admin-web && pnpm install --frozen-lockfile --ignore-scripts && cd ../..
 cp .env.example .env                                  # 已有 .env 时不要覆盖
 
-# 仅首次：生成开发证书并信任其公开证书
+# 仅首次：生成开发证书（本地 CA + localhost 叶子证书）并信任其中的 CA
 pnpm dev:cert
-certutil -user -addstore Root ".cache/dev-certs/localhost.crt"
+certutil -user -addstore Root ".cache/dev-certs/ca.crt"
 
 # 日常：一条命令即可（重启电脑后也是这一条）
 pnpm dev
@@ -122,7 +122,7 @@ pnpm dev
 - 前端保存后由 Vite HMR 局部更新，API 保存后由 `tsx watch` 重启；数据库结构变更需重新执行 `pnpm dev:api:migrate`。
 - 从 Compose 联调模式切回开发模式前先执行 `docker compose stop api web`；`pnpm dev` 发现 3000、8443、8001 被占用会直接报错退出，不静默换端口（常见原因是上一次的 `pnpm dev` 窗口没关）。
 - 真实登录只在 `https://localhost:8443` 成立。`http://localhost:5173`、`http://localhost:8001` 或局域网地址既不受开发证书覆盖，也不匹配 `AUTH_PUBLIC_ORIGIN`，只能用于不依赖登录的页面调试。
-- 开发证书有效期一年，`pnpm dev:cert -- --force` 可重新生成（需重新导入信任）；停用后执行 `certutil -user -delstore Root "refs-tools local dev (vite)"` 移除信任。私钥只保存在已忽略提交的 `.cache/`，不进入镜像或仓库。
+- 开发证书由 `.cache/dev-certs/ca.crt`（本地 CA，10 年）签发 `localhost.crt`（叶子证书，1 年），浏览器只信任 CA。`pnpm dev:cert -- --force` 只重签叶子证书、不需要重新导入信任；`pnpm dev:cert -- --new-ca` 才轮换 CA（需重新导入）。重新生成证书后必须重启 `pnpm dev`，并**完全退出浏览器再打开**，因为 Chrome 会缓存该主机的证书错误。停用后执行 `certutil -user -delstore Root "refs-tools local dev CA"` 移除信任。私钥只保存在已忽略提交的 `.cache/`，不进入镜像或仓库。
 - API 读取根 `.env` 中的本地密钥，只把容器主机名换成 `127.0.0.1`，不复制密钥文件；`NODE_EXTRA_CA_CERTS` 指向从 Compose 容器复制的公开证书，SMTP 与对象存储仍完整校验 TLS。
 - 需要验收镜像产物（Nginx 静态托管、容器网络、生产构建）时，仍使用上一节的 `docker compose up -d --build --wait`。
 

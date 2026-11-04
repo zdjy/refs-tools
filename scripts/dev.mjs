@@ -83,7 +83,7 @@ async function main() {
     return
   }
 
-  const { certPath } = ensureDevCertificate()
+  const { caPath } = ensureDevCertificate()
 
   console.log('[dev] 启动 API（tsx watch）、裁判端与管理端（Vite）…')
   const children = [
@@ -97,7 +97,7 @@ async function main() {
   console.log(`[dev] 裁判端      https://localhost:${webPort}/`)
   console.log(`[dev] 管理端      https://localhost:${webPort}/admin/`)
   console.log('[dev] 收件箱      http://localhost:8025')
-  console.log(`[dev] 首次使用需信任开发证书：certutil -user -addstore Root "${certPath}"`)
+  console.log(`[dev] 首次使用需信任开发 CA 证书：certutil -user -addstore Root "${caPath}"`)
   console.log('[dev] Ctrl+C 结束全部进程；基础设施容器保持运行（下次仍用 pnpm dev 一键启动）。')
   console.log('')
 
