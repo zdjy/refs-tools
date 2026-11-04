@@ -46,6 +46,7 @@ export const refereeTheme: GlobalThemeOverrides = {
     colorInfo: t.soft, borderInfo: `1px solid ${t.line}`, contentTextColorInfo: t.body,
     colorError: t.soft, borderError: `1px solid ${t.red}`, contentTextColorError: t.redHover,
   },
+  Drawer: { color: t.canvas, boxShadow: t.raised },
   Input: inputTheme,
   InputNumber: inputTheme,
 }

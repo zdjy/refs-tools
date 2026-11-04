@@ -38,14 +38,19 @@ try {
     String.raw`.hover\:text-red-hover:hover`, String.raw`.focus-visible\:ring-red\/30:focus-visible`,
     String.raw`.motion-reduce\:transition-none`, String.raw`.min-h-\[44px\]`, '.font-sans', '.font-mono',
     '.shadow-card', '.shadow-raised', '.shadow-lift', '.shadow-selected', '.rounded-xl', '.rounded-2xl', '.rounded-full',
-    String.raw`.lg\:grid-cols-3`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
+    String.raw`.lg\:sticky`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
     String.raw`.group-hover\:scale-105`, '.scroll-mt-6', '.sr-only',
     String.raw`.compact\:grid-cols-3`,
-    // 内容门户首页：索引主次栏、论坛版块侧栏、阅读页进度条与目录栏。
-    String.raw`.tablet\:grid-cols-\[minmax\(0\,1\.5fr\)_minmax\(0\,1fr\)\]`,
-    String.raw`.tablet\:grid-cols-\[220px_minmax\(0\,1fr\)\]`,
+    // 论坛首页：功能侧栏、桌面版块栏、移动抽屉与搜索焦点；阅读页保留独立目录栏。
+    String.raw`.tablet\:grid-cols-\[minmax\(0\,1fr\)_280px\]`,
+    String.raw`.lg\:grid-cols-\[176px_minmax\(0\,1fr\)\]`,
+    String.raw`.focus-within\:ring-red\/30:focus-within`,
+    String.raw`.lg\:hidden`, String.raw`.lg\:block`,
+    String.raw`.pt-\[max\(16px\,env\(safe-area-inset-top\)\)\]`,
+    String.raw`.xl\:grid-cols-\[minmax\(0\,1fr\)_300px\]`,
     String.raw`.tablet\:grid-cols-\[minmax\(0\,1fr\)_260px\]`,
-    String.raw`.scale-x-\(--progress\)`, String.raw`.hover\:-translate-y-0\.5:hover`,
+    String.raw`.scale-x-\(--progress\)`,
+    String.raw`.compact\:grid-cols-4`,
     // macOS 毛玻璃：顶栏/侧栏模糊、半透明画布与悬停浮升阴影。
     '.backdrop-blur-xl', '.backdrop-blur-md', String.raw`.bg-canvas\/90`, String.raw`.hover\:shadow-lift:hover`,
   ]) {

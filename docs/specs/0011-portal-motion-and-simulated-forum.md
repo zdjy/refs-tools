@@ -1,6 +1,6 @@
 # FS-0011：内容门户的动效与模拟论坛
 
-- 状态：已实现；自动化与 Chrome 无头浏览器验收通过，人工项见第 5 节。
+- 状态：首页编排已由 [FS-0018](0018-forum-first-home.md) 替代；本文保留阅读页与模拟内容边界及历史验证记录。
 - 范围：裁判端首页与十条阅读路由。
 - 决策：[ADR 0019](../decisions/0019-motion-and-simulated-forum-content.md)。
 - 视觉基线：[共享 UI 规范](../ui/macos_fiba.md)；视觉基线已由 [FS-0012](0012-macos-vibrancy-ui.md) 切换为 macOS 毛玻璃规范。

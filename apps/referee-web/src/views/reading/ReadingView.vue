@@ -28,7 +28,7 @@ useUiScrollProgress(bar, body)
   <NavigationShell>
     <div aria-hidden="true" class="pointer-events-none fixed inset-x-0 top-0 z-40 h-1 bg-transparent"><div ref="bar" class="h-full origin-left scale-x-(--progress) bg-red" style="--progress: 0"></div></div>
     <template v-if="article">
-      <RouterLink to="/" class="mb-5 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-medium text-body no-underline transition-all duration-200 hover:text-red-hover active:scale-95"><ArrowLeft class="size-4" aria-hidden="true" />返回裁判手记</RouterLink>
+      <RouterLink to="/" class="mb-5 inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-medium text-body no-underline transition-all duration-200 hover:text-red-hover active:scale-95"><ArrowLeft class="size-4" aria-hidden="true" />返回社区首页</RouterLink>
       <article>
         <ReadingHeader :article="article" />
         <div ref="body" class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-7 tablet:grid-cols-[minmax(0,1fr)_260px] xl:gap-12">

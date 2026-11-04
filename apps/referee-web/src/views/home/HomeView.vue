@@ -1,30 +1,16 @@
 <script setup lang="ts">
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
-import LocalWorkbenchNotice from '../../components/navigation/LocalWorkbenchNotice.vue'
-import { editorialNotice } from '../../content/editorial'
 import HomeHero from './components/HomeHero.vue'
-import KeywordBand from './components/KeywordBand.vue'
-import ArticleIndex from './components/ArticleIndex.vue'
-import GuideRail from './components/GuideRail.vue'
 import ThreadFeed from './components/ThreadFeed.vue'
-import GlossaryGrid from './components/GlossaryGrid.vue'
-import PregameChecklist from './components/PregameChecklist.vue'
-import ClosingPanel from './components/ClosingPanel.vue'
-import ModuleDirectory from './components/ModuleDirectory.vue'
+import CommunitySidebar from './components/CommunitySidebar.vue'
 </script>
 
 <template>
   <NavigationShell>
     <HomeHero />
-    <KeywordBand />
-    <ArticleIndex />
-    <GuideRail />
-    <ThreadFeed />
-    <GlossaryGrid />
-    <PregameChecklist />
-    <ClosingPanel />
-    <p class="mt-8 mb-0 text-xs leading-relaxed text-body">{{ editorialNotice }}</p>
-    <ModuleDirectory />
-    <LocalWorkbenchNotice />
+    <div class="grid min-w-0 items-start gap-6 tablet:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
+      <ThreadFeed />
+      <CommunitySidebar />
+    </div>
   </NavigationShell>
 </template>

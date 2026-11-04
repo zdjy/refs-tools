@@ -5,8 +5,9 @@ import { threadsByBoard } from './home.presentation'
 /** 论坛信息流的界面状态：当前版块与已展开的帖子。均为临时界面状态，不写入存储。 */
 export function useThreadFeed() {
   const board = ref<BoardId | 'all'>('all')
+  const query = ref('')
   const expanded = ref<ReadonlySet<string>>(new Set())
-  const threads = computed(() => threadsByBoard(board.value))
+  const threads = computed(() => threadsByBoard(board.value, query.value))
 
   function toggle(id: string) {
     const next = new Set(expanded.value)
@@ -14,5 +15,10 @@ export function useThreadFeed() {
     expanded.value = next
   }
 
-  return { board, threads, expanded, toggle }
+  function reset() {
+    board.value = 'all'
+    query.value = ''
+  }
+
+  return { board, query, threads, expanded, toggle, reset }
 }

@@ -12,6 +12,8 @@ describe('共享 UI 主题适配', () => {
     expect(variables.get('--focus-border')).toBe(uiTokens.focusBorder)
     expect(variables.get('--font')).toBe(refereeTheme.common?.fontFamily)
     expect(variables.get('--shadow')).toBe(refereeTheme.Card?.boxShadow)
+    expect(refereeTheme.Drawer?.color).toBe(uiTokens.canvas)
+    expect(refereeTheme.Drawer?.boxShadow).toBe(uiTokens.raised)
   })
 
   it('阴影为暖调低不透明度微阴影，聚焦环为球场红 30%', () => {
