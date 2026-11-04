@@ -1,5 +1,5 @@
 export type NavigationSection = 'home' | 'learning' | 'tools' | 'forum' | 'account'
-export type ModuleId = 'learning' | 'practice' | 'wrong-questions' | 'exams' | 'results' | 'certifications' | 'organizations' | 'events' | 'tools' | 'workbench' | 'gb2312' | 'rules' | 'forum'
+export type ModuleId = 'learning' | 'practice' | 'wrong-questions' | 'exams' | 'results' | 'certifications' | 'organizations' | 'events' | 'tools' | 'workbench' | 'gb2312' | 'rules' | 'forum' | 'profile' | 'feedback'
 export type Availability = 'planned' | 'partial' | 'available'
 export interface NavigationModule {
   id: ModuleId
@@ -26,6 +26,9 @@ export const modules = {
   // 不选用工作台的子功能（计时、犯规、比分）作为占位，避免把子功能重复包装成独立模块，见 FS-0006 §3.2。
   rules: { id: 'rules', title: '规则速查', path: '/tools/rules', description: '按规则集版本查询暂停、犯规、计时等参数，仅作提示，不替代裁判最终判断', availability: 'planned', beta: true },
   forum: { id: 'forum', title: '裁判社区', path: '/forum', description: '判例讨论、执裁心得与交流', availability: 'planned', beta: true },
+  // 账号菜单的两项入口：只承诺后续范围，页面仍是建设说明，不假装已有个人主页或反馈工单。
+  profile: { id: 'profile', title: '我的主页', path: '/me', description: '个人公开资料、执裁经历与近期动态', availability: 'planned' },
+  feedback: { id: 'feedback', title: '意见反馈', path: '/feedback', description: '问题反馈、建议提交与处理进度查询', availability: 'planned' },
 } as const satisfies Record<ModuleId, NavigationModule>
 
 export const moduleGroups: readonly { title: string; items: readonly ModuleId[] }[] = [
@@ -43,6 +46,12 @@ export const primaryNavigation: readonly { id: NavigationSection; title: string;
   { id: 'account', title: '我的', path: '/account' },
 ]
 
+/**
+ * 桌面主导航不含「我的」：账号入口由顶栏用户名菜单承担，移动底栏仍保留「我的」。
+ * 依据见 FS-0020。
+ */
+export const desktopNavigation = primaryNavigation.filter((item) => item.id !== 'account')
+
 /** 仅关联真实存在的页面，不生成尚未实现的业务操作。 */
 export function relatedModules(id: ModuleId): readonly ModuleId[] {
   if (id === 'practice') return ['wrong-questions', 'learning']
@@ -50,5 +59,7 @@ export function relatedModules(id: ModuleId): readonly ModuleId[] {
   if (id === 'wrong-questions') return ['practice', 'learning']
   if (id === 'results') return ['exams', 'learning']
   if (id === 'gb2312') return ['tools', 'workbench']
+  if (id === 'profile') return ['organizations', 'certifications']
+  if (id === 'feedback') return ['profile']
   return ['learning', 'tools']
 }

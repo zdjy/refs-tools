@@ -5,7 +5,7 @@
     >
       <div class="max-w-[420px]">
         <div class="flex items-center">
-          <img class="mr-2.5 block w-8" :src="websiteConfig.logo" :alt="websiteConfig.title" />
+          <img class="mr-2.5 block w-8" :src="logo" :alt="websiteConfig.title" />
           <h1 class="text-3xl font-semibold tracking-wide">{{ websiteConfig.title }}</h1>
         </div>
         <p class="mb-10 mt-0 text-[15px] leading-relaxed text-[var(--login-text-secondary)]">{{
@@ -120,6 +120,7 @@
   import { ResultEnum } from '@/enums/httpEnum';
   import { PageEnum } from '@/enums/pageEnum';
   import { websiteConfig } from '@/config/website.config';
+  import { useBrandLogo } from '@/hooks/setting/useBrandLogo';
   import { useUserStore } from '@/store/modules/user';
 
   interface FormState {
@@ -140,6 +141,8 @@
     { key: 'facebook', title: 'Facebook', icon: LogoFacebook },
   ]);
   const themeVars = useThemeVars();
+  // 登录页左侧品牌栏底色随主题变化，方标同样按主题切换。
+  const logo = useBrandLogo();
   const message = useMessage();
   const router = useRouter();
   const route = useRoute();

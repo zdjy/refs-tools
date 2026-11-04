@@ -6,7 +6,7 @@
       v-if="navMode === 'horizontal' || (navMode === 'horizontal-mix' && mixMenu)"
     >
       <div class="logo" v-if="navMode === 'horizontal'">
-        <img :src="websiteConfig.logo" alt="" />
+        <img :src="logo" alt="" />
         <h2 v-show="!collapsed" class="title">{{ websiteConfig.title }}</h2>
       </div>
       <AsideMenu
@@ -136,6 +136,7 @@
 
 <script lang="ts">
   import { websiteConfig } from '@/config/website.config';
+  import { useBrandLogo } from '@/hooks/setting/useBrandLogo';
   import { useProjectSetting } from '@/hooks/setting/useProjectSetting';
   import { useDesignSettingStore } from '@/store/modules/designSetting';
   import { AsideMenu } from '@/layout/components/Menu';
@@ -177,6 +178,7 @@
       const localeStore = useLocaleStore();
       const { navMode, headerSetting, menuSetting, crumbsSetting } = useProjectSetting();
       const designStore = useDesignSettingStore();
+      const logo = useBrandLogo();
 
       // 语言切换下拉
       const localeOptions = computed(() =>
@@ -365,6 +367,7 @@
         getMenuLocation,
         mixMenu,
         websiteConfig,
+        logo,
         handleMenuCollapsed,
         RedirectName,
         schoolboy

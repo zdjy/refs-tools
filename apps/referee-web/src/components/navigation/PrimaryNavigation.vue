@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { primaryNavigation } from '../../navigation/modules'
+import { desktopNavigation } from '../../navigation/modules'
 import { navigationCurrent } from '../../navigation/navigation.presentation'
 
 const route = useRoute()
@@ -8,7 +8,7 @@ const route = useRoute()
 
 <template>
   <nav aria-label="主导航" class="hidden shrink-0 items-center gap-1 tablet:flex">
-    <RouterLink v-for="item in primaryNavigation" :key="item.id" :to="item.path" :aria-current="navigationCurrent(route.meta.navigation, route.path, item)" :class="[
+    <RouterLink v-for="item in desktopNavigation" :key="item.id" :to="item.path" :aria-current="navigationCurrent(route.meta.navigation, route.path, item)" :class="[
       'flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium no-underline transition-all duration-200 ease-out hover:bg-soft hover:text-ink active:scale-95',
       route.meta.navigation === item.id ? 'bg-sand font-semibold text-ink shadow-selected' : 'text-body',
     ]">

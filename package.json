@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm --recursive --if-present run build",
+    "brand:icons": "node scripts/brand-icons.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:api": "node scripts/dev-api.mjs",
     "dev:api:migrate": "node scripts/dev-api.mjs migrate",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "sharp": "^0.35.5",
     "typescript": "^5.7.2",
     "vitest": "^3.2.4"
   }

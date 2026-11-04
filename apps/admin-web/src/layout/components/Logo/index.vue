@@ -1,25 +1,18 @@
 <template>
   <div class="logo">
-    <img :src="websiteConfig.logo" alt="" :class="{ 'mr-2': !collapsed }" />
+    <img :src="logo" alt="" :class="{ 'mr-2': !collapsed }" />
     <h2 v-show="!collapsed" class="title">{{ websiteConfig.title }}</h2>
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
   import { websiteConfig } from '@/config/website.config';
-  export default {
-    name: 'Index',
-    props: {
-      collapsed: {
-        type: Boolean,
-      },
-    },
-    data() {
-      return {
-        websiteConfig,
-      };
-    },
-  };
+  import { useBrandLogo } from '@/hooks/setting/useBrandLogo';
+
+  defineOptions({ name: 'Logo' });
+  defineProps<{ collapsed?: boolean }>();
+
+  const logo = useBrandLogo();
 </script>
 
 <style lang="less" scoped>

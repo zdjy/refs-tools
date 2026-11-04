@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createMemoryHistory } from 'vue-router'
 import { createAppRouter } from '../src/router'
-import { learningEntries, moduleGroups, modules, primaryNavigation, relatedModules, toolEntries } from '../src/navigation/modules'
+import { learningEntries, moduleGroups, modules, primaryNavigation, desktopNavigation, relatedModules, toolEntries } from '../src/navigation/modules'
+import { accountMenuLinks } from '../src/navigation/account-menu.presentation'
 import { moduleStatus, navigationCurrent } from '../src/navigation/navigation.presentation'
 
 const router = createAppRouter(createMemoryHistory())
@@ -21,7 +22,7 @@ describe('裁判端静态路由与导航合同', () => {
       expect(route.meta.title).toBeTruthy()
       expect(typeof route.matched.at(-1)?.components?.default).toBe('function')
     }
-    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'rules', 'forum'] as const) {
+    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'rules', 'forum', 'profile', 'feedback'] as const) {
       expect(router.resolve(modules[id].path).matched[0]?.props.default).toEqual({ moduleId: id })
     }
     expect(router.resolve(modules.gb2312.path).matched[0]?.components?.default).toBeTypeOf('function')
@@ -35,6 +36,13 @@ describe('裁判端静态路由与导航合同', () => {
     for (const id of Object.keys(modules) as (keyof typeof modules)[]) {
       for (const target of relatedModules(id)) expect(router.resolve(modules[target].path).name).not.toBe('not-found')
     }
+  })
+
+  it('桌面主导航不含「我的」，账号菜单项全部指向已实现路由', () => {
+    expect(desktopNavigation.map((item) => item.id)).toEqual(['home', 'learning', 'tools', 'forum'])
+    expect(primaryNavigation.map((item) => item.id)).toEqual(['home', 'learning', 'tools', 'forum', 'account'])
+    expect(accountMenuLinks.map((item) => item.label)).toEqual(['我的主页', '我的组织', '账号设置', '意见反馈'])
+    for (const item of accountMenuLinks) expect(router.resolve(item.path).name).not.toBe('not-found')
   })
 
   it('准确区分可用性及 Beta 规划', () => {
