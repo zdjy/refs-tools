@@ -9,7 +9,7 @@ import { connect } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ensureDevCertificate } from './dev-cert.mjs'
-import { spawnApi } from './dev-api.mjs'
+import { ensureComposeCertificate, spawnApi } from './dev-api.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const refereeDir = join(root, 'apps', 'referee-web')
@@ -84,6 +84,10 @@ async function main() {
   }
 
   const { caPath } = ensureDevCertificate()
+  // 对象存储入口 9443 用 Compose 证书，与开发 CA 互不相关；浏览器只信任开发 CA 时直传会报证书错误。
+  // --no-infra 或容器尚未创建时无法导出公开证书，这里只降级提示，不阻断启动。
+  let storageCertPath = ''
+  try { storageCertPath = ensureComposeCertificate() } catch { storageCertPath = '' }
 
   console.log('[dev] 启动 API（tsx watch）、裁判端与管理端（Vite）…')
   const children = [
@@ -97,7 +101,12 @@ async function main() {
   console.log(`[dev] 裁判端      https://localhost:${webPort}/`)
   console.log(`[dev] 管理端      https://localhost:${webPort}/admin/`)
   console.log('[dev] 收件箱      http://localhost:8025')
-  console.log(`[dev] 首次使用需信任开发 CA 证书：certutil -user -addstore Root "${caPath}"`)
+  console.log('[dev] 首次使用需信任两张公开证书（两张互不相关，缺任何一张相关请求都会失败）：')
+  console.log(`[dev]   入口 8443（开发 CA）        certutil -user -addstore Root "${caPath}"`)
+  console.log(storageCertPath
+    ? `[dev]   对象存储 9443（Compose 证书） certutil -user -addstore Root "${storageCertPath}"`
+    : '[dev]   对象存储 9443（Compose 证书）：docker compose cp certificates:/certs/local.crt .cache/local.crt 后导入')
+  console.log('[dev] 只信任开发 CA 时，头像等浏览器直传会报 net::ERR_CERT_AUTHORITY_INVALID，随后核验返回 409。')
   console.log('[dev] Ctrl+C 结束全部进程；基础设施容器保持运行（下次仍用 pnpm dev 一键启动）。')
   console.log('')
 

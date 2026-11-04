@@ -104,6 +104,9 @@ cp .env.example .env                                  # 已有 .env 时不要覆
 pnpm dev:cert
 certutil -user -addstore Root ".cache/dev-certs/ca.crt"
 
+# 仅首次：对象存储入口 9443 用的是 Compose 自签证书，需单独信任（pnpm dev 会自动导出到 .cache/local.crt）
+certutil -user -addstore Root ".cache/local.crt"
+
 # 日常：一条命令即可（重启电脑后也是这一条）
 pnpm dev
 ```
@@ -123,6 +126,7 @@ pnpm dev
 - 从 Compose 联调模式切回开发模式前先执行 `docker compose stop api web`；`pnpm dev` 发现 3000、8443、8001 被占用会直接报错退出，不静默换端口（常见原因是上一次的 `pnpm dev` 窗口没关）。
 - 真实登录只在 `https://localhost:8443` 成立。`http://localhost:5173`、`http://localhost:8001` 或局域网地址既不受开发证书覆盖，也不匹配 `AUTH_PUBLIC_ORIGIN`，只能用于不依赖登录的页面调试。
 - 开发证书由 `.cache/dev-certs/ca.crt`（本地 CA，10 年）签发 `localhost.crt`（叶子证书，1 年），浏览器只信任 CA。`pnpm dev:cert -- --force` 只重签叶子证书、不需要重新导入信任；`pnpm dev:cert -- --new-ca` 才轮换 CA（需重新导入）。重新生成证书后必须重启 `pnpm dev`，并**完全退出浏览器再打开**，因为 Chrome 会缓存该主机的证书错误。停用后执行 `certutil -user -delstore Root "refs-tools local dev CA"` 移除信任。私钥只保存在已忽略提交的 `.cache/`，不进入镜像或仓库。
+- 开发模式下浏览器会面对**两张互不相关的证书**：`https://localhost:8443` 用开发 CA 签发的叶子证书（保证同源认证与 `__Host-` Cookie），`https://localhost:9443`（对象存储直传）仍用 Compose 自签证书 `refs-tools local development`（见 [ADR 0026](docs/decisions/0026-local-hot-reload-dev-environment.md)）。两张公开证书都要导入当前用户根证书存储。只信任开发 CA 时，头像等浏览器直传会以 `net::ERR_CERT_AUTHORITY_INVALID` 被拦下，随后 `/media/{id}/complete` 返回 `409 OBJECT_NOT_FOUND`，页面显示「上传未完成」。Compose 证书轮换（删除 `certificates` volume）后需重新导入 `.cache/local.crt`。
 - API 读取根 `.env` 中的本地密钥，只把容器主机名换成 `127.0.0.1`，不复制密钥文件；`NODE_EXTRA_CA_CERTS` 指向从 Compose 容器复制的公开证书，SMTP 与对象存储仍完整校验 TLS。
 - 需要验收镜像产物（Nginx 静态托管、容器网络、生产构建）时，仍使用上一节的 `docker compose up -d --build --wait`。
 

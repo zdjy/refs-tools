@@ -30,8 +30,9 @@ function required(values, key, hint) {
   return value
 }
 
-/** Compose 服务是宿主机的 127.0.0.1 端口；证书公开件从 Compose 容器复制到已忽略提交的 .cache/。 */
-function ensureComposeCertificate() {
+/** Compose 服务是宿主机的 127.0.0.1 端口；证书公开件从 Compose 容器复制到已忽略提交的 .cache/。
+ * 对象存储入口 9443 由这张 Compose 证书提供服务，浏览器直传前也需要信任它（浏览器不会复用 Node.js 的 NODE_EXTRA_CA_CERTS）。 */
+export function ensureComposeCertificate() {
   if (existsSync(caPath)) return caPath
   mkdirSync(dirname(caPath), { recursive: true })
   // 只复制公开证书（私钥保留在 Docker volume）；certificates 容器执行后已存在，无需构建 api 镜像。

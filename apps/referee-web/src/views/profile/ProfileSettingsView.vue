@@ -55,9 +55,9 @@ async function submitProfile() {
           <button v-for="tab in profileTabs" :key="tab.id" :id="`tab-${tab.id}`" type="button" role="tab"
             :data-tab="tab.id" :aria-selected="active === tab.id" :aria-controls="`panel-${tab.id}`"
             :tabindex="active === tab.id ? 0 : -1"
-            class="inline-flex min-h-11 shrink-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-[14px] transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red active:scale-[.98] tablet:flex-none tablet:justify-start"
+            class="inline-flex min-h-11 shrink-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[13px] whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red active:scale-[.98] xs:text-[14px] sm:px-3 tablet:flex-none tablet:justify-start"
             :class="tabClass(tab.id)" @click="select(tab.id)">
-            <span v-if="active === tab.id" class="size-1.5 shrink-0 rounded-full bg-red" aria-hidden="true"></span>
+            <span v-if="active === tab.id" class="hidden size-1.5 shrink-0 rounded-full bg-red xs:block" aria-hidden="true"></span>
             {{ tab.label }}
           </button>
         </div>

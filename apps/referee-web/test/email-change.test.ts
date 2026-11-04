@@ -30,6 +30,7 @@ async function setup(hasPassword = true) {
 describe('更换邮箱交互状态', () => {
   it('新旧验证码与密码齐备后才提交，并携带两个 challenge 证明', async () => {
     const { api, auth, state } = await setup()
+    expect(state.steps.value.map((item) => item.id)).toEqual(['old', 'password', 'new'])
     state.fields.oldCode = '123456'
     state.fields.newEmail = 'New@Example.com'
     state.fields.password = 'a-long-password-123'
@@ -63,6 +64,7 @@ describe('更换邮箱交互状态', () => {
   it('无密码账号省略密码步骤，缺少密码不报错', async () => {
     const { api, state } = await setup(false)
     expect(state.requiresPassword.value).toBe(false)
+    expect(state.steps.value.map((item) => item.id)).toEqual(['old', 'new'])
     await state.sendOld()
     state.fields.oldCode = '123456'
     state.fields.newEmail = 'new@example.com'
@@ -70,5 +72,50 @@ describe('更换邮箱交互状态', () => {
     state.fields.newCode = '654321'
     expect(await state.submit()).toBe(true)
     expect(api.changeEmail).toHaveBeenCalledWith(expect.not.objectContaining({ password: expect.anything() }))
+  })
+})
+
+describe('更换邮箱分步导航', () => {
+  it('逐步骤校验：当前步未完成时不能前进', async () => {
+    const { state } = await setup()
+    expect(state.step.value.id).toBe('old')
+    expect(state.next()).toBe(false)
+    expect(state.index.value).toBe(0)
+    expect(state.errors.value.oldCode).toContain('请先获取')
+  })
+
+  it('获取验证码后可前进到密码步，上一步保留已填内容', async () => {
+    const { state } = await setup()
+    await state.sendOld()
+    state.fields.oldCode = '123456'
+    expect(state.next()).toBe(true)
+    expect(state.step.value.id).toBe('password')
+    expect(state.next()).toBe(false)
+    expect(state.errors.value.password).toContain('当前登录密码')
+    state.fields.password = 'a-long-password-123'
+    expect(state.next()).toBe(true)
+    expect(state.step.value.id).toBe('new')
+    expect(state.isLast.value).toBe(true)
+    state.back()
+    expect(state.step.value.id).toBe('password')
+    expect(state.fields.oldCode).toBe('123456')
+    expect(state.errors.value).toEqual({})
+  })
+
+  it('最后一步提交成功后回到第一步并清空输入', async () => {
+    const { api, state } = await setup()
+    await state.sendOld()
+    state.fields.oldCode = '123456'
+    state.next()
+    state.fields.password = 'a-long-password-123'
+    state.next()
+    state.fields.newEmail = 'new@example.com'
+    await state.sendNew()
+    state.fields.newCode = '654321'
+    expect(await state.submit()).toBe(true)
+    expect(api.changeEmail).toHaveBeenCalledOnce()
+    expect(state.index.value).toBe(0)
+    expect(state.fields.oldCode).toBe('')
+    expect(state.success.value).toContain('邮箱已更新')
   })
 })

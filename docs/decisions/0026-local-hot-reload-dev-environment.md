@@ -41,6 +41,7 @@
 
 - 前端改动走 HMR，API 改动由 `tsx watch` 自动重启；数据库迁移用 `pnpm dev:api:migrate` 在宿主机执行。
 - 开发证书与 Compose 证书相互独立：切换两种模式时浏览器各自需要信任对应证书；开发证书有效期一年，可 `pnpm dev:cert -- --force` 重新生成。
+- 开发模式下一个浏览器会话会同时面对两张证书：入口 `https://localhost:8443` 是开发 CA 签发的叶子证书，对象存储直传入口 `https://localhost:9443` 仍是 Compose 自签证书。两张公开证书都必须导入当前用户根证书存储；`scripts/dev.mjs` 启动时打印两条导入命令，`scripts/dev-api.mjs` 顺带把 Compose 公开证书导出到 `.cache/local.crt`（私钥仍只在 volume）。只信任开发 CA 时，浏览器预签名直传（如头像上传）会被拦为 `net::ERR_CERT_AUTHORITY_INVALID`，随后的完成核验返回 `409 OBJECT_NOT_FOUND`，表现为「上传未完成」，而宿主机 API 因 `NODE_EXTRA_CA_CERTS` 已信任该证书仍能正常读写对象存储。备选中「让 storage 容器改用开发叶子证书」可只保留一个信任锚，但需要把开发私钥挂入容器、并让宿主机 API 与 `storage` 随 `pnpm dev:cert -- --force` 联动重启，收益不足以抵消额外耦合，暂不采用。
 - 真实登录只在 `https://localhost:8443` 成立。开发服务器仍绑定全部网卡便于手机预览页面，但局域网地址既不受开发证书覆盖，也不匹配 `AUTH_PUBLIC_ORIGIN`，不能用于认证流程。
 - 宿主机需要 Node.js、pnpm 与 `openssl`（Git for Windows 自带）；Compose 完整联调仍不依赖宿主机工具链。
 - 本机 API 连接池上限仍为 5，与 Compose 一致；不新增运行时依赖，不改变生产镜像、迁移、认证与授权代码。
