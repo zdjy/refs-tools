@@ -21,7 +21,7 @@ describe('裁判端静态路由与导航合同', () => {
       expect(route.meta.title).toBeTruthy()
       expect(typeof route.matched.at(-1)?.components?.default).toBe('function')
     }
-    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'forum'] as const) {
+    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'rules', 'forum'] as const) {
       expect(router.resolve(modules[id].path).matched[0]?.props.default).toEqual({ moduleId: id })
     }
     expect(router.resolve(modules.gb2312.path).matched[0]?.components?.default).toBeTypeOf('function')
@@ -30,7 +30,7 @@ describe('裁判端静态路由与导航合同', () => {
   it('首页恰有八项且顺序固定，所有导航目标存在', () => {
     expect(moduleGroups.flatMap((group) => group.items)).toEqual(['learning', 'practice', 'exams', 'certifications', 'organizations', 'events', 'tools', 'forum'])
     expect(learningEntries).toEqual(['practice', 'wrong-questions', 'exams', 'results'])
-    expect(toolEntries).toEqual(['workbench', 'gb2312'])
+    expect(toolEntries).toEqual(['workbench', 'gb2312', 'rules'])
     for (const item of [...Object.values(modules), ...primaryNavigation]) expect(router.resolve(item.path).name).not.toBe('not-found')
     for (const id of Object.keys(modules) as (keyof typeof modules)[]) {
       for (const target of relatedModules(id)) expect(router.resolve(modules[target].path).name).not.toBe('not-found')
@@ -42,7 +42,7 @@ describe('裁判端静态路由与导航合同', () => {
     expect(moduleStatus(modules.tools)).toBe('部分可用 · Beta')
     expect(moduleStatus(modules.workbench)).toBe('可使用 · Beta')
     expect(moduleStatus(modules.gb2312)).toBe('可使用 · Beta')
-    for (const id of ['events', 'forum'] as const) expect(moduleStatus(modules[id])).toBe('建设中 · Beta 规划')
+    for (const id of ['events', 'forum', 'rules'] as const) expect(moduleStatus(modules[id])).toBe('建设中 · Beta 规划')
   })
 
   it('当前页和栏目使用不同 aria-current，无归属模块不误高亮', () => {

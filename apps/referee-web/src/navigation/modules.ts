@@ -1,5 +1,5 @@
 export type NavigationSection = 'home' | 'learning' | 'tools' | 'forum' | 'account'
-export type ModuleId = 'learning' | 'practice' | 'wrong-questions' | 'exams' | 'results' | 'certifications' | 'organizations' | 'events' | 'tools' | 'workbench' | 'gb2312' | 'forum'
+export type ModuleId = 'learning' | 'practice' | 'wrong-questions' | 'exams' | 'results' | 'certifications' | 'organizations' | 'events' | 'tools' | 'workbench' | 'gb2312' | 'rules' | 'forum'
 export type Availability = 'planned' | 'partial' | 'available'
 export interface NavigationModule {
   id: ModuleId
@@ -22,6 +22,9 @@ export const modules = {
   tools: { id: 'tools', title: '裁判工具', path: '/tools', description: '本地比赛工作台与 GB 2312 区位码工具', availability: 'partial', beta: true },
   workbench: { id: 'workbench', title: '本地比赛工作台', path: '/workbench', description: '记分、技术统计、计时、犯规、操作日志及本地导出', availability: 'available', beta: true },
   gb2312: { id: 'gb2312', title: 'GB 2312 区位码工具', path: '/tools/gb2312', description: '汉字双向查询、派生码及批量转换', availability: 'available', beta: true },
+  // 占位工具：先给移动底栏扇形留出第三个入口，页面只展示建设状态，不提供任何查询能力。
+  // 不选用工作台的子功能（计时、犯规、比分）作为占位，避免把子功能重复包装成独立模块，见 FS-0006 §3.2。
+  rules: { id: 'rules', title: '规则速查', path: '/tools/rules', description: '按规则集版本查询暂停、犯规、计时等参数，仅作提示，不替代裁判最终判断', availability: 'planned', beta: true },
   forum: { id: 'forum', title: '裁判社区', path: '/forum', description: '判例讨论、执裁心得与交流', availability: 'planned', beta: true },
 } as const satisfies Record<ModuleId, NavigationModule>
 
@@ -31,7 +34,7 @@ export const moduleGroups: readonly { title: string; items: readonly ModuleId[] 
   { title: '场边与交流', items: ['tools', 'forum'] },
 ]
 export const learningEntries: readonly ModuleId[] = ['practice', 'wrong-questions', 'exams', 'results']
-export const toolEntries: readonly ModuleId[] = ['workbench', 'gb2312']
+export const toolEntries: readonly ModuleId[] = ['workbench', 'gb2312', 'rules']
 export const primaryNavigation: readonly { id: NavigationSection; title: string; path: string }[] = [
   { id: 'home', title: '首页', path: '/' },
   { id: 'learning', title: '学习', path: modules.learning.path },

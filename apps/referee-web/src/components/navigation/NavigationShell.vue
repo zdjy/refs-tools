@@ -3,6 +3,7 @@ import { RouterLink } from 'vue-router'
 import SkipLink from './SkipLink.vue'
 import NavigationIdentity from './NavigationIdentity.vue'
 import PrimaryNavigation from './PrimaryNavigation.vue'
+import MobilePrimaryNavigation from './MobilePrimaryNavigation.vue'
 </script>
 
 <template>
@@ -18,6 +19,6 @@ import PrimaryNavigation from './PrimaryNavigation.vue'
     <main id="main" tabindex="-1" class="mx-auto max-w-[1280px] px-4 pt-6 pb-[calc(100px+env(safe-area-inset-bottom))] compact:px-6 tablet:pt-8 tablet:pb-12 xl:px-8">
       <slot />
     </main>
-    <PrimaryNavigation mobile />
+    <MobilePrimaryNavigation />
   </div>
 </template>
