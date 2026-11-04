@@ -9,7 +9,7 @@ const cleanups: (() => void)[] = []
 afterEach(() => { cleanups.splice(0).forEach((cleanup) => cleanup()); vi.restoreAllMocks() })
 
 async function setup(hasPassword = true) {
-  const session = { user: { id: 'u-1', email: 'old@example.com', displayName: '裁判', emailVerified: true, hasPassword },
+  const session = { user: { id: 'u-1', email: 'old@example.com', displayName: '裁判', emailVerified: true, hasPassword, avatarMediaId: null },
     expiresAt: new Date(Date.now() + 3600_000).toISOString() }
   const api: AuthApi = {
     session: vi.fn().mockResolvedValue(session),

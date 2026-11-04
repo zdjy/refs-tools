@@ -16,7 +16,7 @@ async function setup(hasPassword = false) {
     session: vi.fn().mockResolvedValue(session),
     challenge: vi.fn().mockResolvedValue({ challengeId: '00000000-0000-4000-8000-000000000001',
       expiresAt: new Date(Date.now() + 300_000).toISOString() }),
-    setPassword: vi.fn().mockResolvedValue({ ...session, user: { ...session.user, hasPassword: true } }),
+    setPassword: vi.fn().mockResolvedValue({ ...session, user: { ...session.user, hasPassword: true, avatarMediaId: null } }),
     register: vi.fn(), loginWithCode: vi.fn(), loginWithPassword: vi.fn(), changeEmail: vi.fn(), logout: vi.fn(),
   }
   vi.spyOn(authApi, 'challenge').mockImplementation(api.challenge)

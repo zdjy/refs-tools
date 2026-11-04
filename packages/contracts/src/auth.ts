@@ -41,6 +41,8 @@ export const AuthUserSchema = Type.Object({
   id: Type.String({ format: 'uuid' }), email: EmailSchema,
   displayName: Type.String(), emailVerified: Type.Boolean(),
   hasPassword: Type.Boolean(),
+  /** 头像只给媒体 ID，客户端另行换取短期读授权；会话响应不携带签名 URL。 */
+  avatarMediaId: Type.Union([Type.String({ pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' }), Type.Null()]),
 }, { additionalProperties: false })
 export const AuthSessionResponseSchema = Type.Object({
   data: Type.Object({ user: AuthUserSchema, expiresAt: Type.String({ format: 'date-time' }) }),

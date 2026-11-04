@@ -3,6 +3,7 @@ import { nextTick, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { NAlert, NButton } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
+import { useAvatarStore } from '../../stores/avatar'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
 import ProfileAvatar from './components/ProfileAvatar.vue'
@@ -12,6 +13,7 @@ import { useProfileSettings } from './useProfileSettings'
 import { profileTabs, useProfileTabs } from './useProfileTabs'
 
 const auth = useAuthStore()
+const avatarStore = useAvatarStore()
 const { profile, fields, avatarUrl, avatar, loading, saving, loadError, saveError, saved, fieldError,
   load, save, pickAvatar, retryAvatar, removeAvatar } = useProfileSettings()
 const tablist = ref<HTMLElement | null>(null)
@@ -26,6 +28,28 @@ onMounted(() => {
   if (auth.status === 'unknown') void auth.restore()
   void load()
 })
+
+/** 头像变更后刷新会话投影，顶栏据此换图；旧签名 URL 同时作废。 */
+async function refreshAvatarEverywhere() {
+  avatarStore.invalidate()
+  await auth.restore(true)
+  await avatarStore.ensure(auth.user?.avatarMediaId ?? null)
+}
+
+async function selectAvatar(file: File) {
+  await pickAvatar(file)
+  await refreshAvatarEverywhere()
+}
+
+async function clearAvatar() {
+  await removeAvatar()
+  await refreshAvatarEverywhere()
+}
+
+async function retryAvatarUpload() {
+  await retryAvatar()
+  await refreshAvatarEverywhere()
+}
 
 /** 保存失败时把焦点移到首个无效输入；没有字段错误则聚焦汇总提示。 */
 async function submitProfile() {
@@ -77,7 +101,7 @@ async function submitProfile() {
             <n-alert v-if="saveError" type="error" :show-icon="false">{{ saveError }}</n-alert>
             <p v-if="saved" role="status" class="m-0 rounded-xl border border-solid border-line bg-soft px-4 py-3 text-[13px] leading-[1.7]">{{ saved }}</p>
             <ProfileAvatar :url="avatarUrl" :name="fields.nickname" :state="avatar" :busy="saving"
-              @select="pickAvatar" @retry="retryAvatar" @remove="removeAvatar" />
+              @select="selectAvatar" @retry="retryAvatarUpload" @remove="clearAvatar" />
             <div ref="formArea" tabindex="-1" class="grid gap-5 border-0 border-t border-solid border-line pt-5">
               <ProfileFieldsForm :fields="fields" :field-error="fieldError" :saving="saving" @save="submitProfile" />
             </div>

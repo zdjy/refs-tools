@@ -3,13 +3,17 @@ import type { AuthAccount, AuthRepository, EmailChallenge, StoredSession } from 
 
 type AccountRow = {
   id: string; email: string; display_name: string; email_verified_at: Date | null
-  password_hash: string | null; status: AuthAccount['status']
+  password_hash: string | null; status: AuthAccount['status']; avatar_media_id: string | null
 }
-const accountColumns = 'id, email, display_name, email_verified_at, password_hash, status'
+// 会话投影附带头像媒体 ID，顶栏据此展示头像；头像字节仍走独立的短期读授权。
+const accountColumns = `u.id, u.email, u.display_name, u.email_verified_at, u.password_hash, u.status,
+  p.avatar_media_id`
+const accountFromProfile = 'users u LEFT JOIN referee_profiles p ON p.user_id = u.id'
 function accountFromRow(row: AccountRow): AuthAccount {
   return {
     id: row.id, email: row.email, displayName: row.display_name,
     emailVerified: row.email_verified_at !== null, passwordHash: row.password_hash, status: row.status,
+    avatarMediaId: row.avatar_media_id,
   }
 }
 
@@ -64,18 +68,20 @@ export class PgAuthRepository implements AuthRepository {
     const result = await this.connection.query<AccountRow>(`INSERT INTO users
       (id, email, display_name, email_verified_at, password_hash, status)
       VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT ON CONSTRAINT users_email_unique DO NOTHING
-      RETURNING ${accountColumns}`, [account.id, account.email, account.displayName,
+      RETURNING id, email, display_name, email_verified_at, password_hash, status, NULL::uuid AS avatar_media_id`, [account.id, account.email, account.displayName,
       account.emailVerified ? new Date() : null, account.passwordHash, account.status])
     return result.rows[0] ? accountFromRow(result.rows[0]) : null
   }
 
   async findAccountByEmail(email: string): Promise<AuthAccount | null> {
-    const result = await this.connection.query<AccountRow>(`SELECT ${accountColumns} FROM users WHERE email = $1`, [email])
+    const result = await this.connection.query<AccountRow>(`SELECT ${accountColumns}
+      FROM ${accountFromProfile} WHERE u.email = $1`, [email])
     return result.rows[0] ? accountFromRow(result.rows[0]) : null
   }
 
   async lockAccount(id: string): Promise<AuthAccount | null> {
-    const result = await this.connection.query<AccountRow>(`SELECT ${accountColumns} FROM users WHERE id = $1 FOR UPDATE`, [id])
+    const result = await this.connection.query<AccountRow>(`SELECT ${accountColumns}
+      FROM ${accountFromProfile} WHERE u.id = $1 FOR UPDATE OF u`, [id])
     return result.rows[0] ? accountFromRow(result.rows[0]) : null
   }
 
@@ -102,8 +108,8 @@ export class PgAuthRepository implements AuthRepository {
 
   async findSession(tokenHash: string, now: Date): Promise<{ account: AuthAccount; expiresAt: Date } | null> {
     const result = await this.connection.query<AccountRow & { expires_at: Date }>(`SELECT
-      u.id, u.email, u.display_name, u.email_verified_at, u.password_hash, u.status, s.expires_at
-      FROM auth_sessions s JOIN users u ON u.id = s.user_id
+      ${accountColumns}, s.expires_at
+      FROM auth_sessions s JOIN ${accountFromProfile} ON u.id = s.user_id
       WHERE s.token_hash = $1 AND s.expires_at > $2 AND s.revoked_at IS NULL AND u.status = 'active'`, [tokenHash, now])
     const row = result.rows[0]
     return row ? { account: accountFromRow(row), expiresAt: row.expires_at } : null

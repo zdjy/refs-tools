@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useDialog, useMessage } from 'naive-ui'
 import { Building2, ChevronDown, LogOut, MessageSquare, Settings, UserRound } from '@lucide/vue'
@@ -7,7 +7,7 @@ import { useAuthStore } from '../../stores/auth'
 import { accountMenuLinks, type AccountMenuId } from '../../navigation/account-menu.presentation'
 import { ACCOUNT_MENU_ID, useAccountMenu } from './useAccountMenu'
 
-const props = defineProps<{ name: string }>()
+const props = defineProps<{ name: string; avatarUrl?: string }>()
 const auth = useAuthStore()
 const dialog = useDialog()
 const message = useMessage()
@@ -16,8 +16,10 @@ const panel = ref<HTMLElement | null>(null)
 const { open, toggle, close, onFocusout } = useAccountMenu(trigger, panel)
 const icons: Record<AccountMenuId, typeof UserRound> = { profile: UserRound, organizations: Building2, account: Settings, feedback: MessageSquare }
 const items = computed(() => accountMenuLinks.map((item) => ({ ...item, icon: icons[item.id] })))
-/** 头像位只取显示名首字符，不推断性别、级别或头像图片。 */
+/** 有头像时用图片；缺省或加载失败时回落到昵称首字符，顶栏不出现空位。 */
 const initial = computed(() => Array.from(props.name.trim())[0] ?? '我')
+const imageFailed = ref(false)
+watch(() => props.avatarUrl, () => { imageFailed.value = false })
 
 function confirmLogout(): void {
   close()
@@ -47,7 +49,10 @@ function confirmLogout(): void {
       :aria-controls="open ? ACCOUNT_MENU_ID : undefined"
       @click="toggle($event.detail === 0)"
     >
-      <span aria-hidden="true" class="grid size-7 shrink-0 place-items-center rounded-full bg-ink text-xs font-semibold text-surface">{{ initial }}</span>
+      <span aria-hidden="true" class="grid size-7 shrink-0 place-items-center overflow-hidden rounded-full bg-ink text-xs font-semibold text-surface">
+        <img v-if="avatarUrl && !imageFailed" :src="avatarUrl" alt="" class="size-full object-cover" @error="imageFailed = true" />
+        <template v-else>{{ initial }}</template>
+      </span>
       <span class="min-w-0 truncate">{{ name }}</span>
       <ChevronDown class="size-4 shrink-0 text-body" :class="open ? 'rotate-180' : ''" :stroke-width="1.5" aria-hidden="true" />
     </button>

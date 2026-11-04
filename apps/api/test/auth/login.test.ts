@@ -43,7 +43,8 @@ describe('登录与可撤销会话', () => {
     const h = createAuthHarness()
     const id = randomUUID()
     await h.repository.createAccount({ id, email: 'unverified@example.com', displayName: '裁判',
-      status: 'active', emailVerified: false, passwordHash: await hashPassword('a-long-password-123') })
+      status: 'active', emailVerified: false, passwordHash: await hashPassword('a-long-password-123'),
+      avatarMediaId: null })
     const grant = await h.service.loginWithPassword({ email: 'unverified@example.com', password: 'a-long-password-123' }, 'ip')
     expect((await h.service.requireSession(grant.token)).user.emailVerified).toBe(false)
     await expect(h.service.requireVerifiedSession(grant.token)).rejects.toMatchObject({ code: 'EMAIL_NOT_VERIFIED', statusCode: 403 })

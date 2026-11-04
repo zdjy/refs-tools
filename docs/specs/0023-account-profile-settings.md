@@ -20,7 +20,7 @@ FS-0020 把「账号设置」放进账号菜单，但落点 `/account` 只能查
 | 字段 | 存储位置 | 规则 |
 | --- | --- | --- |
 | 昵称 | `users.display_name`（唯一来源，不双写） | 去首尾空白后 1–80 字符；保存后顶栏与社区显示同步刷新 |
-| 头像 | `referee_profiles.avatar_media_id` → `media_objects` | `purpose=avatar`、`target=self`，仅 JPEG/PNG/WebP，≤ 2 MiB；客户端先压缩为最长边 1600px 的 JPEG 预览 |
+| 头像 | `referee_profiles.avatar_media_id` → `media_objects` | `purpose=avatar`、`target=self`（省略 target 时服务端按本人补齐，契约不接受 `self` 目标类型），仅 JPEG/PNG/WebP，≤ 2 MiB；客户端先压缩为最长边 1600px 的 JPEG 预览。顶栏账号按钮与账号设置页头像预览共用同一头像 |
 | 真实姓名 | `referee_profiles.legal_name` | 选填，去空白后 ≤ 40 字符；变更写入审计（只记录版本投影，不记录姓名内容） |
 | 手机号 | `referee_profiles.phone_e164` | 选填，E.164 格式；**不做短信验证**，页面明确标注未验证且不用于登录 |
 | 地区 | `referee_profiles.region_code` / `region_label` | 省/市/区三级联选，存区县级 6 位代码 + 展示快照；代码与标签必须成对 |
@@ -51,6 +51,7 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
 | `PATCH /api/v1/profile` | 任意字段子集 + 必填 `version` | 局部更新；省略表示不改，`null` 表示清空；无变化不写库；`version` 不符 `409 VERSION_CONFLICT`；字段非法 `422`；`avatarMediaId` 必须是本人已核验的 avatar 上传，否则 `422 INVALID_AVATAR` |
 | `POST /api/v1/auth/email-change` | `oldChallengeId/oldCode`、`newEmail`、`newChallengeId/newCode`、可选 `password` | 三步全过才切换：旧邮箱验证码 → 当前密码（`hasPassword` 为真时必填）→ 新邮箱验证码。切换后 `email_verified_at` 置为当前时间，撤销该账号全部会话并签发新 Cookie；邮箱被占用 `409 EMAIL_TAKEN`；新邮箱与当前相同 `422 EMAIL_UNCHANGED`；密码错误 `401 INVALID_CREDENTIALS` 且不消费验证码 |
 | `GET /api/v1/media/{id}/read-url` | — | 既有端点；`purpose=avatar` 的目标对任意有效登录账号可读，其他用途仍只允许归属者或目标授权者 |
+| `GET /api/v1/auth/session` | — | 会话投影新增 `avatarMediaId`（媒体 ID，不含签名 URL）；认证页从未返回头像字节或签名。 |
 
 - 所有响应 `cache-control: no-store` 且 `vary: Cookie`；写请求沿用精确 Origin 校验。
 - 邮箱 challenge 继续走 `POST /auth/email-challenges` 的 `purpose=email_change`，沿用既有发送频控与一次性消费语义；失败次数在事务内提交，不回滚。
@@ -65,6 +66,8 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
   - 修改邮箱面板：**分步表单**，顶部为步骤指示器（圆形序号 + 标题 + 说明，已完成步骤改用勾选标记），下方只渲染当前步骤的字段，底部为「上一步 / 下一步」，最后一步按钮为「更换登录邮箱」。
   - 分区切换只改变渲染的面板，不重新请求档案、不丢失已填内容；页面底部保留指向 `/account` 会话概览的链接。
   - 档案读取失败只影响个人资料面板，修改邮箱与修改密码仍可正常使用。
+- 顶栏账号按钮：有头像时显示 28×28 圆形图片（`object-cover`），无头像、签名失败或图片加载失败时回落到昵称首字符，不出现空白位；头像图片 `alt=""`，可访问名称仍由按钮的「昵称，账号菜单」提供。
+- 头像变更（上传/移除）后刷新会话投影并作废旧签名 URL，顶栏与账号设置页同时更新，不需要手动刷新页面。
 - 保存仅在服务端确认后提示成功；失败保留输入，字段错误显示在对应输入下方并聚焦首个无效输入；版本冲突显示刷新提示并自动重读档案。
 - 头像上传复用直传链路：选择文件 → 本地压缩 → 申请 `avatar` 上传授权 → 直传 → 核验 → 以 `avatarMediaId` 保存档案。任一步失败保留重试入口，不上报为已保存。
 - 邮箱更换分步：`验证当前邮箱` → `确认当前密码`（无密码账号跳过该步，步骤总数随之变为 2）→ `绑定新邮箱`。
@@ -99,10 +102,11 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
 - `apps/referee-web/test/profile-settings.test.ts`、`email-change.test.ts`：字段 diff、无变化不发请求、冲突后重读、字段错误定位、两步验证码与密码分支、分步校验、上一步保留输入、提交成功后复位。
 - `apps/referee-web/test/usePasswordSettings.test.ts`：首次设置单步骤、有密码时两步导航、上一步保留验证码、最终提交一次报出全部缺失项。
 - `apps/referee-web/test/profile-tabs.test.ts`：分区顺序固定、方向键循环与 `Home`/`End`、非导航按键不拦截。
+- `apps/referee-web/test/avatar-state.test.ts`：无头像不请求签名、同一媒体 ID 只签名一次、签名失败降级、`invalidate` 后重新签名、迟到响应不覆盖新账号。
 
 ## 8. 验收记录
 
-- `pnpm typecheck`、`pnpm test`（77 文件 / 391 用例）、`pnpm build`、`pnpm --filter @refs-tools/referee-web test:styles` 通过。
+- `pnpm typecheck`、`pnpm test`（78 文件 / 396 用例）、`pnpm test:db`（14 文件 / 58 用例）、`pnpm build`、`pnpm --filter @refs-tools/referee-web test:styles` 通过。
 - `pnpm test:db`（14 文件 / 58 用例）在本地测试库通过，其中迁移测试覆盖 `0008` 的 up/down 与幂等重跑，`profiles.integration.test.ts` 覆盖空档案读取、昵称与档案同事务落库、陈旧版本拒绝、地区成对约束、手机号 E.164 约束与头像归属外键。
 - 行政区数据由 `pnpm regions:data` 生成（`scripts/generate-regions.mjs`，来源 `modood/Administrative-divisions-of-China`，MIT），仅保留省/市/区三级，按路由懒加载。
 - 浏览器验收（`https://localhost:8443/profile-setting`，合成账号 `alova-test@example.com`，视口 305/360/485/768/960/1200 宽）：

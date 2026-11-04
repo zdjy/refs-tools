@@ -46,7 +46,7 @@ describe('共享导航身份投影', () => {
   })
 
   it('成功只投影显示名称，不输出完整邮箱或其他私密字段', async () => {
-    const state = setup(vi.fn().mockResolvedValue({ user: { id: 'synthetic', displayName: '合成裁判'.repeat(15), email: 'synthetic@example.test', emailVerified: true, hasPassword: false }, expiresAt: '2099-01-01T00:00:00Z' }))
+    const state = setup(vi.fn().mockResolvedValue({ user: { id: 'synthetic', displayName: '合成裁判'.repeat(15), email: 'synthetic@example.test', emailVerified: true, hasPassword: false, avatarMediaId: null }, expiresAt: '2099-01-01T00:00:00Z' }))
     await state.restore()
     expect(identityPresentation(state.status.value, state.user.value?.displayName)).toEqual({ kind: 'account', text: '合成裁判'.repeat(15) })
     expect(JSON.stringify(identityPresentation(state.status.value, state.user.value?.displayName))).not.toContain('@')

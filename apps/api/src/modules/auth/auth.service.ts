@@ -34,7 +34,7 @@ export class AuthService extends SessionService {
     return this.consume(input, 'register', undefined, async (auth, challenge) => {
       const passwordHash = input.password === undefined ? null : await this.passwordHash(input.password)
       const account = await auth.createAccount({ id: randomUUID(), email: challenge.email, displayName,
-        emailVerified: true, passwordHash, status: 'active' })
+        emailVerified: true, passwordHash, status: 'active', avatarMediaId: null })
       if (!account) return new DomainError('INVALID_CHALLENGE', '验证码无效或无法完成操作', 400)
       return this.createSession(auth, account)
     })

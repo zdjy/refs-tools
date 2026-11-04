@@ -13,7 +13,7 @@ async function fixture() {
     create: vi.fn(async () => user), update: vi.fn(async () => user), remove: vi.fn(async () => ({ deleted: true })) }
   const sessions = { requireVerifiedSession: vi.fn(async (value: string | undefined) => {
     if (value !== token) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
-    return { user: { id, email: user.email, displayName: user.displayName, emailVerified: true, hasPassword: true }, expiresAt: new Date().toISOString() }
+    return { user: { id, email: user.email, displayName: user.displayName, emailVerified: true, hasPassword: true, avatarMediaId: null }, expiresAt: new Date().toISOString() }
   }) }
   const app = await buildApp({}, { adminUsers: { service: service as unknown as AdminUsersService,
     sessions, publicOrigin: 'https://admin.example.com' } })

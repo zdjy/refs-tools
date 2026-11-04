@@ -13,7 +13,7 @@ async function fixture() {
   const service = { get: vi.fn(async () => profile), update: vi.fn(async () => ({ ...profile, version: 2 })) }
   const sessions = { requireSession: vi.fn(async (value: string | undefined) => {
     if (value !== token) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
-    return { user: { id: profile.userId, email: 'ref@example.com', displayName: '裁判甲', emailVerified: true, hasPassword: true },
+    return { user: { id: profile.userId, email: 'ref@example.com', displayName: '裁判甲', emailVerified: true, hasPassword: true, avatarMediaId: null },
       expiresAt: new Date().toISOString() }
   }) }
   const app = await buildApp({}, { profiles: { service: service as unknown as ProfilesService, sessions, publicOrigin: origin } })

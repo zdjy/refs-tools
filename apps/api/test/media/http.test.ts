@@ -9,7 +9,7 @@ it('Cookie/Origin 门禁、JSON 上限、no-store 和精确授权响应', async 
   const h = mediaHarness()
   const service = new MediaCompletionService(h.dependencies)
   const app = await buildApp({}, { media: { service, publicOrigin: origin, sessions: {
-    async requireSession(token) { if (token !== 'test') throw new Error('invalid test cookie'); return { user: { id: h.actor, email: 'synthetic@example.com', displayName: '测试', emailVerified: true, hasPassword: false }, expiresAt: '2026-11-05T00:00:00.000Z' } },
+    async requireSession(token) { if (token !== 'test') throw new Error('invalid test cookie'); return { user: { id: h.actor, email: 'synthetic@example.com', displayName: '测试', emailVerified: true, hasPassword: false, avatarMediaId: null }, expiresAt: '2026-11-05T00:00:00.000Z' } },
   } } })
   try {
     const body = { purpose: 'forum_attachment', contentType: 'image/jpeg', sizeBytes: 100 }

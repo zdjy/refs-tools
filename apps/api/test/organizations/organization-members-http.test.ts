@@ -8,7 +8,7 @@ async function fixture() {
   const app = await buildApp({}, { organizationMembers: { members: f.members, invitations: f.invitations, publicOrigin: origin,
     sessions: { requireVerifiedSession: async value => {
       if (value !== token) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
-      return { user: { id: f.actor, email: 'admin@example.com', displayName: '管理员', emailVerified: true, hasPassword: true }, expiresAt: f.now.toISOString() }
+      return { user: { id: f.actor, email: 'admin@example.com', displayName: '管理员', emailVerified: true, hasPassword: true, avatarMediaId: null }, expiresAt: f.now.toISOString() }
     } } } })
   return { ...f, app, headers: { cookie: `__Host-refs_session=${token}`, origin } }
 }

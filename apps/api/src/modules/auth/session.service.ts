@@ -6,7 +6,8 @@ import type { AuthAccount, AuthDependencies, AuthRepository, SessionGrant } from
 
 function publicUser(account: AuthAccount): AuthUser {
   return { id: account.id, email: account.email, displayName: account.displayName,
-    emailVerified: account.emailVerified, hasPassword: account.passwordHash !== null }
+    emailVerified: account.emailVerified, hasPassword: account.passwordHash !== null,
+    avatarMediaId: account.avatarMediaId }
 }
 
 /** 可撤销会话用例；每次门禁重新读取用户和会话的当前状态。 */
