@@ -1,6 +1,6 @@
 # ADR 0005：对象存储供应商基线
 
-- 状态：已接受
+- 状态：已接受；开发阶段由 [ADR 0024](0024-local-minio-and-cloud-storage-switch.md) 调整为 pgsty/minio，云端继续保留 OSS 选项
 - 日期：2026-11-01
 
 ## 背景

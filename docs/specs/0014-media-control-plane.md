@@ -1,13 +1,13 @@
 # FS-0014：媒体直传控制面与客户端上传部件
 
 - 范围：`.scratch/mvp-platform/issues/03-media-direct-upload.md`、FS-0002 Task 5/6。
-- 状态：控制面与复用部件已实现，待真实 OSS 和后续业务接入验收。
-- 决策：[ADR 0021](../decisions/0021-media-control-plane.md)。部署：[媒体说明](../../apps/api/db/MEDIA_DEPLOYMENT.md)。
+- 状态：控制面与复用部件已实现；开发阶段改用 pgsty/minio，云存储和后续业务接入仍待验收。
+- 决策：[ADR 0021](../decisions/0021-media-control-plane.md)、[ADR 0024](../decisions/0024-local-minio-and-cloud-storage-switch.md)。部署：[媒体说明](../../apps/api/db/MEDIA_DEPLOYMENT.md)。
 
 ## 行为与边界
 
 1. 已验证账号请求上传意图，服务端检查用途、目标、格式、扩展名、大小与配额，生成对象 key。幂等键在同用户内唯一，同键不同文件返回 409。
-2. 浏览器直接 PUT 私有 OSS，签名绑定 MIME、owner、media ID 和禁止覆盖头。授权 300 秒，intent 900 秒；可续签但不延长 intent。上传/下载媒体内容不经过 API。
+2. 浏览器直接 PUT 私有对象存储；本地使用 pgsty/minio，云端可配置 OSS 或兼容 S3。签名绑定 MIME、owner、media ID 和禁止覆盖头（OSS 的 x-oss-forbid-overwrite 或 S3 的 If-None-Match）。授权 300 秒，intent 900 秒；可续签但不延长 intent。上传/下载媒体内容不经过 API。
 3. complete 与可信事件均独立 HEAD，比对类型、精确字节数、归属和 ETag；客户端提供的 checksum/etag 不作为核验依据。pending 才允许进入 available/rejected/expired，终态不能复活。
 4. 读取 URL 有效期 60 秒，实时授权并审计，强制下载/no-store。删除先逻辑撤销并原子审计，再执行存储删除，失败可幂等重试。已核验的认证/考试/赛后材料不允许通用删除。
 5. 事件桥使用独立 HMAC 和 300 秒时间窗，原始 JSON 上限 4 KiB；不是 OSS 原生 callback，桥接器必须先验证 OSS 事件来源。事件 ID 持久去重，不保存原始回调或 URL。
@@ -42,6 +42,22 @@
 | 浏览器真实压缩 | Canvas 2400×1600 合成 JPEG → 1600×1067、10808 字节、独立 `synthetic-preview.jpg`，原文件名保留 |
 | 视觉/辅助技术 | 截图工具超时；未取得独立视觉截图、系统 reduced-motion/屏幕阅读器完整验收，不标通过 |
 | 真实 OSS | 未执行；需要部署账号、私有 Bucket 与可信桥接器 |
+
+## 本地 MinIO 接入（2026-11-04）
+
+本节更新开发存储供应商，前述云端及完整业务闭环限制继续有效。Compose 默认 `MEDIA_STORAGE_PROVIDER=s3`、`MEDIA_ENABLED=true`，独立 API 未配置供应商时兼容 oss。开发对象保存在独立 volume；浏览器通过 HTTPS 存储入口直传，API 不处理文件字节。上线配置切换不自动迁移对象，迁移与回滚步骤见部署文档。
+
+验收标准：
+
+- 初始化自动创建私有 Bucket 和仅限媒体前缀的账号，重复启动保留已有对象；root 凭据不注入 API。
+- 上传签名必须约束 Content-Type、owner、media ID、If-None-Match；篡改/移除签名头不能成功，重复上传不能覆盖已存在对象。
+- 内部 HEAD/删除走容器地址，返回浏览器的 URL 使用可访问的外部 HTTPS Origin；GET 强制 attachment/no-store，匿名读失败。
+- CORS 仅接受配置的前端 Origin；支持 PUT 所需元数据/条件头并暴露 ETag；无 Cookie、签名日志或代理缓冲。
+- 启用但缺失 S3 配置或供应商错误时启动失败；已有 OSS 签名测试继续通过。
+
+实际验证：52 个快速测试文件、280 项通过；`pnpm typecheck`、API Docker 生产镜像构建、Compose 配置与存储 Nginx 语法检查通过。固定版本 pgsty/minio 上真实执行 HTTPS PUT/GET、Content-Type 篡改拒绝、移除条件头拒绝、重复 PUT 返回 412、匿名读返回 403、HEAD 元数据/删除和允许/拒绝 Origin 的 CORS 响应核验；合成对象已清理。API 容器启用 S3 后健康，内部地址 HEAD 可用。此为实际 HTTP 检查，未新增 UI，也未执行浏览器完整业务上传验收或云端测试。
+
+本次交付自检对应当前 workflow：SQL 分层、无驱动端口、同连接事务及表约束未修改，无迁移/数据库检查需求；Vue 行数、HTTP/网关、共享载荷、Naive UI、组件、主题、状态、Router、交互/可访问性及 Tailwind/产物检查均因无前端变更而不适用。无新 domain 规则或 Service，新增存储适配/配置有针对性测试；授权策略不变，存储私有权限另由初始化及真实匿名读取验证。中文注释仅解释签名 Host、流式代理和凭据边界，无死代码或无 issue TODO；TTL、字节及现有业务边界不变。
 
 ## 两轴审查
 

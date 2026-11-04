@@ -15,7 +15,7 @@
 cp .env.example .env
 ```
 
-编辑 `.env`，替换 `POSTGRES_PASSWORD` 和 `AUTH_CHALLENGE_SECRET` 占位值；后者至少 32 字节。可用密码管理器生成随机值；本机安装了 Node.js 时，也可运行以下命令生成一个值（两个配置分别生成）：
+编辑 `.env`，替换 `POSTGRES_PASSWORD`、`AUTH_CHALLENGE_SECRET`、`MINIO_ROOT_PASSWORD`、`S3_SECRET_ACCESS_KEY` 和 `MEDIA_EVENT_SECRET` 占位值；认证及事件密钥至少 32 字节。已有 `.env` 时合并新增存储项，设置 `MEDIA_ENABLED=true`、`MEDIA_STORAGE_PROVIDER=s3`。可用密码管理器分别生成随机值；本机安装了 Node.js 时，也可运行以下命令生成一个值（各配置分别生成）：
 
 ```sh
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
@@ -29,7 +29,7 @@ docker compose up -d --build --wait --wait-timeout 120
 docker compose ps -a
 ```
 
-首次构建需联网下载镜像和包。Compose 自动生成本地证书，等待数据库就绪，运行迁移，再启动 API 和前端。`certificates`、`migrate` 显示 `Exited (0)` 是正常状态，不是启动失败。镜像内使用 Node.js 22 和仓库指定的 pnpm 版本。
+首次构建需联网下载镜像和包。Compose 自动生成本地证书，等待数据库就绪，运行迁移，再启动 API 和前端。`certificates`、`migrate`、`minio-init` 显示 `Exited (0)` 是正常状态，不是启动失败。镜像内使用 Node.js 22 和仓库指定的 pnpm 版本。
 
 ### 地址与端口
 
@@ -40,10 +40,12 @@ docker compose ps -a
 | API 直连 | http://localhost:3000/api/v1/health | `api:3000` | 健康检查及 API 调试；浏览器认证仍走上面的 HTTPS 同源入口 |
 | PostgreSQL 联调库 | `127.0.0.1:5432` | `db:5432` | 数据库 `refs_tools`，用户 `refs_tools`，密码取 `.env` |
 | Mailpit 收件箱 | http://localhost:8025 | `mailpit:8025` | 查看测试注册/登录验证码邮件 |
+| MinIO 私有对象存储 | https://localhost:9443 | `storage:443` → `minio:9000` | 浏览器签名直传 HTTPS 入口，复用本地证书；媒体不经过 API |
+| MinIO 控制台 | http://localhost:9001 | `minio:9001` | 使用 `.env` 中 root 凭据管理合成测试资源 |
 | SMTP | 不发布本机端口 | `mailpit:1025` | API 通过 STARTTLS 发信到本地收件箱，不发送到真实邮箱 |
 | PostgreSQL 测试库 | `127.0.0.1:5433` | `test-db:5432` | 仅启用 `test` profile 时启动，独立于联调库 |
 
-所有发布端口只绑定 `127.0.0.1`，默认不允许局域网或手机访问。可在 `.env` 调整 `WEB_PORT`、`API_PORT`、`POSTGRES_PORT`、`MAILPIT_PORT`、`TEST_POSTGRES_PORT`；调整前端端口时 Compose 会同步设置 API 的 `AUTH_PUBLIC_ORIGIN`。浏览器使用 `localhost`，不要替换为 `127.0.0.1`，否则认证写请求的 Origin 校验会失败。
+所有发布端口只绑定 `127.0.0.1`，默认不允许局域网或手机访问。可在 `.env` 调整 `WEB_PORT`、`API_PORT`、`POSTGRES_PORT`、`MAILPIT_PORT`、`TEST_POSTGRES_PORT`、`MINIO_PORT`、`MINIO_CONSOLE_PORT`；调整前端端口时 Compose 会同步设置 API 的 `AUTH_PUBLIC_ORIGIN`。浏览器使用 `localhost`，不要替换为 `127.0.0.1`，否则认证写请求的 Origin 校验会失败。
 
 ### 本地 HTTPS 与注册登录
 
@@ -65,6 +67,12 @@ certutil -user -addstore Root .cache/local.crt
 
 打开 https://localhost:8443 注册，使用虚构测试邮箱（例如 `referee@example.test`），到 http://localhost:8025 读取验证码。此收件箱不转发邮件、无访问密码且重建后邮件会丢失，禁止放真实个人数据或在公网暴露。
 
+### 资源存储
+
+本地资源管理使用固定版本 `pgsty/minio`，自动创建私有 Bucket 和受限媒体账号，数据持久化在 `objects` volume。浏览器使用短时签名直接上传/下载，API 仅负责权限、元数据与完成核验。上传部件仍需由具体业务页面接入，启用存储不代表新增了独立资源管理页面。
+
+上线通过 `MEDIA_STORAGE_PROVIDER=oss` 切换现有阿里云 OSS 适配器，或用 `s3` 配置兼容云存储；正式部署不使用这套本地 MinIO。切换配置不会自动迁移文件，已有媒体须先迁移与核验。变量、权限、清理和迁移步骤见[媒体部署说明](apps/api/db/MEDIA_DEPLOYMENT.md)，取舍见 [ADR 0024](docs/decisions/0024-local-minio-and-cloud-storage-switch.md)。
+
 ### 日常操作
 
 ```sh
@@ -78,7 +86,7 @@ docker compose run --rm migrate
 docker compose --profile test down
 ```
 
-**只有确认可以清空所有联调数据时**才执行 `docker compose --profile test down -v`；它会同时删除数据库和证书 volume，再次启动后需更新本机证书信任。修改 `.env` 的数据库密码不会自动修改已初始化 volume 中的密码；需显式修改数据库账号密码，或确认数据可丢弃后重建。原有 `referee_*` 容器不属于此 Compose 项目；如它们启动后占用相同端口，先停旧服务或调整 `.env`。
+**只有确认可以清空所有联调数据时**才执行 `docker compose --profile test down -v`；它会同时删除数据库、证书和对象存储 volume，再次启动后需更新本机证书信任。修改 `.env` 的数据库密码不会自动修改已初始化 volume 中的密码；需显式修改数据库账号密码，或确认数据可丢弃后重建。原有 `referee_*` 容器不属于此 Compose 项目；如它们启动后占用相同端口，先停旧服务或调整 `.env`。
 
 ## 上游模板快照
 

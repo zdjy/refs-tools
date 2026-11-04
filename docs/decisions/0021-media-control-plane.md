@@ -1,6 +1,6 @@
 # ADR 0021：媒体控制面、不可覆盖上传与分阶段业务接入
 
-- 状态：已接受
+- 状态：已接受；开发存储及 S3 条件写由 [ADR 0024](0024-local-minio-and-cloud-storage-switch.md) 扩展，原有媒体状态与授权边界不变
 - 范围：MVP ticket 03、FS-0002 Task 5/6
 - 关联：[ADR 0002](0002-direct-to-object-storage-media-flow.md)、[ADR 0005](0005-object-storage-provider.md)、[ADR 0014](0014-scoped-authorization-and-audit-foundation.md)
 

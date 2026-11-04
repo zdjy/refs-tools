@@ -1,0 +1,42 @@
+# 来源与前端 Compose 端口同步；存储端口不接收业务 Cookie，也不记录签名查询串。
+map $http_origin $storage_origin {
+    default "";
+    "https://localhost:${WEB_PORT}" $http_origin;
+}
+
+server {
+    listen 443 ssl;
+    server_name localhost;
+    ssl_certificate /certs/local.crt;
+    ssl_certificate_key /certs/local.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    server_tokens off;
+    access_log off;
+    error_log /dev/stderr crit;
+    client_max_body_size 500m;
+
+    location / {
+        if ($request_method = OPTIONS) { return 204; }
+        add_header Access-Control-Allow-Origin $storage_origin always;
+        add_header Access-Control-Allow-Methods "PUT, GET, HEAD, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Content-Type, If-None-Match, x-amz-meta-media-id, x-amz-meta-owner-id" always;
+        add_header Access-Control-Expose-Headers "ETag" always;
+        add_header Vary Origin always;
+        add_header Cache-Control "no-store" always;
+
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Credentials;
+        proxy_hide_header Access-Control-Expose-Headers;
+        proxy_hide_header Cache-Control;
+        # 保留签名 Host 与原始 URI；流式转发，禁止把媒体写入代理临时文件。
+        proxy_pass http://minio:9000;
+        proxy_set_header Host $http_host;
+        proxy_set_header Cookie "";
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}

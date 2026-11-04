@@ -38,6 +38,10 @@ Mailpit 作为仅本地使用的邮件收件箱，不向外投递。OpenSSL 一�
 
 本机 `pnpm dev` 的 `8001` 入口没有 API 代理且 Origin 不匹配，不能用于真实登录。
 
+## 后续实施：本地对象存储
+
+[ADR 0024](0024-local-minio-and-cloud-storage-switch.md) 按资源联调需求新增固定版本 `pgsty/minio`、一次性私有 Bucket/账号初始化及独立 HTTPS 存储入口；更新本 ADR 原先不新增存储模拟器的范围。启动 API 前等待初始化与存储入口健康，数据保存在独立 `objects` volume。生产继续使用第三方云存储，不部署此本地组件。
+
 ## 后果与限制
 
 - 一条 Compose 启动命令可重复执行迁移并联调注册登录，旧 `referee_*` 容器不被修改。

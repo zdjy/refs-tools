@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0024：开发阶段使用 pgsty/minio，上线切换云对象存储](./0024-local-minio-and-cloud-storage-switch.md) — 本地私有 S3 直传、独立 TLS/CORS 入口与配置化供应商切换，保留 OSS 适配器。
+
 - [ADR 0023：前端请求层迁移至 alova，并按 DDD 封装网关](./0023-alova-http-client-and-ddd-gateway.md) — 统一使用 alova/fetch，禁用缓存与请求合并；传输客户端、上下文网关（防腐层）、应用层三层分离。
 
 - [ADR 0022：管理端用户 CRUD 与 Cookie 会话边界](./0022-admin-user-crud-and-cookie-boundary.md) — 管理端使用真实 Cookie 会话和最小用户投影，用户变更与实时授权、会话撤销及审计保持事务一致。

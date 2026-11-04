@@ -9,10 +9,13 @@
     "db:rollback": "tsx src/infrastructure/database/migrate.ts down",
     "auth:cleanup": "tsx src/infrastructure/database/auth-maintenance-cli.ts",
     "media:cleanup": "tsx src/media-maintenance-cli.ts",
+    "media:smoke": "tsx scripts/storage-smoke.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@refs-tools/contracts": "workspace:*",
     "@refs-tools/domain": "workspace:*",
     "@sinclair/typebox": "^0.34.52",
