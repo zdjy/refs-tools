@@ -13,6 +13,15 @@ export const organizationStatusText: Record<Organization['status'], { label: str
   dissolved: { label: '已解散', hint: '组织已解散，仅保留历史记录。' },
 }
 export const roleLabels: Partial<Record<Role, string>> = { owner: '负责人', organizer: '组织者', certifier: '认证员' }
+/** 名册筛选分组：服务端不提供按状态查询，分组由展示层按本人可见状态投影。 */
+export type RosterFilter = 'all' | 'active' | 'pending' | 'closed'
+/** 胶囊顺序即语义顺序：需要处理的申请在前，已加入次之，已结束最后。 */
+export const rosterFilterOptions = [
+  { id: 'all', label: '全部' },
+  { id: 'pending', label: '申请中' },
+  { id: 'active', label: '已加入' },
+  { id: 'closed', label: '已结束' },
+] as const satisfies readonly { id: RosterFilter; label: string }[]
 export const memberStatusLabels: Record<Membership['status'], string> = {
   pending: '待审核', active: '正式成员', rejected: '已驳回', left: '已退出', removed: '已移除',
 }

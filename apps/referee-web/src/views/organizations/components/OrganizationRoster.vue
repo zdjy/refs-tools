@@ -9,14 +9,15 @@ import { organizationStatusText, roleLabels } from '../organizations.presentatio
  * 名册：本人所在的每个组织一行，首字母方块作为稳定的视觉锚点。
  * 可进入工作区的（有成员关系）渲染为链接；仅负责人的待审核/被驳回申请渲染为静态说明，
  * 并写清原因与下一步，而不是只给一个状态标签。
+ * 错开入场最多前 6 行，长列表后段行不因序号累积出长时间延迟。
  */
 defineProps<{ items: readonly MyOrganization[] }>()
 const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted', rejected: 'bg-danger', dissolved: 'bg-muted' } as const
 </script>
 
 <template>
-  <ul class="m-0 grid list-none gap-0 border-0 border-y border-solid border-line p-0">
-    <li v-for="(item, index) in items" :key="item.id" v-reveal="{ delay: index * 0.05, y: 14 }" class="border-0 border-b border-solid border-line last:border-b-0">
+  <ul id="roster-list" class="m-0 grid list-none gap-0 border-0 border-y border-solid border-line p-0">
+    <li v-for="(item, index) in items" :key="item.id" v-reveal="{ delay: Math.min(index, 6) * 0.05, y: 14 }" class="border-0 border-b border-solid border-line last:border-b-0">
       <component :is="item.membership ? RouterLink : 'div'" v-bind="item.membership ? { to: `/organizations/${item.id}` } : {}"
         class="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 p-4 text-ink no-underline compact:p-5"
         :class="item.membership ? 'transition-colors duration-200 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent' : ''">
