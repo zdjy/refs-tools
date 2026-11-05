@@ -6,6 +6,7 @@
 
 ## 决策索引
 
+- [ADR 0030：弱网判定、读请求自动重试与加载反馈](./0030-network-resilience-and-loading-feedback.md) — 以请求耗时分级加浏览器联网事件判定弱网，仅 GET 有限重试，写操作不自动重试、不做离线队列，按场景选择静态骨架 / 按钮 loading / 路由进度条 / 全局提示。
 - [ADR 0029：品牌资源归属与图标生成流水线](./0029-brand-assets-and-app-icons.md) — 母版留在 `logo/` 不进构建，图标由脚本从 UI 画布 token 生成，保持 PNG 与 maskable 安全区约束。
 
 - [ADR 0027：独立的平台媒体治理入口](./0027-admin-media-governance.md) — 独立 media.manage 权限与治理 API，保留业务媒体权限和证据留存边界。

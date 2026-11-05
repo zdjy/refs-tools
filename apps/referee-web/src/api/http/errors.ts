@@ -1,5 +1,8 @@
-/** 传输层失败的最小分类，不携带原始异常、响应体或签名 URL。 */
-export type HttpErrorKind = 'network' | 'http' | 'invalid-response'
+/**
+ * 传输层失败的最小分类，不携带原始异常、响应体或签名 URL。
+ * `offline` 表示浏览器已报告离线、请求根本没有发出；`network` 表示请求发出后失败或超时，写操作的服务端结果未知。
+ */
+export type HttpErrorKind = 'network' | 'offline' | 'http' | 'invalid-response'
 
 /**
  * HTTP 基础设施抛出的唯一错误类型。网关（`*.api.ts`）负责把它翻译为所属上下文的错误，

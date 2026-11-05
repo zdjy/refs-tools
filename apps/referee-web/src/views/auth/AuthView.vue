@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/auth'
 import { useAuth } from './useAuth'
 import AuthShell from './components/AuthShell.vue'
 import AuthFields from './components/AuthFields.vue'
+import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
 import './auth.css'
 
 const props = defineProps<{ initialMode: 'login' | 'register' }>()
@@ -37,7 +38,7 @@ async function onSubmit() {
   <AuthShell>
     <div class="mx-auto max-w-[480px] rounded-2xl border border-solid border-line bg-surface px-5 py-6 shadow-raised xs:px-6 xs:py-7 sm:px-8 sm:py-9 md:w-full lg:p-10">
       <template v-if="status === 'unknown' || status === 'loading'">
-        <p role="status">正在确认登录状态…</p>
+        <UiLoadingRegion :loading="true" label="确认登录状态" :lines="2" @retry="auth.restore(true)" />
       </template>
       <template v-else-if="status === 'error'">
         <h2 class="mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">暂时无法确认登录状态</h2>

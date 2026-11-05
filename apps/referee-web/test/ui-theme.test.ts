@@ -38,3 +38,10 @@ describe('共享 UI 主题适配', () => {
     expect(refereeTheme.Button?.heightMedium).toBe('44px')
   })
 })
+
+describe('加载反馈主题', () => {
+  it('路由进度条使用球场红实色，错误态使用 hover 红，均来自共享 token', () => {
+    expect(refereeTheme.LoadingBar?.colorLoading).toBe(uiTokens.red)
+    expect(refereeTheme.LoadingBar?.colorError).toBe(uiTokens.redHover)
+  })
+})

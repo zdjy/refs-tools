@@ -3,6 +3,7 @@
   import { NButton, NForm, NFormItem, NInput, NSpace, type FormInst, type FormRules } from 'naive-ui';
   import type { CreateOrganization } from '@refs-tools/contracts/organizations';
   import OrganizationOwnerSelect from './OrganizationOwnerSelect.vue';
+  import UiSubmitHint from '../../../../components/ui/UiSubmitHint.vue';
 
   const props = defineProps<{ form: CreateOrganization; busy: boolean; online: boolean }>();
   const emit = defineEmits<{ 'update:form': [value: CreateOrganization]; save: []; close: [] }>();
@@ -39,6 +40,7 @@
           :input-props="{ 'aria-label': field.label }" @update:value="update(field.key, $event)" />
       </NFormItem>
     </NForm>
+    <UiSubmitHint :busy="busy" class="mb-3 text-right" />
     <NSpace justify="end">
       <NButton size="large" :disabled="busy" @click="emit('close')">取消</NButton>
       <NButton type="primary" size="large" :loading="busy" :disabled="busy || !online" @click="submit">录入申请</NButton>

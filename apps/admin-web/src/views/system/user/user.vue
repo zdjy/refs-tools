@@ -3,6 +3,7 @@
   import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NPagination, NSelect, NSpace } from 'naive-ui';
   import { useUserStore } from '@/store/modules/user';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
+  import UiLoadingHint from '../../../components/ui/UiLoadingHint.vue';
   import { useUsers } from './useUsers';
   import { statusOptions, userColumns } from './users.presentation';
   import UserDialog from './components/UserDialog.vue';
@@ -41,6 +42,7 @@
       <NAlert v-if="error" type="error" title="读取失败，列表可能已陈旧" class="mb-4" role="alert">
         {{ error }} <NButton size="large" :disabled="loading || !online" @click="load()">重试</NButton>
       </NAlert>
+      <UiLoadingHint :loading="loading" label="读取用户列表" @retry="load()" />
       <div class="min-w-0 overflow-x-auto">
         <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1190" />
       </div>

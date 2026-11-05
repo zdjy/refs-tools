@@ -47,6 +47,8 @@ export const refereeTheme: GlobalThemeOverrides = {
     colorError: t.soft, borderError: `1px solid ${t.red}`, contentTextColorError: t.redHover,
   },
   Drawer: { color: t.canvas, boxShadow: t.raised },
+  // 路由进度条使用球场红实色，错误态沿用同一色，不用渐变（共享 UI 基线）。
+  LoadingBar: { colorLoading: t.red, colorError: t.redHover, height: '3px' },
   Input: inputTheme,
   InputNumber: inputTheme,
 }

@@ -6,6 +6,7 @@ import { NAlert, NButton, NPopconfirm, useMessage } from 'naive-ui'
 import { useAuthStore } from '../../stores/auth'
 import AuthShell from './components/AuthShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
+import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
 import './auth.css'
 const auth = useAuthStore()
 const message = useMessage()
@@ -20,7 +21,7 @@ onMounted(() => { void auth.restore() })
 <template>
   <AuthShell account>
     <div class="mx-auto max-w-[480px] rounded-2xl border border-solid border-line bg-surface px-5 py-6 shadow-raised xs:px-6 xs:py-7 sm:px-8 sm:py-9 md:w-full lg:p-10">
-      <p v-if="status === 'unknown' || status === 'loading'" role="status">正在确认登录状态…</p>
+      <UiLoadingRegion v-if="status === 'unknown' || status === 'loading'" :loading="true" label="确认登录状态" :lines="3" @retry="auth.restore(true)" />
       <template v-else-if="status === 'error'">
         <h2 class="mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">暂时无法确认登录状态</h2>
         <n-alert type="error" :show-icon="false">{{ error }}</n-alert>

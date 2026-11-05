@@ -93,7 +93,7 @@ apps/referee-web/src/
 * 页面 Composable 对外提供加载、提交、错误、结果等与组件库无关的状态。`useMessage`、`useDialog`、`FormInst`、`FormRules` 等库适配只允许位于展示组件、表现层投影或 `components/ui/` 内的纯 UI 适配中，不得为了弹提示让业务状态层依赖 UI 框架。
 * Store 与 Composable 的公开接口使用领域/应用语义命令和与 UI 无关的数据，不暴露组件实例、路由对象或 Naive UI 类型；导航由表现层根据用例结果发起，不能让领域层/应用状态层直接调用 `router.push()`。
 * 展示组件可以调用表单实例进行交互校验，校验通过后以表单值/语义事件交给页面 Composable；不得把表单实例作为业务提交函数的参数，也不得将带渲染函数或响应式引用的 UI 对象作为 API Payload。
-* 异步操作明确区分加载、空数据、失败、陈旧/离线与待同步状态，提供可见反馈与重试入口；不将网络异常伪装成空列表，不仅靠颜色或短暂 toast 表达错误。提交期间防止重复触发，失败保留可恢复输入；未获服务端确认的离线操作不得提示为已完成，UI 库也不得自行承担缓存或同步职责。
+* 异步操作明确区分加载、空数据、失败、陈旧/离线与待同步状态，提供可见反馈与重试入口（加载与网络状态的具体形态见[第 6 节](#6-弱网与加载反馈)）；不将网络异常伪装成空列表，不仅靠颜色或短暂 toast 表达错误。提交期间防止重复触发，失败保留可恢复输入；未获服务端确认的离线操作不得提示为已完成，UI 库也不得自行承担缓存或同步职责。
 * 删除、清空及其他破坏性操作通过清晰的确认流程触发语义化业务命令；UI 确认框仅负责交互，不承担授权，也不绕过规格要求的理由、二次确认或审计。
 
 ### (5) 操作反馈完整性
@@ -126,7 +126,7 @@ Composable / Store / 状态工厂 → <feature>.api.ts（上下文网关，防�
 
 | 层 | 位置 | 职责 | 对外可见 |
 | --- | --- | --- | --- |
-| 传输客户端 | `src/api/http/` | 创建 alova 实例；同源 Cookie、`no-store`、超时、`{ data }` / `{ error: { code } }` 信封解包；失败统一抛 `HttpError` | `PlatformClient`、`ObjectStorageClient`、`HttpError`，均为 Promise 接口 |
+| 传输客户端 | `src/api/http/` | 创建 alova 实例；同源 Cookie、`no-store`、超时、`{ data }` / `{ error: { code } }` 信封解包；离线拦截与 GET 自动重试（[第 6 节](#6-弱网与加载反馈)）；失败统一抛 `HttpError` | `PlatformClient`、`ObjectStorageClient`、`HttpError`，均为 Promise 接口 |
 | 上下文网关 | `src/api/<feature>.api.ts` | 路径与参数编码、请求头（如幂等键）、业务语义的状态判断；把 `HttpError` 翻译为本上下文的错误类型与稳定错误码 | `create<Feature>Api(client)` 工厂、默认实例、`<Feature>ApiError`、`<Feature>Api` 类型 |
 | 应用层 | `use<Feature>.ts`、`stores/`、`application/` | 编排用例、保留输入、重试；通过注入的网关对象获得 IO | 不接触 alova、`HttpError` 或原始响应 |
 
@@ -152,12 +152,75 @@ Composable / Store / 状态工厂 → <feature>.api.ts（上下文网关，防�
 
 * 无请求体的 POST 也会被适配器写入 `Content-Type: application/json`，Fastify 会拒绝空 JSON 体。传输客户端必须把此类请求的 `Content-Type` 设为空串（适配器会剔除空值头）。
 
-* 超时与网络失败都归一为 `HttpError('network')`；调用方需要区分用户取消时，使用 `AbortSignal` 的取消语义，不解析异常文本。
+* 超时与发出后的网络失败归一为 `HttpError('network')`；浏览器已报告离线、请求未发出时为 `HttpError('offline')`，二者文案不同。调用方需要区分用户取消时，使用 `AbortSignal` 的取消语义，不解析异常文本。
 
 ### (4) 测试要求
 
-* 传输客户端：用注入的 `fetch` 验证信封解包、Cookie 与 `no-store` 配置、GET 不缓存不合并、无体 POST 头、错误码映射、网络失败与超时、取消。
+* 传输客户端：用注入的 `fetch` 验证信封解包、Cookie 与 `no-store` 配置、GET 不缓存不合并、无体 POST 头、错误码映射、网络失败与超时、取消；重试、离线拦截见[第 6 节 (5)](#5-测试要求)。
 
 * 网关：用 `PlatformClient` 替身验证路径、方法、请求头和 `HttpError` → 上下文错误的翻译表；不引入真实网络或 alova。
 
 * 状态层与 Composable 继续使用网关替身，保持低内存纯逻辑单测。
+
+## 6. 弱网与加载反馈
+
+阈值、重试边界与加载选型的依据见 [ADR 0030](../../decisions/0030-network-resilience-and-loading-feedback.md)，用户可见行为与验收见 [FS-0025](../../specs/0025-network-resilience-feedback.md)。本节与[第 3 节 (5)](#5-操作反馈完整性)互补：(5) 管操作**结果**，本节管**过程**与**网络异常**。
+
+### (1) 目录与归属
+
+```
+src/
+├── infrastructure/network/        # 无 Vue 依赖的纯逻辑，可注入时钟与定时器
+│   ├── network-policy.ts          # 全部阈值与退避函数（唯一来源）
+│   ├── network-monitor.ts         # 在途请求计数 / 耗时 / 联网状态
+│   ├── network-status.ts          # online · slow · stalled · offline 判定
+│   └── loading-phase.ts           # 延迟显示 · 最短可见 · 逐级升级
+├── api/http/request-guard.ts      # 离线拦截 + GET 重试 + 上报监视器
+└── components/ui/                 # Vue 适配与展示（不引用业务模块）
+    ├── useNetworkStatus.ts · useLoadingPhase.ts
+    └── UiNetworkBanner · UiRouteProgress · UiSkeleton · UiLoadingRegion · UiSubmitHint
+```
+
+管理端沿用同一结构（`UiLoadingHint` 取代骨架）。**两应用各持一份副本，禁止跨应用引用**；修改 `network-policy.ts` 必须同步两端并更新两端测试。
+
+### (2) 硬性约束
+
+* **阈值只写在 `networkPolicy`**：页面、组件、Composable 不得出现 `3000`、`8000`、`300` 等自行约定的时间常量，也不得自写 `setTimeout` 判断「是否太慢」。需要新阈值先改策略并说明理由。
+* **离线判定取自浏览器事件，慢速判定取自请求耗时**。不依赖 Network Information API，不新增心跳或探测接口（2C2G 预算）。`navigator.onLine === true` 不代表可达。
+* **只对 GET 自动重试**：最多 2 次、指数退避带抖动、总预算 30 秒，仅重试传输失败与 502 / 503 / 504。4xx（含 429）、响应无效、离线均不重试。
+* **写操作永不自动重试，也不做离线写入队列**。POST / PATCH / DELETE 超时后服务端结果未知，失败文案必须提示「先刷新确认是否已生效」，并保留输入。引入幂等键自动重试或离线队列须先有 ADR 与后端契约。
+* **离线请求不发出**：传输层以 `offline` 错误拒绝（管理端 `code: 'OFFLINE'`），网关翻译为 `OFFLINE` 错误码，文案必须说明「未提交 / 输入已保留」。`network`（发出后失败）与 `offline`（未发出）必须使用不同文案。
+* **监视器只记数量、时间戳、重试标志与最近结果**，不得记录 URL、请求体、响应、签名 URL 或令牌。
+* **传输层与网关不调用通知 API**，网络提示由 `components/ui/` 的展示组件经根 Provider 呈现，与第 3 节 (5) 一致。
+* **对象存储直传不经请求守卫**，取消与重试仍由上传状态机和 `AbortSignal` 负责。
+
+### (3) 加载形态选择
+
+新增异步入口时按下表选择，并在 PR / 规格中说明所选形态：
+
+| 场景 | 形态 | 组件 |
+| --- | --- | --- |
+| 提交、保存、删除（按钮触发） | 按钮内 loading + 禁用，不遮挡已填内容；慢速阶段提示「请勿重复操作」 | `NButton :loading` + `UiSubmitHint` |
+| 首次加载页面主体 | 静态骨架，较慢补说明，长时间无响应出现「重新加载」 | `UiLoadingRegion`（裁判端） |
+| 已有数据的刷新 / 翻页 / 筛选 | 保留旧内容，不清空；慢速补说明与重试 | `UiLoadingHint`（管理端）+ 表格自带 loading |
+| 路由切换 | 顶部进度条，延迟出现 | `UiRouteProgress`（裁判端）；管理端沿用 `window.$loading` |
+| 离线 / 较慢 / 未响应 / 已恢复 | 固定在视口底部的全局提示 | `UiNetworkBanner`（根 Provider 内，已装配） |
+
+* **统一时序**：加载态延迟 300 ms 才显示，一旦显示至少保持 400 ms，之后在 3 秒、8 秒升级。页面通过 `useLoadingPhase(loading)` 取得阶段，不自行计时。
+* **骨架屏**：静态纯色块，行高与真实内容接近以避免布局位移；**禁止脉冲、闪烁、旋转等动画**（UI 基线禁止装饰性动效）。
+* **全局提示**：必须 `role="status" aria-live="polite"` 且常驻 DOM；固定定位且不占文档流，不得与吸顶导航争抢位置；移动端须避开底部导航。离线 / 卡顿为持续提示，不自动消失；仅「已恢复」约 3 秒后消失，且只在离线恢复或慢速请求**成功**后出现。
+* **不得**用全屏遮罩、阻断式模态或 toast 表达加载与网络状态。持久错误与重试入口留在页面内（见第 3 节 (5)）。
+* 路由进度条、骨架、提示的颜色只使用主题 token（`ui-theme.ts` 的 `LoadingBar` 映射），不用渐变。
+
+### (4) 错误文案
+
+* `OFFLINE`：说明请求**未发出**，写操作须含「未提交」，并说明输入已保留与恢复网络后可重试。
+* `NETWORK_ERROR`：说明连接失败或超时；写操作须含「先刷新确认是否已生效」，读操作说明已自动重试。
+* 文案不含 URL、状态码、原始异常或签名信息。
+
+### (5) 测试要求
+
+* 纯逻辑（策略、监视器、状态、时序、守卫）使用注入的时钟、定时器、`sleep` 与随机数单测，覆盖：离线不执行、GET 重试成功 / 用尽、各 HTTP 状态不重试、写不重试、预算耗尽、等待期转离线、快请求不闪烁、最短可见、阶段升级、`dispose` 停止。
+* 客户端测试必须向 `createPlatformClient` 注入 `retry: { sleep: async () => {} }`，避免真实退避等待拖慢单测。
+* 新网关的错误翻译表须包含 `offline → OFFLINE`。
+* 浏览器验证（独立于单测，不并入 300 MB 预算）：用节流或 `fetch` 替身验证挂起 → 骨架 → 较慢 → 重新加载；断网重试；离线点击重试无请求；320 px 下提示不遮挡底栏。未做真实节流 / 真机时在规格中如实标注。

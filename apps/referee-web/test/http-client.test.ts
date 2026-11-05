@@ -15,7 +15,7 @@ const hang = (_url: unknown, init?: RequestInit) => new Promise<Response>((_, re
 
 function platform(respond: () => Response | Promise<Response>, timeoutMs?: number) {
   const fetchMock = vi.fn(async (_url: unknown, _init?: RequestInit) => respond())
-  const client = createPlatformClient({ baseURL: '/api/v1', fetch: fetchMock as unknown as typeof fetch, ...(timeoutMs ? { timeoutMs } : {}) })
+  const client = createPlatformClient({ baseURL: '/api/v1', fetch: fetchMock as unknown as typeof fetch, retry: { sleep: async () => {} }, ...(timeoutMs ? { timeoutMs } : {}) })
   return { client, fetchMock, init: () => fetchMock.mock.calls.at(-1)![1]! }
 }
 

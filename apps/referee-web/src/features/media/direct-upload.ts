@@ -39,7 +39,7 @@ export function createDirectUpload(api: DirectUploadApi, changed: (state: Upload
         } catch (error) {
           if (current !== generation) return
           const code = (error as { code?: string }).code
-          if (code && !['OBJECT_NOT_FOUND', 'NETWORK_ERROR'].includes(code)) throw error
+          if (code && !['OBJECT_NOT_FOUND', 'NETWORK_ERROR', 'OFFLINE'].includes(code)) throw error
         }
       }
       const authorized = intent && Date.parse(intent.upload.expiresAt) > Date.now() + 1000 ? intent

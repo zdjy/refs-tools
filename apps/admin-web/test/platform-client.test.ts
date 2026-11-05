@@ -6,7 +6,7 @@ const json = (body: unknown, status = 200) =>
 
 function setup(respond: () => Response | Promise<Response>, timeoutMs?: number) {
   const fetchMock = vi.fn(async (_url: unknown, _init?: RequestInit) => respond());
-  const client = createPlatformClient({ fetch: fetchMock as unknown as typeof fetch, ...(timeoutMs ? { timeoutMs } : {}) });
+  const client = createPlatformClient({ fetch: fetchMock as unknown as typeof fetch, retry: { sleep: async () => {} }, ...(timeoutMs ? { timeoutMs } : {}) });
   return { client, fetchMock, init: () => fetchMock.mock.calls.at(-1)![1]! };
 }
 
@@ -54,7 +54,7 @@ describe('管理端平台 API 客户端', () => {
     const failing = setup(() => Promise.reject(new TypeError('fetch failed')));
     const error = await failing.client.get('/x').catch((e) => e);
     expect(error).toBeInstanceOf(AdminApiError);
-    expect(error).toMatchObject({ status: 0, message: '网络连接失败，请检查网络后重试' });
+    expect(error).toMatchObject({ status: 0, message: '网络连接失败或超时，请检查网络后重试；写入类操作请先刷新确认是否已生效' });
     const slow = setup(() => new Promise(() => {}), 20);
     slow.fetchMock.mockImplementation((_url, init) => new Promise((_, reject) => {
       init!.signal!.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));

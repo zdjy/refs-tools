@@ -4,7 +4,7 @@ import { organizationsApi, OrganizationsApiError } from '../../../api/system/org
 
 function message(error: unknown) {
   const messages: Record<string, string> = {
-    NETWORK_ERROR: '网络连接失败，请检查网络后重试', UNAUTHENTICATED: '登录已失效，请重新登录',
+    OFFLINE: '当前处于离线状态，操作未提交，恢复网络后再试', NETWORK_ERROR: '网络连接失败或超时，请检查网络后重试；写入类操作请先刷新确认是否已生效', UNAUTHENTICATED: '登录已失效，请重新登录',
     FORBIDDEN: '当前账号没有平台组织管理权限', NOT_FOUND: '组织不存在，请刷新列表',
     VERSION_CONFLICT: '组织已更新，请重新读取后再操作', INVALID_ORGANIZATION_STATE: '当前状态不允许此操作，请重新读取',
     INVALID_OWNER: '负责人须为有效且邮箱已验证的用户', INVALID_ORGANIZATION: '请完整填写组织与负责人资料',

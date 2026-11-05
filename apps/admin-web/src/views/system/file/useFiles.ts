@@ -4,7 +4,7 @@ import { mediaApi, MediaApiError } from '../../../api/system/media';
 
 function message(error: unknown) {
   const messages: Record<string, string> = {
-    NETWORK_ERROR: '网络连接失败，请检查网络后重试', UNAUTHENTICATED: '登录已失效，请重新登录',
+    OFFLINE: '当前处于离线状态，操作未提交，恢复网络后再试', NETWORK_ERROR: '网络连接失败或超时，请检查网络后重试；写入类操作请先刷新确认是否已生效', UNAUTHENTICATED: '登录已失效，请重新登录',
     FORBIDDEN: '当前账号没有平台文件管理权限', EMAIL_NOT_VERIFIED: '请先验证邮箱',
     NOT_FOUND: '文件记录不存在，请刷新列表', MEDIA_NOT_AVAILABLE: '文件当前不可下载，请重新读取详情',
     MEDIA_RETENTION_REQUIRED: '此文件为已核验留存证据，须由所属业务审批删除', REASON_REQUIRED: '请填写操作理由',

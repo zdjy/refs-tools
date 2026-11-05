@@ -13,6 +13,7 @@ const file = new File(['x'], 'a.txt', { type: 'text/plain' })
 
 describe('认证网关错误翻译', () => {
   it.each([
+    [new HttpError('offline', null, 0), 'OFFLINE', 0],
     [new HttpError('network', null, 0), 'NETWORK_ERROR', 0],
     [new HttpError('http', 'INVALID_CREDENTIALS', 401), 'INVALID_CREDENTIALS', 401],
     [new HttpError('http', null, 502), 'SERVICE_UNAVAILABLE', 502],

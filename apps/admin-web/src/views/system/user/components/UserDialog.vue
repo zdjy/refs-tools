@@ -3,6 +3,7 @@
   import { NAlert, NButton, NForm, NFormItem, NInput, NModal, NSelect, NSpace, NSpin, type FormInst, type FormRules } from 'naive-ui';
   import type { AdminUser } from '@refs-tools/contracts/admin-users';
   import { roleLabels, statusOptions } from '../users.presentation';
+  import UiSubmitHint from '../../../../components/ui/UiSubmitHint.vue';
 
   const props = defineProps<{
     mode: 'create' | 'edit' | 'detail'; selected: AdminUser | null; loading: boolean; busy: boolean;
@@ -70,6 +71,7 @@
       </NForm>
     </NSpin></div>
     <template #footer>
+      <UiSubmitHint :busy="busy" class="mb-3 text-right" />
       <NSpace justify="end">
         <NButton v-if="mode === 'edit'" type="error" size="large" :disabled="busy || !ready || !online || selected?.id === actorId"
           @click="emit('remove')">删除用户</NButton>

@@ -13,6 +13,7 @@ export class AuthApiError extends Error {
 /** 网关防腐层：HttpError 在此翻译为认证上下文的错误码，alova 异常不会外泄。 */
 function toAuthError(error: unknown): AuthApiError {
   if (!(error instanceof HttpError)) return new AuthApiError('SERVICE_UNAVAILABLE', 0)
+  if (error.kind === 'offline') return new AuthApiError('OFFLINE', 0)
   if (error.kind === 'network') return new AuthApiError('NETWORK_ERROR', 0)
   return new AuthApiError(error.code ?? 'SERVICE_UNAVAILABLE', error.status)
 }
@@ -37,7 +38,8 @@ export type AuthApi = typeof authApi
 /** 为当前操作提供稳定的中文反馈，不依赖服务端异常文本。 */
 export function authErrorMessage(error: unknown): string {
   const messages: Record<string, string> = {
-    NETWORK_ERROR: '连接失败，请检查网络后重试。输入内容已保留。',
+    OFFLINE: '当前处于离线状态，操作未提交。输入内容已保留，恢复网络后再试。',
+    NETWORK_ERROR: '连接失败或超时，请检查网络后重试。输入内容已保留；如多次失败，请先刷新确认操作是否已生效。',
     INVALID_CREDENTIALS: '邮箱或密码不正确，请检查后重试，或改用验证码登录。',
     INVALID_CHALLENGE: '验证码无效、已过期或无法完成操作，请检查验证码或重新获取。',
     RATE_LIMITED: '操作过于频繁，请稍后再试。',

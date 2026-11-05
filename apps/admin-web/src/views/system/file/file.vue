@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NPagination, NSelect, NSpace } from 'naive-ui';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
+  import UiLoadingHint from '../../../components/ui/UiLoadingHint.vue';
   import FileDetail from './components/FileDetail.vue';
   import { fileColumns, purposeOptions, statusOptions } from './files.presentation';
   import { useFiles } from './useFiles';
@@ -42,6 +43,7 @@
       <NAlert v-if="error" type="error" title="读取失败，当前列表可能已陈旧" role="alert" class="mb-4">
         {{ error }} <NButton size="large" :disabled="loading || !online" @click="load()">重试</NButton>
       </NAlert>
+      <UiLoadingHint :loading="loading" label="读取文件列表" @retry="load()" />
       <div class="min-w-0 overflow-x-auto">
         <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1420">
           <template #empty>没有匹配的文件记录</template>

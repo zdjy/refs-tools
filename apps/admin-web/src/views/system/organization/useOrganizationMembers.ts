@@ -5,7 +5,7 @@ import { organizationMembersApi, OrganizationMembersApiError } from '../../../ap
 
 function errorText(e: unknown) {
   const messages: Record<string, string> = {
-    NETWORK_ERROR: '网络连接失败，请重试', NOT_FOUND: '记录不存在或当前账号没有组织成员管理权限', FORBIDDEN: '当前账号没有读取权限',
+    OFFLINE: '当前处于离线状态，操作未提交，恢复网络后再试', NETWORK_ERROR: '网络连接失败或超时，请先刷新确认操作是否已生效后再重试', NOT_FOUND: '记录不存在或当前账号没有组织成员管理权限', FORBIDDEN: '当前账号没有读取权限',
     UNAUTHENTICATED: '登录已失效，请重新登录', INVALID_MEMBER: '目标用户须有效且邮箱已验证', ALREADY_MEMBER: '目标用户已是正式成员',
     INVITATION_PENDING: '已有待回应邀请，请等待回应或先撤销', VERSION_CONFLICT: '记录已更新，请重新读取后操作',
     INVALID_MEMBER_STATE: '成员状态已变化，请重新读取', INVALID_INVITATION_STATE: '邀请已回应、撤销或过期，请重新读取',

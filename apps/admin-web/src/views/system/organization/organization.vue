@@ -2,6 +2,7 @@
   import { ref } from 'vue';
   import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NPagination, NSelect, NSpace, NSpin } from 'naive-ui';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
+  import UiLoadingHint from '../../../components/ui/UiLoadingHint.vue';
   import { useOrganizations } from './useOrganizations';
   import { actionDescriptions, actionLabels, actionTypes, organizationColumns, statusOptions } from './organizations.presentation';
   import OrganizationCreateForm from './components/OrganizationCreateForm.vue';
@@ -42,6 +43,7 @@
       <NAlert v-if="error" type="error" title="读取失败，列表可能已陈旧" class="mb-4" role="alert">
         {{ error }} <NButton size="large" :disabled="loading || !online" @click="load()">重试</NButton>
       </NAlert>
+      <UiLoadingHint :loading="loading" label="读取组织列表" @retry="load()" />
       <div class="min-w-0 overflow-x-auto">
         <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1290" />
       </div>

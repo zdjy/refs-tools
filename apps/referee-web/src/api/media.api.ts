@@ -11,6 +11,7 @@ export class MediaApiError extends Error {
 /** 网关防腐层：HttpError 在此翻译为媒体上下文的错误码。 */
 function toMediaError(error: unknown, fallback: string): MediaApiError {
   if (!(error instanceof HttpError)) return new MediaApiError(fallback, 0)
+  if (error.kind === 'offline') return new MediaApiError('OFFLINE', 0)
   if (error.kind === 'network') return new MediaApiError('NETWORK_ERROR', 0)
   return new MediaApiError(error.code ?? 'MEDIA_SERVICE_UNAVAILABLE', error.status)
 }

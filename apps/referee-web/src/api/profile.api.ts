@@ -10,6 +10,7 @@ export class ProfileApiError extends Error {
 
 function toProfileError(error: unknown): ProfileApiError {
   if (!(error instanceof HttpError)) return new ProfileApiError('SERVICE_UNAVAILABLE', 0)
+  if (error.kind === 'offline') return new ProfileApiError('OFFLINE', 0)
   if (error.kind === 'network') return new ProfileApiError('NETWORK_ERROR', 0)
   return new ProfileApiError(error.code ?? 'SERVICE_UNAVAILABLE', error.status)
 }
@@ -29,7 +30,8 @@ export type ProfileApi = typeof profileApi
 /** 面向用户的中文反馈不依赖服务端异常文本。 */
 export function profileErrorMessage(error: unknown): string {
   const messages: Record<string, string> = {
-    NETWORK_ERROR: '连接失败，请检查网络后重试。已填写的内容仍保留在页面上。',
+    OFFLINE: '当前处于离线状态，资料未提交。已填写的内容仍保留在页面上，恢复网络后再保存。',
+    NETWORK_ERROR: '连接失败或超时，请检查网络后重试。已填写的内容仍保留在页面上；如多次失败，请先刷新确认资料是否已保存。',
     UNAUTHENTICATED: '登录已失效，请重新登录后再保存。',
     VERSION_CONFLICT: '档案已被其他设备或后台更新，请刷新页面后再提交。',
     INVALID_NICKNAME: '昵称需为 1-80 个字符。',
@@ -47,7 +49,8 @@ export function profileErrorMessage(error: unknown): string {
 /** 读取失败时没有任何输入需要保留，文案只说明可重试，不暗示已保存或已填写。 */
 export function profileLoadErrorMessage(error: unknown): string {
   const code = error instanceof ProfileApiError ? error.code : ''
-  if (code === 'NETWORK_ERROR') return '连接失败，请检查网络后重试。'
+  if (code === 'OFFLINE') return '当前处于离线状态，无法读取账号资料。恢复网络后请重新读取。'
+  if (code === 'NETWORK_ERROR') return '连接较慢或已中断，已自动重试仍未成功，请检查网络后重新读取。'
   if (code === 'UNAUTHENTICATED') return '登录已失效，请重新登录后查看账号资料。'
   return '暂时无法读取账号资料，请稍后重试。若持续失败，请联系平台管理员。'
 }

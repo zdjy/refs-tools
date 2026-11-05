@@ -2,6 +2,7 @@
   import { NAlert, NButton, NDescriptions, NDescriptionsItem, NFormItem, NInput, NSpace } from 'naive-ui';
   import type { AdminMedia } from '@refs-tools/contracts/admin-media';
   import { formatBytes, formatTime, purposeLabel, retained, statusLabel } from '../files.presentation';
+  import UiSubmitHint from '../../../../components/ui/UiSubmitHint.vue';
   defineProps<{ file: AdminMedia; reason: string; busy: boolean; online: boolean }>();
   defineEmits<{ 'update:reason': [value: string]; download: []; remove: []; close: [] }>();
 </script>
@@ -28,6 +29,7 @@
         placeholder="说明本次管理操作的必要性，请勿填写凭据或 URL" @update:value="$emit('update:reason', $event)" />
     </NFormItem>
     <p class="text-admin-body">下载链接仅短时有效，文件由浏览器直接从对象存储下载，不进行在线预览。下载内容可能含私有资料，请妥善保管。</p>
+    <UiSubmitHint :busy="busy" class="mb-3" />
     <NSpace>
       <NButton type="primary" size="large" :loading="busy" :disabled="busy || !online || file.status !== 'available'" @click="$emit('download')">授权下载</NButton>
       <NButton type="error" size="large" :disabled="busy || !online || retained(file)" @click="$emit('remove')">{{ file.status === 'deleted' ? '重试对象删除' : '删除文件' }}</NButton>

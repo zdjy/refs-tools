@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { NButton, NDatePicker, NInput } from 'naive-ui'
 import type { ProfileFieldKey, ProfileFieldsState } from '../useProfileSettings'
 import RegionSelect, { type RegionSelection } from './RegionSelect.vue'
+import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 
 const props = defineProps<{ fields: ProfileFieldsState; fieldError: { field: ProfileFieldKey; message: string } | null; saving: boolean }>()
 const emit = defineEmits<{ save: [] }>()
@@ -75,6 +76,7 @@ const textProps = (key: ProfileFieldKey, describedBy: string) => ({
     </div>
     <div>
       <n-button type="primary" attr-type="submit" :loading="saving" :disabled="saving">保存账号资料</n-button>
+      <UiSubmitHint class="mt-3" :busy="saving" />
     </div>
   </form>
 </template>

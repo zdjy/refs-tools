@@ -7,6 +7,7 @@ import { useAvatarStore } from '../../stores/avatar'
 import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
+import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
 import ProfileAvatar from './components/ProfileAvatar.vue'
 import ProfileFieldsForm from './components/ProfileFieldsForm.vue'
 import EmailChangeForm from './components/EmailChangeForm.vue'
@@ -94,7 +95,7 @@ async function submitProfile() {
             <h2 class="m-0 text-[18px]">个人资料</h2>
             <p class="m-0 text-[13px] leading-[1.8] text-body">昵称、头像、实名与联系方式。只有昵称与头像会展示给其他人。</p>
           </div>
-          <p v-if="loading" role="status" class="m-0 text-[13px] text-body">正在读取账号资料…</p>
+          <UiLoadingRegion v-if="loading" :loading="loading" label="读取账号资料" :lines="5" @retry="load()" />
           <template v-else-if="loadError">
             <n-alert type="error" :show-icon="false">{{ loadError }}</n-alert>
             <div><n-button type="primary" @click="load()">重新读取</n-button></div>

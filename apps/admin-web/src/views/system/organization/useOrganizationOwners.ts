@@ -18,7 +18,7 @@ export function useOrganizationOwners(api = organizationOwnersApi) {
       users.value = result.items; total.value = result.total;
     } catch (e) {
       if (current !== sequence) return;
-      const messages: Record<string, string> = { NETWORK_ERROR: '用户查询失败，请检查网络后重试',
+      const messages: Record<string, string> = { OFFLINE: '当前处于离线状态，无法查询用户', NETWORK_ERROR: '用户查询失败，请检查网络后重试',
         UNAUTHENTICATED: '登录已失效，请重新登录', FORBIDDEN: '当前账号没有用户查询权限' };
       error.value = e instanceof OrganizationOwnersApiError ? messages[e.code] ?? '用户查询失败，请重试' : '用户查询失败，请重试';
     } finally { if (current === sequence) loading.value = false; }
