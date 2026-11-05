@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { NSelect } from 'naive-ui'
-import { regionLabel, regionProvinces } from '../../../content/regions'
+import { regionLabel, regionProvinces } from '../../content/regions'
 
+/**
+ * 省/市/区三级联动地区选择，账号设置与组织申请共用，保证两处的选项、级联与展示文本一致。
+ * 仅在选到区/县时产出值；中间态对父级表现为 null。
+ */
 export type RegionSelection = { code: string; label: string } | null
 
 const props = defineProps<{ modelValue: RegionSelection; disabled?: boolean; invalid?: boolean }>()
@@ -46,12 +50,13 @@ function changeDistrict(code: string) {
 </script>
 
 <template>
-  <div class="grid gap-3 sm:grid-cols-3" role="group" aria-label="所在地区">
-    <n-select :value="provinceCode" :options="provinceOptions" :disabled="disabled" placeholder="省/直辖市"
-      v-bind="invalid ? { status: 'error' as const } : {}" @update:value="changeProvince" />
-    <n-select :value="cityCode" :options="cityOptions" :disabled="disabled || !provinceCode" placeholder="市"
-      v-bind="invalid ? { status: 'error' as const } : {}" @update:value="changeCity" />
-    <n-select :value="districtCode" :options="districtOptions" :disabled="disabled || !cityCode" placeholder="区/县"
-      v-bind="invalid ? { status: 'error' as const } : {}" @update:value="changeDistrict" />
+  <!-- 三级选项最多几十项，开启输入搜索（默认按名称子串匹配）；输入框需单独的可访问名称。 -->
+  <div class="grid gap-3 sm:grid-cols-3" role="group" aria-label="所在地区" :data-invalid="invalid ? 'true' : undefined">
+    <n-select :value="provinceCode" :options="provinceOptions" :disabled="disabled" filterable placeholder="省/直辖市"
+      :input-props="{ 'aria-label': '省/直辖市' }" v-bind="invalid ? { status: 'error' as const } : {}" @update:value="changeProvince" />
+    <n-select :value="cityCode" :options="cityOptions" :disabled="disabled || !provinceCode" filterable placeholder="市"
+      :input-props="{ 'aria-label': '市' }" v-bind="invalid ? { status: 'error' as const } : {}" @update:value="changeCity" />
+    <n-select :value="districtCode" :options="districtOptions" :disabled="disabled || !cityCode" filterable placeholder="区/县"
+      :input-props="{ 'aria-label': '区/县' }" v-bind="invalid ? { status: 'error' as const } : {}" @update:value="changeDistrict" />
   </div>
 </template>

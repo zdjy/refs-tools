@@ -11,13 +11,19 @@ export type MineRow = {
   ownerUserId: string; createdAt: string; governanceReason: string | null
   membership: { id: string; status: 'pending' | 'active'; version: number } | null
 }
+/** 落库的申请：组织资料来自请求，负责人实名与联系方式由服务端从申请人账户资料快照而来。 */
+export type NewOrganizationApplication = OrganizationApplication & { ownerLegalName: string; contact: string }
+/** 申请人账户资料中与申请相关的最小投影；字段为 null 表示尚未填写。 */
+export type ApplicantProfile = { legalName: string | null; phone: string | null }
 export interface OrganizationSelfRepository {
   mine(userId: string): Promise<MineRow[]>
   directory(userId: string, query: DirectoryQuery): Promise<DirectoryList>
   /** 事务级咨询锁，串行化同一申请人的并发申请，使数量上限不被「先查再写」绕过。 */
   lockApplicant(userId: string): Promise<void>
   countPending(userId: string): Promise<number>
-  apply(id: string, ownerUserId: string, input: OrganizationApplication, now: Date): Promise<void>
+  /** 读取有效账号的资料投影；账号不存在或已失效返回 null。 */
+  applicantProfile(userId: string): Promise<ApplicantProfile | null>
+  apply(id: string, ownerUserId: string, input: NewOrganizationApplication, now: Date): Promise<void>
 }
 export type NewJoinCode = { id: string; organizationId: string; tokenHash: string; hint: string; maxUses: number; createdBy: string }
 export interface OrganizationJoinCodesRepository {

@@ -1,6 +1,8 @@
 import type { PoolClient } from 'pg'
-import type { DirectoryItem, DirectoryList, DirectoryQuery, OrganizationApplication } from '@refs-tools/contracts/organization-self'
-import type { MineRow, OrganizationSelfRepository } from './organization-access.types.js'
+import type { DirectoryItem, DirectoryList, DirectoryQuery } from '@refs-tools/contracts/organization-self'
+import type {
+  ApplicantProfile, MineRow, NewOrganizationApplication, OrganizationSelfRepository,
+} from './organization-access.types.js'
 
 type MineSqlRow = {
   id: string; name: string; region: string; purpose: string; status: MineRow['status']; owner_user_id: string
@@ -55,7 +57,16 @@ export class PgOrganizationSelfRepository implements OrganizationSelfRepository 
     return Number(result.rows[0]!.total)
   }
 
-  async apply(id: string, ownerUserId: string, input: OrganizationApplication, now: Date): Promise<void> {
+  async applicantProfile(userId: string): Promise<ApplicantProfile | null> {
+    // 跨模块只读投影 referee_profiles：资料的写入与校验仍归 profiles 模块，这里只取申请快照所需的两列。
+    const result = await this.connection.query<{ legal_name: string | null; phone_e164: string | null }>(
+      `SELECT p.legal_name,p.phone_e164 FROM users u LEFT JOIN referee_profiles p ON p.user_id=u.id
+       WHERE u.id=$1 AND u.status='active' AND u.deleted_at IS NULL`, [userId])
+    const row = result.rows[0]
+    return row ? { legalName: row.legal_name, phone: row.phone_e164 } : null
+  }
+
+  async apply(id: string, ownerUserId: string, input: NewOrganizationApplication, now: Date): Promise<void> {
     await this.connection.query(`INSERT INTO organizations(id,name,region,purpose,owner_user_id,owner_legal_name,contact,status,created_at)
       VALUES($1,$2,$3,$4,$5,$6,$7,'pending_review',$8)`,
     [id, input.name, input.region, input.purpose, ownerUserId, input.ownerLegalName, input.contact, now])

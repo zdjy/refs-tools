@@ -13,17 +13,20 @@ import { useOrganizationApplication } from './useOrganizationApplication'
 
 const app = useOrganizationApplication()
 const formArea = ref<HTMLElement | null>(null)
-const { status, retry } = useAuthGate(() => {})
+const { status, retry } = useAuthGate(() => app.applicant.load())
 useUiFeedback(app.action.done)
-/** 校验或提交失败时把焦点移到首个无效字段；没有字段错误（如服务端拒绝）则聚焦表单区，让读屏用户听到结果。 */
+/**
+ * 校验或提交失败时把焦点移到首个无效字段；没有字段错误（如服务端拒绝）则聚焦表单区，让读屏用户听到结果。
+ * 地区选择器是 role=group，无法携带 aria-invalid，因此用其 data-invalid 标记定位组内第一个可聚焦的下拉。
+ */
 async function submit() {
   if (await app.submit()) return
   await nextTick()
-  const target = formArea.value?.querySelector<HTMLElement>('[aria-invalid="true"]')
+  const target = formArea.value?.querySelector<HTMLElement>('[aria-invalid="true"], [data-invalid="true"] [tabindex="0"]')
   ;(target ?? formArea.value)?.focus()
 }
 const steps = [
-  { title: '提交资料', hint: '填写组织与负责人信息' },
+  { title: '提交资料', hint: '填写组织信息，负责人信息取自你的账号资料' },
   { title: '平台审核', hint: '审核期间没有运营权限' },
   { title: '开始使用', hint: '通过后你成为负责人' },
 ] as const
@@ -49,7 +52,8 @@ const steps = [
       <div v-else class="grid gap-6 tablet:grid-cols-[minmax(0,1fr)_280px] tablet:items-start">
         <section ref="formArea" tabindex="-1" aria-labelledby="form-title" class="grid gap-5 focus:outline-hidden border-0 border-t border-solid border-ink pt-5 compact:p-6">
           <h2 id="form-title" class="m-0 text-lg text-ink">组织与负责人资料</h2>
-          <ApplicationForm v-model:fields="app.fields" :field-error="app.fieldError" :busy="app.action.busy.value" :error="app.action.error.value" @submit="submit" />
+          <ApplicationForm v-model:fields="app.fields" :field-error="app.fieldError" :busy="app.action.busy.value" :error="app.action.error.value"
+            :applicant="app.applicant" @submit="submit" />
         </section>
         <aside aria-labelledby="flow-title" class="grid gap-3 border-0 border-l border-solid border-ink pl-4">
           <h2 id="flow-title" class="m-0 text-base text-ink">提交之后</h2>

@@ -32,10 +32,14 @@ export const DirectoryItemSchema = Type.Object({
   memberCount: Type.Integer({ minimum: 0 }),
   relation: Type.Union([Type.Literal('none'), Type.Literal('pending'), Type.Literal('active')]),
 }, { additionalProperties: false })
+/**
+ * 自助申请载荷。`region` 是账户设置同款地区选择器产出的「省/市/区」展示文本；
+ * 负责人实名与联系方式不由客户端提交，服务端在事务内取申请人账户资料（`Profile.legalName` / `Profile.phone`），
+ * 因此 Schema 拒绝这两个字段。
+ */
 export const OrganizationApplicationSchema = Type.Object({
   name: Type.String({ minLength: 1, maxLength: 120 }), region: Type.String({ minLength: 1, maxLength: 100 }),
-  purpose: Type.String({ minLength: 1, maxLength: 1000 }), ownerLegalName: Type.String({ minLength: 1, maxLength: 80 }),
-  contact: Type.String({ minLength: 1, maxLength: 200 }),
+  purpose: Type.String({ minLength: 1, maxLength: 1000 }),
 }, { additionalProperties: false })
 
 export const MyOrganizationResponseSchema = Type.Object({ data: MyOrganizationSchema })

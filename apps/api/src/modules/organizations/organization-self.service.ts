@@ -49,14 +49,23 @@ export class OrganizationSelfService {
     })
   }
 
-  /** 负责人即申请人；平台审核通过前不建立成员关系，也不授予任何角色。 */
+  /**
+   * 负责人即申请人；平台审核通过前不建立成员关系，也不授予任何角色。
+   * 负责人实名与联系方式取自申请人账户资料，并在提交时快照进组织记录：审核看到的是提交当时的资料，
+   * 之后本人修改账户资料不会改写已提交的申请。资料不完整返回 422 PROFILE_INCOMPLETE，前端据此引导补全。
+   */
   async apply(actor: string, input: OrganizationApplication) {
-    const value = { name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim(),
-      ownerLegalName: input.ownerLegalName.trim(), contact: input.contact.trim() }
-    if (Object.values(value).some(text => !text)) throw new DomainError('INVALID_ORGANIZATION', '请完整填写组织与负责人资料', 422)
+    const base = { name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim() }
+    if (Object.values(base).some(text => !text)) throw new DomainError('INVALID_ORGANIZATION', '请完整填写组织资料', 422)
     const now = this.d.now(), id = randomUUID()
     return this.d.transaction.run(async r => {
       if (!await r.identities.requireActiveActor(actor)) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
+      const profile = await r.self.applicantProfile(actor)
+      const ownerLegalName = profile?.legalName?.trim(), contact = profile?.phone?.trim()
+      if (!ownerLegalName || !contact) {
+        throw new DomainError('PROFILE_INCOMPLETE', '请先在账号设置中填写真实姓名和手机号，再提交组织申请', 422)
+      }
+      const value = { ...base, ownerLegalName, contact }
       await r.self.lockApplicant(actor)
       if (await r.self.countPending(actor) >= PENDING_APPLICATION_LIMIT) {
         throw new DomainError('APPLICATION_LIMIT', `同时待审核的申请最多 ${PENDING_APPLICATION_LIMIT} 个，请等待平台审核后再提交`, 409)

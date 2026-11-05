@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { NButton, NDatePicker, NInput } from 'naive-ui'
 import type { ProfileFieldKey, ProfileFieldsState } from '../useProfileSettings'
-import RegionSelect, { type RegionSelection } from './RegionSelect.vue'
+import RegionSelect, { type RegionSelection } from '../../../components/ui/UiRegionSelect.vue'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 
 const props = defineProps<{ fields: ProfileFieldsState; fieldError: { field: ProfileFieldKey; message: string } | null; saving: boolean }>()

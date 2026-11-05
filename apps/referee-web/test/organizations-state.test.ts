@@ -2,15 +2,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import type { OrganizationInvitation } from '@refs-tools/contracts/organization-members'
 import { OrganizationsApiError, type OrganizationsApi } from '../src/api/organizations.api'
+import { ProfileApiError } from '../src/api/profile.api'
 import { useJoinCodes } from '../src/views/organizations/useJoinCodes'
 import { useLoadable, useAction } from '../src/views/organizations/organization-primitives'
 import { reasonProblem, useConfirmReason } from '../src/views/organizations/useConfirmReason'
 import { useMyOrganizations } from '../src/views/organizations/useMyOrganizations'
 import { useOrganizationDirectory } from '../src/views/organizations/useOrganizationDirectory'
+import { useApplicantProfile } from '../src/views/organizations/useApplicantProfile'
 import { useOrganizationApplication } from '../src/views/organizations/useOrganizationApplication'
 
 const api = (patch: Record<string, unknown> = {}) => ({ mine: vi.fn(async () => ({ items: [] })), inbox: vi.fn(async () => ({ items: [] })),
   acceptInvitation: vi.fn(async () => ({})), declineInvitation: vi.fn(async () => ({})), ...patch }) as unknown as OrganizationsApi
+const applicant = (profile: { legalName: string | null; phone: string | null }) => useApplicantProfile({ read: vi.fn(async () => profile) } as never)
 const invitation = { id: 'i', organizationId: 'o', organizationName: '协会', status: 'pending', version: 1 } as OrganizationInvitation
 const token = `rj_${'a'.repeat(43)}`
 
@@ -80,13 +83,49 @@ describe('目录、兑换与申请表单', () => {
     state.token.value = ` ${token} `; expect(await state.redeemToken()).toBe(true)
     expect(redeemCode).toHaveBeenCalledWith(token); expect(state.token.value).toBe(''); expect(state.joined.value).toBe('o')
   })
-  it('申请表单校验必填，失败保留全部输入，成功记录结果', async () => {
+  it('申请表单校验必填与地区层级，失败保留全部输入，成功只提交组织资料', async () => {
     const apply = vi.fn().mockRejectedValueOnce(new OrganizationsApiError('APPLICATION_LIMIT', 409)).mockResolvedValue({ id: 'n', name: '协会' })
-    const state = useOrganizationApplication(api({ apply }))
-    expect(await state.submit()).toBe(false); expect(apply).not.toHaveBeenCalled(); expect(state.fieldError.name).toContain('请填写')
-    Object.assign(state.fields, { name: '协会', region: '杭州', purpose: '培训', ownerLegalName: '张三', contact: '138' })
+    const state = useOrganizationApplication(api({ apply }), applicant({ legalName: '张三', phone: '+8613800138000' }))
+    await state.applicant.load()
+    expect(await state.submit()).toBe(false); expect(apply).not.toHaveBeenCalled()
+    expect(state.fieldError.name).toContain('请填写'); expect(state.fieldError.region).toContain('区/县')
+    Object.assign(state.fields, { name: '协会', purpose: '培训', region: '浙江省/杭州市', regionCode: null })
+    expect(await state.submit()).toBe(false); expect(apply).not.toHaveBeenCalled(); expect(state.fieldError.region).toContain('区/县')
+    Object.assign(state.fields, { region: '浙江省/杭州市/西湖区', regionCode: '330106' })
     expect(await state.submit()).toBe(false); expect(state.fields.name).toBe('协会'); expect(state.action.error.value).toContain('上限')
     expect(await state.submit()).toBe(true); expect(state.submitted.value).toEqual({ id: 'n', name: '协会' })
+    // 负责人实名与联系方式由服务端取账号资料，客户端载荷不得携带；regionCode 只用于回显。
+    expect(apply).toHaveBeenLastCalledWith({ name: '协会', region: '浙江省/杭州市/西湖区', purpose: '培训' })
+  })
+  it('账号资料缺项、读取中或读取失败时不发请求，补全重读后才放行', async () => {
+    const apply = vi.fn(async () => ({ id: 'n', name: '协会' })), read = vi.fn()
+    read.mockResolvedValueOnce({ legalName: '张三', phone: null }).mockRejectedValueOnce(new ProfileApiError('NETWORK_ERROR', 0))
+      .mockResolvedValue({ legalName: ' 张三 ', phone: '+8613800138000' })
+    const profile = useApplicantProfile({ read } as never), state = useOrganizationApplication(api({ apply }), profile)
+    Object.assign(state.fields, { name: '协会', purpose: '培训', region: '浙江省/杭州市/西湖区', regionCode: '330106' })
+    expect(await state.submit()).toBe(false); expect(profile.state.status).toBe('idle')
+    await profile.load(); expect(profile.missing).toEqual(['手机号']); expect(profile.complete).toBe(false)
+    expect(await state.submit()).toBe(false)
+    await profile.load(); expect(profile.state.status).toBe('error'); expect(profile.state.error).toContain('重新读取'); expect(profile.complete).toBe(false)
+    expect(await state.submit()).toBe(false); expect(apply).not.toHaveBeenCalled()
+    await profile.load(); expect(profile.state.legalName).toBe('张三'); expect(profile.complete).toBe(true)
+    expect(await state.submit()).toBe(true); expect(apply).toHaveBeenCalledTimes(1)
+  })
+  it('服务端返回资料不完整时保留输入、给出说明并重新读取资料', async () => {
+    const apply = vi.fn().mockRejectedValue(new OrganizationsApiError('PROFILE_INCOMPLETE', 422))
+    const read = vi.fn().mockResolvedValueOnce({ legalName: '张三', phone: '+8613800138000' }).mockResolvedValue({ legalName: '张三', phone: null })
+    const profile = useApplicantProfile({ read } as never), state = useOrganizationApplication(api({ apply }), profile)
+    await profile.load(); Object.assign(state.fields, { name: '协会', purpose: '培训', region: '浙江省/杭州市/西湖区', regionCode: '330106' })
+    expect(await state.submit()).toBe(false)
+    expect(state.action.error.value).toContain('账号设置'); expect(state.fields.name).toBe('协会')
+    await vi.waitFor(() => expect(profile.missing).toEqual(['手机号'])); expect(read).toHaveBeenCalledTimes(2)
+  })
+  it('资料重读的旧响应不会覆盖新结果', async () => {
+    const resolvers: Array<(value: unknown) => void> = []
+    const profile = useApplicantProfile({ read: () => new Promise(resolve => resolvers.push(resolve)) } as never)
+    const stale = profile.load(), fresh = profile.load()
+    resolvers[1]!({ legalName: '新', phone: '+8613800138000' }); resolvers[0]!({ legalName: '旧', phone: null }); await Promise.all([stale, fresh])
+    expect(profile.state.legalName).toBe('新'); expect(profile.complete).toBe(true)
   })
 })
 

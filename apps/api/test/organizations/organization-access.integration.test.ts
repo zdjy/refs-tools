@@ -33,7 +33,9 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('用户视角组织 PostgreSQ
     self = new OrganizationSelfService(d); codes = new OrganizationJoinCodesService(d)
     roles = new OrganizationRolesService(d); candidates = new OrganizationCandidatesService(d)
   })
-  const input = { name: '新协会', region: '杭州', purpose: '培训', ownerLegalName: '张三', contact: '13800000000' }
+  const input = { name: '新协会', region: '浙江省/杭州市/西湖区', purpose: '培训' }
+  const completeProfile = (userId: string) => db.pool.query(
+    "INSERT INTO referee_profiles(user_id,legal_name,phone_e164) VALUES($1,'张三','+8613800138000')", [userId])
 
   it('成员码只落哈希；兑换建立成员关系但不授角色，重复兑换幂等且不消耗次数', async () => {
     const { token, code } = await codes.create(seed.ids.owner, seed.ids.orgA, { validDays: 1, maxUses: 2 })
@@ -70,7 +72,17 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('用户视角组织 PostgreSQ
     expect((await db.pool.query('SELECT uses FROM organization_join_codes WHERE id=$1', [first.code.id])).rows[0].uses).toBe(0)
   })
 
+  it('账户资料不完整时拒绝申请且不落库；补全后实名与手机号快照进组织记录，之后改资料不影响已提交申请', async () => {
+    await expect(self.apply(seed.ids.outsider, input)).rejects.toMatchObject({ code: 'PROFILE_INCOMPLETE', statusCode: 422 })
+    expect((await db.pool.query('SELECT id FROM organizations WHERE owner_user_id=$1', [seed.ids.outsider])).rowCount).toBe(0)
+    await completeProfile(seed.ids.outsider)
+    const created = await self.apply(seed.ids.outsider, input)
+    await db.pool.query("UPDATE referee_profiles SET legal_name='李四',phone_e164='+8613900139000' WHERE user_id=$1", [seed.ids.outsider])
+    const stored = (await db.pool.query('SELECT region,owner_legal_name,contact FROM organizations WHERE id=$1', [created.id])).rows[0]
+    expect(stored).toEqual({ region: '浙江省/杭州市/西湖区', owner_legal_name: '张三', contact: '+8613800138000' })
+  })
   it('自助申请并发只能达到上限，申请不出现在目录，负责人在「我的组织」里只看到待审核', async () => {
+    await completeProfile(seed.ids.outsider)
     const results = await Promise.allSettled(Array.from({ length: 5 }, (_, i) => self.apply(seed.ids.outsider, { ...input, name: `申请${i}` })))
     expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(3)
     expect((await db.pool.query("SELECT id FROM organizations WHERE owner_user_id=$1 AND status='pending_review'", [seed.ids.outsider])).rowCount).toBe(3)

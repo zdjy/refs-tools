@@ -17,7 +17,8 @@ export function accessFixture() {
   const bindings: Array<{ id: string; userId: string; displayName: string; role: 'owner' | 'organizer' | 'certifier'; grantedAt: string }> = []
   const r: AccessRepositories = { ...base.r,
     self: { mine: vi.fn(async () => []), directory: vi.fn(async () => ({ items: [], total: 0, page: 1, pageSize: 20 })),
-      lockApplicant: vi.fn(async () => {}), countPending: vi.fn(async () => 0), apply: vi.fn(async () => {}) },
+      lockApplicant: vi.fn(async () => {}), countPending: vi.fn(async () => 0), apply: vi.fn(async () => {}),
+      applicantProfile: vi.fn(async () => ({ legalName: '张三', phone: '+8613800138000' })) },
     joinCodes: { list: vi.fn(async () => [code]), countActive: vi.fn(async () => 0), create: vi.fn(async () => {}),
       find: vi.fn(async () => ({ ...code })), organizationOf: vi.fn(async () => base.id),
       consume: vi.fn(async () => ({ ...code, uses: 1 })), revoke: vi.fn(async () => true) },

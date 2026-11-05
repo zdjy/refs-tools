@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildApp } from '../../src/app.js'
 import { DomainError } from '../../src/application/errors.js'
 import { accessFixture } from './access-fixture.js'
@@ -55,8 +55,15 @@ describe('用户视角组织 HTTP 边界', () => {
   it('自助申请 201，缺字段 400；角色撤销与候选人检索可达', async () => {
     const f = await fixture()
     try {
-      const body = { name: '协会', region: '杭州', purpose: '培训', ownerLegalName: '张三', contact: '1380000' }
+      const body = { name: '协会', region: '浙江省/杭州市/西湖区', purpose: '培训' }
       expect((await f.app.inject({ method: 'POST', url: '/api/v1/me/organization-applications', headers: f.headers, payload: body })).statusCode).toBe(201)
+      // 负责人实名与联系方式只取自账户资料，请求体携带这两个字段一律 400，且不触发写入。
+      const writes = vi.mocked(f.r.self.apply).mock.calls.length
+      for (const extra of [{ ownerLegalName: '张三' }, { contact: '1380000' }]) {
+        expect((await f.app.inject({ method: 'POST', url: '/api/v1/me/organization-applications', headers: f.headers,
+          payload: { ...body, ...extra } })).statusCode).toBe(400)
+      }
+      expect(vi.mocked(f.r.self.apply).mock.calls).toHaveLength(writes)
       expect((await f.app.inject({ method: 'POST', url: '/api/v1/me/organization-applications', headers: f.headers, payload: { name: '协会' } })).statusCode).toBe(400)
       const search = await f.app.inject({ url: `/api/v1/organizations/${f.id}/member-candidates?keyword=al`, headers: f.headers })
       expect(search.statusCode).toBe(200); expect(search.json().data.items).toEqual([])
