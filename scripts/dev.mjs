@@ -5,11 +5,11 @@
 import { spawn, spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { existsSync, readFileSync } from 'node:fs'
-import { connect } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ensureDevCertificate } from './dev-cert.mjs'
 import { ensureComposeCertificate, spawnApi } from './dev-api.mjs'
+import { DEV_PORTS, findPortListeners, portInUse, stopDevProcesses } from './dev-process.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const refereeDir = join(root, 'apps', 'referee-web')
@@ -23,14 +23,22 @@ function viteCli(packageDir) {
   return join(dirname(pkgPath), bin)
 }
 
-function portInUse(port) {
-  return new Promise((resolve) => {
-    const socket = connect({ host: '127.0.0.1', port })
-    socket.setTimeout(600)
-    socket.once('connect', () => { socket.destroy(); resolve(true) })
-    socket.once('timeout', () => { socket.destroy(); resolve(false) })
-    socket.once('error', () => resolve(false))
-  })
+/** 端口被占用时指出真正的占用者：Compose 的 api/web 容器只是其中一种可能，更多是上次未退出的 tsx/vite 子进程。 */
+function reportBusyPorts(busy) {
+  const listeners = findPortListeners(busy)
+  console.error(`[dev] 端口被占用：${busy.join(', ')}`)
+  for (const listener of listeners) {
+    const owner = listener.ownedByRepo ? '本仓库遗留的开发进程' : '其他程序'
+    console.error(`[dev]   ${listener.port}  PID ${listener.pid}  ${listener.name || '未知进程'}（${owner}）`)
+    if (listener.command) console.error(`[dev]     ${listener.command}`)
+  }
+  if (listeners.some((listener) => listener.ownedByRepo)) {
+    console.error('[dev] 上次 pnpm dev 未正常退出时会留下 tsx watch 与 Vite 子进程，执行 pnpm dev:stop 清理后重试。')
+  }
+  if (listeners.some((listener) => !listener.ownedByRepo)) {
+    console.error(`[dev] 其他程序占用时需自行结束，例如：${process.platform === 'win32' ? 'taskkill /PID <pid> /T /F' : 'kill -9 <pid>'}`)
+    console.error('[dev] 若占用者是 Compose 的 api/web 容器，先执行：docker compose stop api web')
+  }
 }
 
 /** 多进程共用终端时按行加前缀，便于区分 API 与两个前端。 */
@@ -74,11 +82,16 @@ async function main() {
   const skipInfra = process.argv.includes('--no-infra')
   if (!skipInfra) ensureInfra()
 
+  if (process.argv.includes('--kill-stale')) {
+    for (const entry of stopDevProcesses().stopped) {
+      console.log(`[dev] 已结束本仓库遗留开发进程：PID ${entry.pid} ${entry.name}`)
+    }
+  }
+
   const busy = []
-  for (const port of [3000, 8443, 8001]) if (await portInUse(port)) busy.push(port)
+  for (const port of DEV_PORTS) if (await portInUse(port)) busy.push(port)
   if (busy.length > 0) {
-    console.error(`[dev] 端口被占用：${busy.join(', ')}`)
-    console.error('[dev] 若占用者是 Compose 的 api/web 容器，请先执行：docker compose stop api web')
+    reportBusyPorts(busy)
     process.exitCode = 1
     return
   }

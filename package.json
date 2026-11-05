@@ -8,6 +8,7 @@
     "brand:icons": "node scripts/brand-icons.mjs",
     "regions:data": "node scripts/generate-regions.mjs",
     "dev": "node scripts/dev.mjs",
+    "dev:stop": "node scripts/dev-stop.mjs",
     "dev:api": "node scripts/dev-api.mjs",
     "dev:api:migrate": "node scripts/dev-api.mjs migrate",
     "dev:cert": "node scripts/dev-cert.mjs",

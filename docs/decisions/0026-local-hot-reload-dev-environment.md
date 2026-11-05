@@ -26,6 +26,7 @@
 5. 对象存储仍走已发布的 `https://localhost:9443`，`S3_ENDPOINT` 与 `S3_PUBLIC_ENDPOINT` 相同，签名 Host 与浏览器一致。
 6. `compose.yaml` 为 Mailpit 增加回环绑定的 SMTP 发布端口（`MAILPIT_SMTP_PORT`，默认 1025），供宿主机 API 投递验证码邮件；容器内仍用 `mailpit:1025`。
 7. `scripts/dev.mjs` 编排三个进程（API、裁判端、管理端），统一加日志前缀并在 Ctrl+C 时结束全部子进程；启动前先执行 `docker compose up -d --wait` 确保基础设施容器就绪（`--no-infra` 可跳过，`pnpm dev:infra` 只起容器），使重启电脑后仍只需一条 `pnpm dev`。
+8. `scripts/dev-process.mjs` 负责端口占用诊断与残留清理：端口被占用时按 PID 列出监听者及其命令行，并区分「本仓库遗留的开发进程」与「其他程序」；`pnpm dev:stop`（或 `pnpm dev -- --kill-stale`）只结束祖先链落在本仓库的进程，其他程序占用的端口保持不动。之所以不能只杀监听者：`tsx watch` 守护进程的命令行不含监听端口，杀掉 API 子进程后它会在下次文件变化时重新拉起并再次占用 3000。
 
 开发模式下不启动 `web`、`api` 容器（8443/3000 与宿主机进程冲突），基础设施（`db`、`mailpit`、`minio`、`minio-init`、`storage`、`certificates`）继续由 Compose 提供。
 
@@ -40,6 +41,7 @@
 ## 后果与限制
 
 - 前端改动走 HMR，API 改动由 `tsx watch` 自动重启；数据库迁移用 `pnpm dev:api:migrate` 在宿主机执行。
+- 关闭终端窗口、用 `nohup` 启动或 Ctrl+C 只结束根进程时，`tsx watch` 与 Vite 子进程会在 Windows 上继续存活并占用 3000/8443/8001（`pnpm dev` 只负责结束自己这棵进程树，无法回收父进程已消失的遗留进程）。因此再次启动时的端口冲突以 `pnpm dev` 的内建诊断与 `pnpm dev:stop` 为准，不再需要手动 `taskkill` 或猜测是否是 Compose 容器占用。
 - 开发证书与 Compose 证书相互独立：切换两种模式时浏览器各自需要信任对应证书；开发证书有效期一年，可 `pnpm dev:cert -- --force` 重新生成。
 - 开发模式下一个浏览器会话会同时面对两张证书：入口 `https://localhost:8443` 是开发 CA 签发的叶子证书，对象存储直传入口 `https://localhost:9443` 仍是 Compose 自签证书。两张公开证书都必须导入当前用户根证书存储；`scripts/dev.mjs` 启动时打印两条导入命令，`scripts/dev-api.mjs` 顺带把 Compose 公开证书导出到 `.cache/local.crt`（私钥仍只在 volume）。只信任开发 CA 时，浏览器预签名直传（如头像上传）会被拦为 `net::ERR_CERT_AUTHORITY_INVALID`，随后的完成核验返回 `409 OBJECT_NOT_FOUND`，表现为「上传未完成」，而宿主机 API 因 `NODE_EXTRA_CA_CERTS` 已信任该证书仍能正常读写对象存储。备选中「让 storage 容器改用开发叶子证书」可只保留一个信任锚，但需要把开发私钥挂入容器、并让宿主机 API 与 `storage` 随 `pnpm dev:cert -- --force` 联动重启，收益不足以抵消额外耦合，暂不采用。
 - 真实登录只在 `https://localhost:8443` 成立。开发服务器仍绑定全部网卡便于手机预览页面，但局域网地址既不受开发证书覆盖，也不匹配 `AUTH_PUBLIC_ORIGIN`，不能用于认证流程。
