@@ -5,7 +5,8 @@ import { PageEnum } from '@/enums/pageEnum';
 import { createRouterGuards } from './guards';
 import type { IModuleType } from './types';
 
-const modules = import.meta.glob<IModuleType>('./modules/**/*.ts', { eager: true });
+// 只装载真实业务模块；模板演示模块（仪表盘、表单、列表等）不再注册，也不进入构建产物。
+const modules = import.meta.glob<IModuleType>('./modules/system.ts', { eager: true });
 
 const routeModuleList: RouteRecordRaw[] = Object.keys(modules).reduce((list, key) => {
   const mod = modules[key].default ?? {};

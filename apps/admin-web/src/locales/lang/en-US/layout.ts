@@ -11,6 +11,9 @@ export default {
     logoutTip: 'Are you sure you want to log out?',
     logoutSuccess: 'Logged out successfully',
     language: 'Switch language',
+    toggleMenu: 'Collapse or expand menu',
+    reload: 'Reload page',
+    account: 'Account menu',
   },
   breadcrumb: {
     home: 'Home',

@@ -35,8 +35,8 @@ useUiScrollProgress(bar, body)
           <ReadingToc :sections="article.sections" :active="active" />
           <div class="min-w-0 rounded-xl border border-solid border-line bg-surface p-5 compact:p-8 tablet:col-start-1 tablet:row-start-1 xl:p-12">
             <p class="mt-0 mb-10 border-0 border-l border-solid border-red pl-5 text-xl leading-relaxed font-medium text-ink compact:text-2xl">{{ article.takeaway }}</p>
-            <section v-for="(section, index) in article.sections" :key="section.id" class="mb-10 last:mb-0">
-              <h2 :id="section.id" tabindex="-1" class="mt-0 mb-5 flex scroll-mt-6 items-baseline gap-4 text-2xl leading-snug font-bold tracking-tight text-ink compact:text-3xl"><span class="font-mono text-sm font-normal text-red-hover">{{ String(index + 1).padStart(2, '0') }}</span>{{ section.title }}</h2>
+            <section v-for="section in article.sections" :key="section.id" class="mb-10 last:mb-0">
+              <h2 :id="section.id" tabindex="-1" class="mt-0 mb-5 scroll-mt-6 text-2xl leading-snug font-bold tracking-tight text-ink compact:text-3xl">{{ section.title }}</h2>
               <p v-for="paragraph in section.paragraphs" :key="paragraph" class="mt-0 mb-5 text-base leading-[2] text-body last:mb-0">{{ paragraph }}</p>
             </section>
             <aside class="mt-10 rounded-xl bg-soft p-4 text-sm leading-relaxed text-body">{{ editorialNotice }}</aside>

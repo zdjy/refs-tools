@@ -40,7 +40,7 @@ const progress = computed(() => `${index.value + 1} / ${steps.value.length}`)
 <template>
   <section class="grid gap-5" aria-labelledby="profile-email-heading">
     <header class="grid gap-1">
-      <h2 id="profile-email-heading" class="m-0 text-[18px]">修改登录邮箱</h2>
+      <h2 id="profile-email-heading" class="m-0 text-ink text-[18px]">修改登录邮箱</h2>
       <p class="m-0 text-[13px] leading-[1.8] text-body">
         当前邮箱：<span class="wrap-anywhere">{{ auth.user?.email }}</span>（{{ auth.user?.emailVerified ? '已验证' : '待验证' }}）。
         共 {{ steps.length }} 步，切换后其他设备的会话会立即失效。

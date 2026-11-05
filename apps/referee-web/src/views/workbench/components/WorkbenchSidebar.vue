@@ -12,7 +12,7 @@ const emit = defineEmits<{ create: []; select: [id: string]; clear: [] }>()
 <template>
   <aside class="flex min-w-0 flex-col border-0 border-b border-solid border-line bg-soft/80 p-4 backdrop-blur-xl tablet:border-r tablet:border-b-0 tablet:px-4 tablet:py-6" aria-label="比赛会话列表">
     <div class="flex items-center justify-between">
-      <h1 class="m-0 text-[18px]">比赛</h1>
+      <h1 class="text-ink m-0 text-[18px]">比赛</h1>
       <n-button quaternary circle class="size-11" :theme-overrides="refereeControlThemes.iconButton" aria-label="新建比赛" :disabled="disabled" @click="emit('create')"><Plus class="size-5" aria-hidden="true" /></n-button>
     </div>
     <p class="mt-1 mr-0 mb-3 ml-0 text-[13px] text-body">仅保存在这台设备</p>
@@ -30,7 +30,7 @@ const emit = defineEmits<{ create: []; select: [id: string]; clear: [] }>()
       <p class="mt-0 mr-0 mb-1.5 ml-0 text-[13px] font-bold">共享设备提示</p>
       <p class="m-0 text-[13px] leading-[1.6] text-body">赛后请导出需要保留的记录，并清除此设备中的比赛数据。</p>
       <n-popconfirm positive-text="清空" negative-text="取消" @positive-click="emit('clear')">
-        <template #trigger><n-button class="mt-2" quaternary :disabled="!canClear">清空本设备全部比赛</n-button></template>
+        <template #trigger><n-button class="mt-2" secondary type="error" :disabled="!canClear">清空本设备全部比赛</n-button></template>
         清空本设备的全部比赛会话？此操作无法撤销，请先导出需要保留的记录。
       </n-popconfirm>
     </div>

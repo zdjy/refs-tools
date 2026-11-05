@@ -3,7 +3,7 @@ import type { AuthUser } from '@refs-tools/contracts/auth';
 import { store } from '@/store';
 import { getUserInfo, login, logout } from '@/api/system/user';
 
-export type UserInfoType = { username: string; email: string; id?: string };
+export type UserInfoType = { username: string; email: string; id?: string; avatarMediaId?: string | null };
 export type IUserState = { username: string; avatar: string; permissions: { label: string; value: string }[]; info: UserInfoType };
 
 /** 认证信息只在内存保存；Cookie 的生命周期由 API 管理。 */
@@ -23,7 +23,7 @@ export const useUserStore = defineStore({
   actions: {
     applyUser(user: AuthUser) {
       this.username = user.displayName;
-      this.info = { id: user.id, username: user.email, email: user.email };
+      this.info = { id: user.id, username: user.email, email: user.email, avatarMediaId: user.avatarMediaId };
       this.permissions = [];
       return { ...this.info, permissions: this.permissions };
     },

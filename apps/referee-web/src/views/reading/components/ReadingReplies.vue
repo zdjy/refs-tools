@@ -9,7 +9,6 @@ defineProps<{ thread: SampleThread }>()
 
 <template>
   <section class="mt-8" aria-labelledby="replies-title">
-    <p class="mt-0 mb-3 text-xs font-bold tracking-wider text-red-hover uppercase">Replies / 示例回应</p>
     <h2 id="replies-title" class="m-0 text-2xl font-bold tracking-tight text-ink compact:text-3xl">{{ thread.replies.length }} 条示例回应</h2>
     <p class="mt-3 mb-0 text-sm leading-relaxed text-body">回应人物均为示例角色，数值为示例值，并非真实用户内容。真实回复与点赞尚未开放。</p>
     <div class="mt-6 grid gap-4">

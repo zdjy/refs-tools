@@ -51,5 +51,5 @@ export default {
   system_organization: '组织管理',
   system_file: '文件管理',
   login: '登录',
-  errorPage: '错误页',
+  errorPage: '页面不存在',
 };

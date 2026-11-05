@@ -1,40 +1,34 @@
 <template>
-  <div class="flex flex-col justify-center page-container">
-    <div class="text-center">
-      <img src="~@/assets/images/exception/404.svg" alt="" />
+  <section
+    class="mx-auto flex min-h-[60vh] max-w-[520px] flex-col items-start justify-center gap-4 px-4 py-12"
+    aria-labelledby="not-found-title"
+  >
+    <p class="m-0 text-6xl font-semibold leading-none tabular-nums text-admin-primary" aria-hidden="true">404</p>
+    <h1 id="not-found-title" class="m-0 text-2xl font-semibold text-admin-ink">页面不存在</h1>
+    <p class="m-0 text-sm leading-relaxed text-admin-body">
+      没有找到
+      <code class="break-all rounded bg-admin-surface-muted px-1.5 py-0.5 text-admin-ink">{{ route.fullPath }}</code>。地址可能输入有误，或该页面已下线。
+    </p>
+    <div class="mt-2 flex flex-wrap gap-3">
+      <n-button type="primary" size="large" @click="goHome">回到首页</n-button>
+      <n-button size="large" @click="goBack">返回上一页</n-button>
     </div>
-    <div class="text-center">
-      <h1 class="text-base text-admin-body">抱歉，你访问的页面不存在</h1>
-      <n-button type="info" @click="goHome">回到首页</n-button>
-    </div>
-  </div>
+  </section>
 </template>
 
 <script lang="ts" setup>
-  import { useRouter } from 'vue-router';
+  import { useRoute, useRouter } from 'vue-router';
+  import { PageEnum } from '@/enums/pageEnum';
+
+  const route = useRoute();
   const router = useRouter();
+
   function goHome() {
-    router.push('/');
+    router.push(PageEnum.BASE_HOME);
+  }
+  /** 直接打开 404 地址时没有可返回的历史，退回首页而不是停在原地。 */
+  function goBack() {
+    if (window.history.state?.back) router.back();
+    else goHome();
   }
 </script>
-
-<style lang="less" scoped>
-  .page-container {
-    width: 100%;
-    border-radius: 4px;
-    padding: 50px 0;
-    height: 100vh;
-
-    .text-center {
-      h1 {
-        color: var(--admin-body);
-        padding: 20px 0;
-      }
-    }
-
-    img {
-      width: 350px;
-      margin: 0 auto;
-    }
-  }
-</style>

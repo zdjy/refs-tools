@@ -119,6 +119,7 @@ function toNaiveTheme(palette: AdminPalette): GlobalThemeOverrides {
       tdColorStriped: palette.surfaceMuted,
     },
     Input: {
+      heightLarge: '44px',
       color: palette.surfaceMuted,
       colorFocus: palette.surface,
       textColor: palette.ink,

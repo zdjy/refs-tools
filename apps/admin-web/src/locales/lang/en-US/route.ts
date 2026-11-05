@@ -51,5 +51,5 @@ export default {
   system_organization: 'Organizations',
   system_file: 'Files',
   login: 'Login',
-  errorPage: 'Error Page',
+  errorPage: 'Page not found',
 };

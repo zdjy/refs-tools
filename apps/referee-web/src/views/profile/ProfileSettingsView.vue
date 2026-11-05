@@ -71,8 +71,7 @@ async function submitProfile() {
   <NavigationShell>
     <div class="mx-auto grid max-w-[980px] gap-6">
       <header class="grid gap-2">
-        <p class="m-0 text-xs font-bold tracking-wider text-red-hover uppercase">个人账号</p>
-        <h1 class="m-0 text-[26px] leading-[1.35] tracking-[-.03em] sm:text-[32px]">账号设置</h1>
+        <h1 class="text-ink m-0 text-[26px] leading-[1.35] tracking-[-.03em] sm:text-[32px]">账号设置</h1>
         <p class="m-0 text-[14px] leading-[1.8] text-body">维护你的裁判档案与登录方式。账号资料保存后立即生效；更换邮箱会重新核验旧邮箱、密码与新邮箱。</p>
       </header>
 
@@ -92,7 +91,7 @@ async function submitProfile() {
         <section v-if="active === 'profile'" id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" tabindex="0"
           class="grid min-w-0 gap-5 rounded-2xl border border-solid border-line bg-surface p-5 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red sm:p-6">
           <div class="grid gap-1">
-            <h2 class="m-0 text-[18px]">个人资料</h2>
+            <h2 class="text-ink m-0 text-[18px]">个人资料</h2>
             <p class="m-0 text-[13px] leading-[1.8] text-body">昵称、头像、实名与联系方式。只有昵称与头像会展示给其他人。</p>
           </div>
           <UiLoadingRegion v-if="loading" :loading="loading" label="读取账号资料" :lines="5" @retry="load()" />

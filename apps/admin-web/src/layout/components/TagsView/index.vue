@@ -244,6 +244,10 @@
 
       // 将最新的路由信息同步到 localStorage 中
       const routes = router.getRoutes();
+      // 丢弃已下架或无权访问的路由标签，避免恢复出指向错误页的残留标签。
+      cacheRoutes = cacheRoutes.filter((cacheRoute) =>
+        routes.some((route) => route.path === cacheRoute.path)
+      );
       cacheRoutes.forEach((cacheRoute) => {
         const route = routes.find((route) => route.path === cacheRoute.path);
         if (route) {

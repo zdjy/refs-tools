@@ -5,6 +5,7 @@ import type { AdminMedia } from '@refs-tools/contracts/admin-media';
 export const purposeOptions = [
   { label: '学习资料', value: 'learning' }, { label: '认证证据', value: 'certification_evidence' },
   { label: '考试答卷', value: 'exam_answer' }, { label: '论坛附件', value: 'forum_attachment' }, { label: '赛后记录', value: 'post_game_record' },
+  { label: '头像', value: 'avatar' },
 ];
 export const statusOptions = [
   { label: '待上传', value: 'pending_upload' }, { label: '可用', value: 'available' },
@@ -34,7 +35,7 @@ export function fileColumns(open: (id: string) => void): DataTableColumns<AdminM
     { title: '状态', key: 'status', width: 110, render: row => h(NTag, { type: statusTypes[row.status], bordered: false }, { default: () => statusLabel(row.status) }) },
     { title: '类型', key: 'contentType', width: 160 },
     { title: '大小', key: 'expectedSizeBytes', width: 120, render: row => formatBytes(row.verifiedSizeBytes ?? row.expectedSizeBytes) },
-    { title: '所属用户 ID', key: 'ownerUserId', width: 300 },
+    { title: '所属用户 ID', key: 'ownerUserId', width: 200, ellipsis: { tooltip: true } },
     { title: '创建时间', key: 'createdAt', width: 180, render: row => formatTime(row.createdAt) },
     { title: '操作', key: 'actions', width: 100, fixed: 'right', render: row => h(NButton, { size: 'large', onClick: () => open(row.id), 'aria-label': `管理文件 ${row.fileName ?? row.id}` }, { default: () => '管理' }) },
   ];

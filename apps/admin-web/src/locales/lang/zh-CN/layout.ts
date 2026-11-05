@@ -11,6 +11,9 @@ export default {
     logoutTip: '您确定要退出登录吗',
     logoutSuccess: '成功退出登录',
     language: '切换语言',
+    toggleMenu: '折叠或展开菜单',
+    reload: '刷新当前页',
+    account: '账号菜单',
   },
   breadcrumb: {
     home: '首页',

@@ -18,7 +18,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'user',
         name: 'system_user',
-        meta: { title: 'route.system_user' },
+        meta: { title: 'route.system_user', affix: true },
         component: () => import('@/views/system/user/user.vue'),
       },
       {

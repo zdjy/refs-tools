@@ -23,7 +23,7 @@
         </ul>
       </div>
       <p class="m-0 text-[13px] text-[var(--login-text-secondary)]"
-        >© {{ currentYear }} Naive Ui Admin · Vue 3 + Vite + TypeScript</p
+        >© {{ currentYear }} {{ websiteConfig.title }}</p
       >
     </aside>
 
@@ -68,36 +68,19 @@
               </template>
             </n-input>
           </n-form-item>
-          <div class="mb-5 mt-1 flex items-center justify-between gap-2">
-            <n-checkbox v-model:checked="rememberMe">{{ t('login.rememberMe') }}</n-checkbox>
-            <a class="login-link" href="javascript:">{{ t('login.forgotPassword') }}</a>
-          </div>
-          <n-button type="primary" size="large" block :loading="loading" @click="handleSubmit">
+          <n-button
+            class="mt-2"
+            type="primary"
+            size="large"
+            block
+            :loading="loading"
+            @click="handleSubmit"
+          >
             {{ t('login.submit') }}
           </n-button>
-          <div
-            class="mb-4 mt-7 flex items-center gap-3 text-[13px] text-[var(--login-text-secondary)]"
-          >
-            <span class="h-px flex-1 bg-[var(--login-border)]" />
-            <span>{{ t('login.otherMethods') }}</span>
-            <span class="h-px flex-1 bg-[var(--login-border)]" />
-          </div>
-          <div class="flex justify-center gap-4">
-            <a
-              v-for="item in socialLogins"
-              :key="item.key"
-              class="login-social flex h-11 w-11 items-center justify-center rounded-full border border-solid border-[var(--login-border)] text-[var(--login-text-secondary)]"
-              href="javascript:"
-              :title="item.title"
-              :aria-label="item.title"
-            >
-              <n-icon size="20"><component :is="item.icon" /></n-icon>
-            </a>
-          </div>
         </n-form>
         <p class="mb-0 mt-6 text-center text-sm text-[var(--login-text-secondary)]">
-          {{ t('login.noAccount')
-          }}<a class="login-link" href="javascript:">{{ t('login.register') }}</a>
+          {{ t('login.accessNote') }}
         </p>
       </div>
     </main>
@@ -110,13 +93,7 @@
   import { useI18n } from 'vue-i18n';
   import { useMessage, useThemeVars } from 'naive-ui';
   import type { FormInst, FormRules, InputInst } from 'naive-ui';
-  import {
-    LockClosedOutline,
-    LogoFacebook,
-    LogoGithub,
-    LogoWechat,
-    PersonOutline,
-  } from '@vicons/ionicons5';
+  import { LockClosedOutline, PersonOutline } from '@vicons/ionicons5';
   import { ResultEnum } from '@/enums/httpEnum';
   import { PageEnum } from '@/enums/pageEnum';
   import { websiteConfig } from '@/config/website.config';
@@ -129,17 +106,7 @@
   }
 
   const { t } = useI18n();
-  const features = computed(() => [
-    t('login.featureVue'),
-    t('login.featureVite'),
-    t('login.featureNaive'),
-    t('login.featurePractice'),
-  ]);
-  const socialLogins = computed(() => [
-    { key: 'github', title: 'GitHub', icon: LogoGithub },
-    { key: 'wechat', title: t('login.wechat'), icon: LogoWechat },
-    { key: 'facebook', title: 'Facebook', icon: LogoFacebook },
-  ]);
+  const features = computed(() => [t('login.featureUsers'), t('login.featureOrgs'), t('login.featureFiles')]);
   const themeVars = useThemeVars();
   // 登录页左侧品牌栏底色随主题变化，方标同样按主题切换。
   const logo = useBrandLogo();
@@ -150,7 +117,6 @@
   const formRef = ref<FormInst | null>(null);
   const usernameRef = ref<InputInst | null>(null);
   const loading = ref(false);
-  const rememberMe = ref(true);
   const currentYear = new Date().getFullYear();
   const formInline = reactive<FormState>({ username: '', password: '' });
   const rules = computed<FormRules>(() => ({
@@ -164,7 +130,6 @@
     '--login-border': themeVars.value.dividerColor,
     '--login-text': themeVars.value.textColor1,
     '--login-text-secondary': themeVars.value.textColor3,
-    '--login-primary': themeVars.value.primaryColor,
   }));
 
   async function handleSubmit() {
@@ -199,31 +164,3 @@
     usernameRef.value?.focus();
   });
 </script>
-
-<style scoped>
-  /* 上游 Tailwind 使用全局 important；交互基线在此保证焦点与减少动态效果偏好。 */
-  .login-link {
-    color: var(--login-primary);
-    font-size: 14px;
-    text-decoration: none;
-  }
-  .login-link,
-  .login-social {
-    transition: opacity 0.3s ease;
-  }
-  .login-link:hover,
-  .login-social:hover {
-    opacity: 0.8;
-  }
-  .login-link:focus-visible,
-  .login-social:focus-visible {
-    outline: 2px solid var(--login-primary);
-    outline-offset: 3px;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .login-link,
-    .login-social {
-      transition: none;
-    }
-  }
-</style>

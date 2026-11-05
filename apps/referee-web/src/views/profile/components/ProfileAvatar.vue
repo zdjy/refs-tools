@@ -22,7 +22,7 @@ function pick(event: Event) {
 
 <template>
   <section aria-labelledby="profile-avatar-heading" class="grid gap-4">
-    <h2 id="profile-avatar-heading" class="m-0 text-[16px]">头像</h2>
+    <h2 id="profile-avatar-heading" class="m-0 text-ink text-[16px]">头像</h2>
     <div class="flex flex-wrap items-center gap-4">
       <span class="grid size-20 shrink-0 place-items-center overflow-hidden rounded-full border border-solid border-line bg-soft text-[28px] font-semibold text-ink" aria-hidden="true">
         <img v-if="url" :src="url" alt="" class="size-full object-cover" />

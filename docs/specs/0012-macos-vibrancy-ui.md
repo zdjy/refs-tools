@@ -21,7 +21,7 @@
 | 毛玻璃 | 顶栏 `bg-canvas/90 backdrop-blur-md`；移动底栏 `bg-canvas/85 backdrop-blur-xl`；工作台侧栏 `bg-soft/80 backdrop-blur-xl`。 |
 | 激活态 | 导航、阅读目录、论坛版块、工作台会话为沙金底加微阴影；桌面主导航附球场红指示点，移动底栏图标为球场红。 |
 | 聚焦 | 文本输入：红色 2px ring（30%）加 40% 红边框；按钮、链接、摘要：2px 实线球场红轮廓。 |
-| 排印 | 眉题 `text-xs font-bold uppercase tracking-wider`，小号红字用 `red-hover`；编号与参数用 `font-mono`。 |
+| 排印 | 标题上方不再放置大写眉题，状态与分类以标题下方的胶囊标签表达；小号红字用 `red-hover`；参数与代码用 `font-mono`；章节序号不作装饰。 |
 | 渐变与冷色 | 禁止渐变、冷灰/冷蓝黑；首页收尾面板由炭黑块改为沙金块。 |
 
 ## 3. 窄范围例外
@@ -30,6 +30,7 @@
 - 小号红色眉题使用 `#BA2F17` 而非 `#D83A1E`，以满足 WCAG AA。
 - 场边操作页继续沿用 FS-0002 对紧凑间距的例外，不套用规范中的营销留白。
 - 品牌几何折面的 `clip-path` 保留为局部 CSS（`auth.css`）及内联任意值。
+- 页面横幅（`UiPageBanner`）、登录侧栏、404 与工作台空状态使用半场线稿 `UiCourtLines`：单色细线、仅作装饰、`aria-hidden`，在 compact 断点以下隐藏或避开正文，不引入新色值。
 
 ## 4. 验收标准
 

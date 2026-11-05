@@ -19,8 +19,11 @@
     <!--左侧菜单-->
     <div class="layout-header-left" v-else>
       <!-- 菜单收起 -->
-      <div
+      <button
+        type="button"
         class="ml-1 layout-header-trigger layout-header-trigger-min"
+        :aria-label="t('layout.header.toggleMenu')"
+        :aria-expanded="!collapsed"
         @click="handleMenuCollapsed"
       >
         <n-icon size="18" v-if="collapsed">
@@ -29,19 +32,21 @@
         <n-icon size="18" v-else>
           <MenuFoldOutlined />
         </n-icon>
-      </div>
+      </button>
       <!-- 刷新 -->
-      <div
+      <button
+        type="button"
         class="mr-1 layout-header-trigger layout-header-trigger-min"
         v-if="headerSetting.isReload"
+        :aria-label="t('layout.header.reload')"
         @click="reloadPage"
       >
         <n-icon size="18">
           <ReloadOutlined />
         </n-icon>
-      </div>
+      </button>
       <!-- 面包屑 -->
-      <n-breadcrumb v-if="crumbsSetting.show">
+      <n-breadcrumb v-if="crumbsSetting.show" class="max-sm:hidden">
         <template
           v-for="routeItem in breadcrumbList"
           :key="routeItem.name === RedirectName ? void 0 : routeItem.name"
@@ -72,53 +77,74 @@
       </n-breadcrumb>
     </div>
     <div class="layout-header-right">
-      <div
-        class="layout-header-trigger layout-header-trigger-min"
+      <button
+        type="button"
+        class="layout-header-trigger layout-header-trigger-min max-sm:hidden"
         v-for="item in iconList"
         :key="item.icon"
+        :aria-label="item.tips"
+        @click="item.onClick"
       >
         <n-tooltip placement="bottom">
           <template #trigger>
             <n-icon size="18">
-              <component :is="item.icon" v-on="item.eventObject || {}" />
+              <component :is="item.icon" />
             </n-icon>
           </template>
           <span>{{ item.tips }}</span>
         </n-tooltip>
-      </div>
+      </button>
       <!--切换全屏-->
-      <div class="layout-header-trigger layout-header-trigger-min">
+      <button
+        type="button"
+        class="layout-header-trigger layout-header-trigger-min max-sm:hidden"
+        :aria-label="t('layout.header.fullscreen')"
+        @click="toggleFullScreen"
+      >
         <n-tooltip placement="bottom">
           <template #trigger>
             <n-icon size="18">
-              <component :is="fullscreenIcon" @click="toggleFullScreen" />
+              <component :is="fullscreenIcon" />
             </n-icon>
           </template>
           <span>{{ t('layout.header.fullscreen') }}</span>
         </n-tooltip>
-      </div>
+      </button>
       <!--切换语言-->
-      <div class="layout-header-trigger layout-header-trigger-min">
-        <n-dropdown trigger="hover" :options="localeOptions" @select="localeSelect">
-          <div class="layout-header-trigger layout-header-trigger-min">
-            <n-icon size="18">
-              <TranslationOutlined />
-            </n-icon>
-          </div>
-        </n-dropdown>
-      </div>
+      <n-dropdown trigger="click" :options="localeOptions" @select="localeSelect">
+        <button
+          type="button"
+          class="layout-header-trigger layout-header-trigger-min"
+          :aria-label="t('layout.header.language')"
+        >
+          <n-icon size="18">
+            <TranslationOutlined />
+          </n-icon>
+        </button>
+      </n-dropdown>
       <!-- 个人中心 -->
-      <div class="layout-header-trigger layout-header-trigger-min">
-        <n-dropdown trigger="hover" @select="avatarSelect" :options="avatarOptions">
-          <div class="avatar">
-            <n-avatar :src="schoolboy" round />
-            <n-divider vertical />
-            <span>{{ username }}</span>
-          </div>
-        </n-dropdown>
-      </div>
+      <n-dropdown trigger="click" @select="avatarSelect" :options="avatarOptions">
+        <button
+          type="button"
+          class="layout-header-trigger layout-header-trigger-min"
+          :aria-label="`${t('layout.header.account')}：${username}`"
+        >
+          <span class="avatar">
+            <n-avatar :src="avatarUrl || undefined" round :size="32">
+              <template v-if="!avatarUrl">{{ initial }}</template>
+            </n-avatar>
+            <n-divider vertical class="max-sm:hidden" />
+            <span class="max-sm:hidden">{{ username }}</span>
+          </span>
+        </button>
+      </n-dropdown>
       <!--设置-->
-      <div class="layout-header-trigger layout-header-trigger-min" @click="openSetting">
+      <button
+        type="button"
+        class="layout-header-trigger layout-header-trigger-min"
+        :aria-label="t('layout.header.projectConfig')"
+        @click="openSetting"
+      >
         <n-tooltip placement="bottom-end">
           <template #trigger>
             <n-icon size="18" style="font-weight: bold">
@@ -127,7 +153,7 @@
           </template>
           <span>{{ t('layout.header.projectConfig') }}</span>
         </n-tooltip>
-      </div>
+      </button>
     </div>
   </div>
   <!--项目配置-->
@@ -146,7 +172,7 @@
   import { TABS_ROUTES } from '@/store/mutation-types';
   import { storage } from '@/utils/Storage';
   import { NDialogProvider, useDialog, useMessage } from 'naive-ui';
-  import { computed, defineComponent, reactive, ref, toRefs, unref } from 'vue';
+  import { computed, defineComponent, reactive, ref, toRefs, unref, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useI18n } from 'vue-i18n';
   import { TranslationOutlined } from '@vicons/antd';
@@ -155,7 +181,7 @@
   import { useLocaleStore } from '@/store/modules/locale';
   import components from './components';
   import ProjectSetting from './ProjectSetting.vue';
-  import schoolboy from '@/assets/images/schoolboy.png'
+  import { useAvatarStore } from '@/store/modules/avatar';
 
   export default defineComponent({
     name: 'PageHeader',
@@ -171,6 +197,7 @@
     emits: ['update:collapsed'],
     setup(props, { emit }) {
       const userStore = useUserStore();
+      const avatarStore = useAvatarStore();
       const useLockscreen = useScreenLockStore();
       const message = useMessage();
       const dialog = useDialog();
@@ -203,6 +230,11 @@
         headerSetting,
         crumbsSetting,
       });
+
+      // 头像签名随会话里的媒体 ID 变化重新换取；无头像或失败时回落为昵称首字符。
+      watch(() => userStore.info.avatarMediaId, (id) => void avatarStore.ensure(id), { immediate: true });
+      const avatarUrl = computed(() => avatarStore.url);
+      const initial = computed(() => (userStore.username || state.username).trim().charAt(0).toUpperCase());
 
       const getInverted = computed(() => designStore.darkTheme);
 
@@ -267,6 +299,7 @@
           negativeText: t('common.cancel'),
           onPositiveClick: () => {
             userStore.logout().then(() => {
+              avatarStore.reset();
               message.success(t('layout.header.logoutSuccess'));
               // 移除标签页
               storage.remove(TABS_ROUTES);
@@ -308,16 +341,10 @@
         {
           icon: 'LockOutlined',
           tips: t('layout.header.lock'),
-          eventObject: {
-            click: () => useLockscreen.setLock(true),
-          },
+          onClick: () => useLockscreen.setLock(true),
         },
       ]);
       const avatarOptions = computed(() => [
-        {
-          label: t('layout.header.personalSetting'),
-          key: 1,
-        },
         {
           label: t('layout.header.logout'),
           key: 2,
@@ -327,9 +354,6 @@
       //头像下拉菜单
       const avatarSelect = (key) => {
         switch (key) {
-          case 1:
-            router.push({ name: 'Setting' });
-            break;
           case 2:
             doLogout();
             break;
@@ -370,7 +394,8 @@
         logo,
         handleMenuCollapsed,
         RedirectName,
-        schoolboy
+        avatarUrl,
+        initial,
       };
     },
   });
@@ -446,9 +471,19 @@
       display: inline-block;
       width: 64px;
       height: 64px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
+
+      &:focus-visible {
+        outline: 2px solid var(--admin-primary);
+        outline-offset: -2px;
+      }
 
       .n-icon {
         display: flex;
@@ -469,6 +504,7 @@
 
     &-trigger-min {
       width: auto;
+      min-width: 44px;
       padding: 0 12px;
     }
   }

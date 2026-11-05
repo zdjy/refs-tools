@@ -6,8 +6,8 @@ export const ErrorPageRoute: RouteRecordRaw = {
   path: '/:path(.*)*',
   name: 'ErrorPage',
   component: Layout,
+  // 父级不设标题：面包屑按 meta.title 渲染，父子同名会显示成「页面不存在 / 页面不存在」。
   meta: {
-    title: 'route.errorPage',
     hideBreadcrumb: true,
   },
   children: [

@@ -27,17 +27,17 @@
     <NCard :bordered="false">
       <NForm inline size="large" @submit.prevent="load(1)">
         <div class="flex w-full flex-wrap items-end gap-3">
-          <NFormItem label="组织名称 / 地区" class="w-full min-w-0 sm:w-auto sm:flex-1">
+          <NFormItem label="组织名称 / 地区" :show-feedback="false" class="w-full min-w-0 sm:min-w-[280px] sm:max-w-[420px] sm:flex-1">
             <NInput v-model:value="keyword" :maxlength="100" clearable :input-props="{ 'aria-label': '组织名称或地区' }" placeholder="搜索组织" />
           </NFormItem>
-          <NFormItem label="组织状态" class="w-40">
+          <NFormItem label="组织状态" :show-feedback="false" class="w-full sm:w-40">
             <NSelect v-model:value="status" :options="statusOptions" clearable aria-label="筛选组织状态" placeholder="全部状态" />
           </NFormItem>
-          <NSpace class="mb-6">
+          <NSpace>
             <NButton attr-type="submit" size="large" :disabled="loading || !online">查询</NButton>
             <NButton size="large" :disabled="loading || !online" @click="keyword = ''; status = null; load(1)">重置</NButton>
-            <NButton type="primary" size="large" :disabled="busy || !online" @click="create">代录组织申请</NButton>
           </NSpace>
+          <NButton type="primary" size="large" class="sm:ml-auto" :disabled="busy || !online" @click="create">代录组织申请</NButton>
         </div>
       </NForm>
       <NAlert v-if="error" type="error" title="读取失败，列表可能已陈旧" class="mb-4" role="alert">

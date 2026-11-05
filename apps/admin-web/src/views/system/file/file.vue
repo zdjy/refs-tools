@@ -28,13 +28,13 @@
     <p v-if="notice" role="status" class="rounded border border-admin-line bg-admin-surface p-4 text-admin-body">{{ notice }}</p>
     <NCard :bordered="false">
       <NForm size="large" @submit.prevent="load(1)">
-        <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-          <NFormItem label="原文件名"><NInput v-model:value="keyword" :maxlength="200" clearable placeholder="按文件名搜索" :input-props="{ 'aria-label': '搜索文件名' }" /></NFormItem>
-          <NFormItem label="所属用户 ID"><NInput v-model:value="ownerUserId" :maxlength="36" clearable placeholder="填写完整用户 UUID" :input-props="{ 'aria-label': '筛选文件所属用户' }" /></NFormItem>
-          <NFormItem label="用途"><NSelect v-model:value="purpose" :options="purposeOptions" clearable aria-label="筛选文件用途" placeholder="全部用途" /></NFormItem>
-          <NFormItem label="状态"><NSelect v-model:value="status" :options="statusOptions" clearable aria-label="筛选文件状态" placeholder="全部状态" /></NFormItem>
+        <div class="flex w-full flex-wrap items-end gap-3">
+          <NFormItem label="原文件名" :show-feedback="false" class="w-full min-w-0 sm:min-w-[220px] sm:flex-1"><NInput v-model:value="keyword" :maxlength="200" clearable placeholder="按文件名搜索" :input-props="{ 'aria-label': '搜索文件名' }" /></NFormItem>
+          <NFormItem label="所属用户 ID" :show-feedback="false" class="w-full min-w-0 sm:min-w-[220px] sm:flex-1"><NInput v-model:value="ownerUserId" :maxlength="36" clearable placeholder="填写完整用户 UUID" :input-props="{ 'aria-label': '筛选文件所属用户' }" /></NFormItem>
+          <NFormItem label="用途" :show-feedback="false" class="w-full sm:w-40"><NSelect v-model:value="purpose" :options="purposeOptions" clearable aria-label="筛选文件用途" placeholder="全部用途" /></NFormItem>
+          <NFormItem label="状态" :show-feedback="false" class="w-full sm:w-40"><NSelect v-model:value="status" :options="statusOptions" clearable aria-label="筛选文件状态" placeholder="全部状态" /></NFormItem>
         </div>
-        <NSpace class="mb-4">
+        <NSpace class="mb-4 mt-4">
           <NButton attr-type="submit" type="primary" size="large" :disabled="loading || !online">查询</NButton>
           <NButton size="large" :disabled="loading || !online" @click="reset">重置</NButton>
           <NButton size="large" :disabled="loading || !online" @click="load()">刷新</NButton>
@@ -45,7 +45,7 @@
       </NAlert>
       <UiLoadingHint :loading="loading" label="读取文件列表" @retry="load()" />
       <div class="min-w-0 overflow-x-auto">
-        <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1420">
+        <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1200">
           <template #empty>没有匹配的文件记录</template>
         </NDataTable>
       </div>

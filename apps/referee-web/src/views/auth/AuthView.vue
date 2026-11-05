@@ -41,14 +41,13 @@ async function onSubmit() {
         <UiLoadingRegion :loading="true" label="确认登录状态" :lines="2" @retry="auth.restore(true)" />
       </template>
       <template v-else-if="status === 'error'">
-        <h2 class="mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">暂时无法确认登录状态</h2>
+        <h2 class="text-ink mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">暂时无法确认登录状态</h2>
         <n-alert type="error" :show-icon="false">{{ error }}</n-alert>
         <n-button type="primary" block @click="auth.restore(true)">重试连接</n-button>
       </template>
       <template v-else>
         <header class="mb-7">
-          <p class="mt-0 mr-0 mb-3 ml-0 text-xs font-bold tracking-wider text-red-hover uppercase">{{ mode === 'register' ? '创建账号' : '欢迎回来' }}</p>
-          <h2 class="mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">{{ mode === 'register' ? '开启你的裁判之旅' : '登录裁判工具箱' }}</h2>
+          <h2 class="text-ink mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">{{ mode === 'register' ? '开启你的裁判之旅' : '登录裁判工具箱' }}</h2>
           <p class="m-0 text-[14px] leading-[1.7] text-body">{{ mode === 'register' ? '验证邮箱，建立属于你的个人账号。' : '登录后，继续你的学习与裁判履职。' }}</p>
         </header>
         <div v-if="mode !== 'register'" class="mb-6 grid grid-cols-2 gap-2 rounded-full bg-soft p-1" role="group" aria-label="选择登录方式">

@@ -14,7 +14,7 @@ const stats = Object.keys(STAT_LABELS) as TeamStat[]
     <p class="mt-0 mr-0 mb-5 ml-0 text-[14px] leading-[1.6] text-body">本机辅助记录，不是官方统计表。比分纠错不改变投篮统计。</p>
     <div class="grid grid-cols-[minmax(0,1fr)] gap-6 compact:grid-cols-2">
       <section v-for="side in (['home', 'away'] as const)" :key="side" class="min-w-0 wrap-anywhere">
-        <h3 class="mt-0 mr-0 mb-3 ml-0">{{ session.scorer.teams[side].name }} · {{ session.scorer.teams[side].score }} 分</h3>
+        <h3 class="mt-0 mr-0 mb-3 ml-0 text-ink">{{ session.scorer.teams[side].name }} · {{ session.scorer.teams[side].score }} 分</h3>
         <dl class="m-0">
           <div class="flex justify-between gap-3 border-0 border-t border-solid border-line px-0 py-2 text-[13px]"><dt class="text-body">分节比分</dt><dd class="m-0 text-right wrap-anywhere tabular-nums">{{ Array.from({ length: session.period }, (_, i) => session.scorer.teams[side].periodScores[i] ?? 0).join(' / ') }}</dd></div>
           <div class="flex justify-between gap-3 border-0 border-t border-solid border-line px-0 py-2 text-[13px]"><dt class="text-body">投篮（两分+三分）</dt><dd class="m-0 text-right wrap-anywhere tabular-nums">{{ shootingSummary(session.scorer.teams[side]).field }}</dd></div>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import SkipLink from '../../components/navigation/SkipLink.vue'
-import brandLockup from '../../assets/brand/lockup-compact.png'
+import BrandLink from '../../components/navigation/BrandLink.vue'
 import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { NAlert, NButton, NEmpty, NPopconfirm } from 'naive-ui'
+import { NAlert, NButton, NPopconfirm } from 'naive-ui'
+import UiCourtLines from '../../components/ui/UiCourtLines.vue'
 import { useWorkbenchStore } from '../../stores/workbench'
 import { useScorerConsole } from './useScorerConsole'
 import TeamScorePanel from './components/TeamScorePanel.vue'
@@ -39,7 +40,7 @@ onMounted(initialize)
   <main class="min-h-screen">
     <SkipLink />
     <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-canvas/90 px-4 py-2 backdrop-blur-md tablet:sticky tablet:top-0 tablet:z-40 md:px-8">
-      <RouterLink class="inline-flex min-h-11 items-center no-underline" to="/"><img :src="brandLockup" alt="裁判工具箱首页" class="h-8 w-auto" /></RouterLink>
+      <BrandLink label="裁判工具箱首页" />
       <div class="flex items-center gap-2 text-[13px] text-body">
         <span class="hidden sm:inline">本地工作台</span>
         <RouterLink class="inline-flex min-h-11 min-w-11 items-center justify-center px-2 py-0 text-[13px] text-body no-underline hover:text-red" to="/account">账号</RouterLink>
@@ -63,7 +64,7 @@ onMounted(initialize)
           <WorkbenchScoreStrip :session="activeSession" :now="now" @toggle="toggleClock('game')" @reset-shot="applyPreset" />
           <header class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 class="m-0 text-[22px] tracking-[-.02em] wrap-anywhere">{{ activeSession.scorer.teams.home.name }} vs {{ activeSession.scorer.teams.away.name }}</h2>
+              <h2 class="text-ink m-0 text-[22px] tracking-[-.02em] wrap-anywhere">{{ activeSession.scorer.teams.home.name }} vs {{ activeSession.scorer.teams.away.name }}</h2>
               <p class="mt-1.5 mr-0 mb-0 ml-0 text-[13px] wrap-anywhere text-body">{{ periodLabel(activeSession.period, activeSession.rules.periodCount) }} / {{ activeSession.rules.label }}</p>
               <p class="mt-1.5 mr-0 mb-0 ml-0 text-[13px] wrap-anywhere text-body">规则版本：{{ activeSession.rules.id }}</p>
             </div>
@@ -111,12 +112,13 @@ onMounted(initialize)
           <WorkbenchEventLog :events="activeSession.events" @clear="clearEventLog" />
           <TeamBoxScore v-model:show="boxScoreVisible" :session="activeSession" @csv="exportCsv('stats')" @json="exportSession" />
         </template>
-        <div v-else class="grid min-h-[300px] place-items-center px-3 py-8">
-          <n-empty :description="restoreFailed ? '本地记录暂时无法读取' : '还没有比赛'" :show-icon="false">
-            <template #extra>
-              <n-button type="primary" :disabled="restoreFailed" @click="createDialogVisible = true">新建比赛</n-button>
-            </template>
-          </n-empty>
+        <div v-else class="relative grid min-h-[320px] items-center overflow-hidden rounded-2xl border border-solid border-line bg-sand px-5 py-10 compact:px-10">
+          <UiCourtLines class="pointer-events-none absolute -right-6 -bottom-12 hidden h-64 w-auto text-body/25 compact:block" />
+          <div class="relative grid max-w-[360px] justify-items-start gap-2">
+            <h2 class="m-0 text-xl font-bold text-ink">{{ restoreFailed ? '本地记录暂时无法读取' : '还没有比赛' }}</h2>
+            <p class="m-0 text-sm leading-relaxed text-body">{{ restoreFailed ? '请先导出原始数据，再重试读取。' : '新建一场比赛后即可记分、计时并记录犯规，数据只保存在这台设备。' }}</p>
+            <n-button class="mt-3" type="primary" :disabled="restoreFailed" @click="createDialogVisible = true">新建比赛</n-button>
+          </div>
         </div>
       </section>
     </section>
