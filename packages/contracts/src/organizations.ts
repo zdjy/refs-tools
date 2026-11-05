@@ -26,6 +26,12 @@ export const CreateOrganizationSchema = Type.Object({
   purpose: Type.String({ minLength: 1, maxLength: 1000 }), ownerUserId: Type.String({ format: 'uuid' }),
   contact: Type.String({ minLength: 1, maxLength: 200 }),
 }, { additionalProperties: false })
+/** 平台修正组织资料；只允许四个可维护字段，状态、负责人与时间戳走各自用例。 */
+export const UpdateOrganizationSchema = Type.Object({
+  name: Type.String({ minLength: 1, maxLength: 120 }), region: Type.String({ minLength: 1, maxLength: 100 }),
+  purpose: Type.String({ minLength: 1, maxLength: 1000 }), contact: Type.String({ minLength: 1, maxLength: 200 }),
+  expectedVersion: Type.Integer({ minimum: 1 }),
+}, { additionalProperties: false })
 export const OrganizationDecisionSchema = Type.Object({
   action: Type.Union([Type.Literal('approve'), Type.Literal('reject'), Type.Literal('freeze'), Type.Literal('unfreeze')]),
   expectedVersion: Type.Integer({ minimum: 1 }), reason: Type.String({ minLength: 1, maxLength: 500 }),
@@ -39,5 +45,6 @@ export type OrganizationDetail = Static<typeof OrganizationDetailSchema>
 export type OrganizationQuery = Static<typeof OrganizationQuerySchema>
 export type OrganizationList = Static<typeof OrganizationListResponseSchema>['data']
 export type CreateOrganization = Static<typeof CreateOrganizationSchema>
+export type UpdateOrganization = Static<typeof UpdateOrganizationSchema>
 export type OrganizationDecision = Static<typeof OrganizationDecisionSchema>
 export type OrganizationParams = Static<typeof OrganizationParamsSchema>

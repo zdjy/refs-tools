@@ -8,3 +8,10 @@ export function organizationStatusAfter(status: Organization['status'], action: 
   const [from, to] = transitions[action]
   return status === from ? to : null
 }
+
+const profileEditable = ['pending_review', 'active', 'frozen'] as const
+
+/** 平台可修正组织资料的状态；已驳回与已解散为终态，需重新申请或走后续治理流程，不能直接改写资料。 */
+export function canUpdateOrganizationProfile(status: Organization['status']): boolean {
+  return (profileEditable as readonly Organization['status'][]).includes(status)
+}

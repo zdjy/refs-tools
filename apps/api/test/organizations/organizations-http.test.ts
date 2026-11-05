@@ -10,7 +10,8 @@ async function fixture() {
     version: 1, createdAt: new Date().toISOString(), ownerLegalName: '负责人', contact: 'private@example.com',
     reviewedBy: null, reviewedAt: null, governanceReason: null }
   const service = { list: vi.fn(async () => ({ items: [organization], total: 1, page: 1, pageSize: 20 })),
-    detail: vi.fn(async () => organization), create: vi.fn(async () => organization), decide: vi.fn(async () => organization) }
+    detail: vi.fn(async () => organization), create: vi.fn(async () => organization), decide: vi.fn(async () => organization),
+    update: vi.fn(async () => ({ ...organization, name: '协会（已修正）', version: 2 })) }
   const sessions = { requireVerifiedSession: vi.fn(async (value: string | undefined) => {
     if (value !== token) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
     return { user: { id: actor, email: 'admin@example.com', displayName: '管理员', emailVerified: true, hasPassword: true, avatarMediaId: null }, expiresAt: new Date().toISOString() }
@@ -28,6 +29,10 @@ describe('组织治理 HTTP 门禁', () => {
       expect((await f.app.inject({ method: 'POST', url: `/api/v1/admin/organizations/${f.id}/decision`,
         headers: { ...f.headers, origin: 'https://evil.example.com' }, payload: { action: 'approve', expectedVersion: 1, reason: '齐全' } })).statusCode).toBe(403)
       expect(f.service.list).not.toHaveBeenCalled(); expect(f.service.decide).not.toHaveBeenCalled()
+      expect((await f.app.inject({ method: 'PATCH', url: `/api/v1/admin/organizations/${f.id}`,
+        headers: { ...f.headers, origin: 'https://evil.example.com' },
+        payload: { name: '协会', region: '上海', purpose: '培训', contact: 'c', expectedVersion: 1 } })).statusCode).toBe(403)
+      expect(f.service.update).not.toHaveBeenCalled()
     } finally { await f.app.close() }
   })
   it('当前 Cookie 身份贯穿查询和治理，列表响应剔除私密字段', async () => {
@@ -44,6 +49,16 @@ describe('组织治理 HTTP 门禁', () => {
       const decision = { action: 'approve', expectedVersion: 1, reason: '材料齐全' }
       expect((await f.app.inject({ method: 'POST', url: `/api/v1/admin/organizations/${f.id}/decision`, headers: f.headers, payload: decision })).statusCode).toBe(200)
       expect(f.service.decide).toHaveBeenCalledWith(f.actor, f.id, decision)
+      const profile = { name: '协会', region: '上海', purpose: '培训', contact: 'public@example.com', expectedVersion: 1 }
+      const updated = await f.app.inject({ method: 'PATCH', url: `/api/v1/admin/organizations/${f.id}`, headers: f.headers, payload: profile })
+      expect(updated.statusCode).toBe(200); expect(updated.json().data.name).toBe('协会（已修正）')
+      expect(f.service.update).toHaveBeenCalledWith(f.actor, f.id, profile)
+      expect((await f.app.inject({ method: 'PATCH', url: `/api/v1/admin/organizations/${f.id}`, headers: f.headers,
+        payload: { ...profile, status: 'active' } })).statusCode).toBe(400)
+      expect((await f.app.inject({ method: 'PATCH', url: `/api/v1/admin/organizations/${f.id}`, headers: f.headers,
+        payload: { ...profile, expectedVersion: undefined } })).statusCode).toBe(400)
+      expect((await f.app.inject({ method: 'PATCH', url: `/api/v1/admin/organizations/not-uuid`, headers: f.headers, payload: profile })).statusCode).toBe(400)
+      expect(f.service.update).toHaveBeenCalledTimes(1)
     } finally { await f.app.close() }
   })
   it('拒绝非法 UUID、分页、额外角色字段和无版本治理', async () => {

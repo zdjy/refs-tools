@@ -9,6 +9,7 @@ export const AuditActionSchema = Type.Union([
   Type.Literal('membership.queried'), Type.Literal('membership.changed'), Type.Literal('invitation.queried'), Type.Literal('invitation.changed'),
   Type.Literal('join_code.queried'), Type.Literal('join_code.changed'), Type.Literal('candidate.queried'),
   Type.Literal('organization.queried'), Type.Literal('organization.created'), Type.Literal('organization.unfrozen'),
+  Type.Literal('organization.updated'),
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
   Type.Literal('certification.decided'), Type.Literal('certification.revoked'), Type.Literal('certification.appealed'),
   Type.Literal('exam.published'), Type.Literal('question.versioned'), Type.Literal('grading.reviewed'), Type.Literal('grading.overridden'),

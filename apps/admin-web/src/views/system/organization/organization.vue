@@ -10,11 +10,13 @@
   import OrganizationMembers from './components/OrganizationMembers.vue';
 
   const { items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError,
-    notice, online, mode, action, reason, confirming, form, load, create, open, close, requestDecision, save, decide } = useOrganizations();
+    notice, online, mode, action, reason, confirming, form, profile, profileDirty, profileEditable, savingProfile, load, create, open,
+    close, requestDecision, resetProfile, save, saveProfile, decide } = useOrganizations();
   useUiFeedback(notice);
   const memberPanel = ref<InstanceType<typeof OrganizationMembers> | null>(null);
   const columns = organizationColumns(open, organization => memberPanel.value?.open(organization));
   function updateForm(value: typeof form) { Object.assign(form, value); }
+  function updateProfile(value: typeof profile) { Object.assign(profile, value); }
 </script>
 
 <template>
@@ -72,7 +74,9 @@
         @update:form="updateForm" @save="save" @close="close" />
       <NSpin v-else :show="detailLoading">
         <OrganizationDetail v-if="selected && ready" :organization="selected" v-model:action="action" v-model:reason="reason"
-          :busy="busy" :online="online" @request="requestDecision" @close="close" />
+          :busy="busy" :saving="savingProfile" :online="online" :profile="profile" :profile-editable="profileEditable"
+          :profile-dirty="profileDirty" @update:profile="updateProfile" @save-profile="saveProfile"
+          @reset-profile="resetProfile" @request="requestDecision" @close="close" />
         <div v-else>
           <p role="status">{{ detailLoading ? '正在读取组织详情…' : '详情未就绪，请重新读取。' }}</p>
           <NButton size="large" @click="close">关闭</NButton>

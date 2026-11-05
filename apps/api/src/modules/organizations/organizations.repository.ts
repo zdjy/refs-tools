@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg'
-import type { CreateOrganization, OrganizationDetail, OrganizationList, OrganizationQuery } from '@refs-tools/contracts/organizations'
+import type { CreateOrganization, OrganizationDetail, OrganizationList, OrganizationQuery, UpdateOrganization } from '@refs-tools/contracts/organizations'
 import type { OrganizationsRepository } from './organizations.types.js'
 
 type OrganizationRow = {
@@ -48,6 +48,14 @@ export class PgOrganizationsRepository implements OrganizationsRepository {
       reviewed_by=CASE WHEN $6 THEN $4::uuid ELSE reviewed_by END,
       reviewed_at=CASE WHEN $6 THEN $7::timestamptz ELSE reviewed_at END WHERE id=$1 AND version=$2 RETURNING id`,
     [id, version, status, actor, reason, review, now])
+    return result.rows.length > 0
+  }
+
+  async updateProfile(id: string, input: UpdateOrganization): Promise<boolean> {
+    // 版本条件更新代替行锁：并发的资料修改与治理操作只有一方能命中当前版本。
+    const result = await this.connection.query(`UPDATE organizations SET name=$3,region=$4,purpose=$5,contact=$6,version=version+1
+      WHERE id=$1 AND version=$2 RETURNING id`,
+    [id, input.expectedVersion, input.name, input.region, input.purpose, input.contact])
     return result.rows.length > 0
   }
 

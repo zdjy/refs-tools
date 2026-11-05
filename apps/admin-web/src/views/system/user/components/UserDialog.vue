@@ -16,6 +16,8 @@
   }>();
   const formRef = ref<FormInst | null>(null), contentRef = ref<HTMLElement | null>(null);
   const title = computed(() => ({ create: '新增用户', edit: '编辑用户', detail: '用户详情' })[props.mode]);
+  const roleText = computed(() => props.selected?.roles.map(role => roleLabels[role] ?? role).join('、') || '普通用户');
+  const createdText = computed(() => props.selected ? new Date(props.selected.createdAt).toLocaleString() : '');
   const rules = computed<FormRules>(() => ({
     email: { required: true, type: 'email', message: '请输入有效邮箱', trigger: ['blur', 'input'] },
     displayName: { required: true, validator: (_, value: string) => !!value?.trim(), message: '请输入显示名称', trigger: 'blur' },
@@ -43,19 +45,17 @@
     </NAlert>
     <NAlert v-if="!online" type="warning" class="mb-4">当前离线，无法提交；输入暂时保留。</NAlert>
     <div ref="contentRef"><NSpin :show="loading">
-      <dl v-if="mode === 'detail' && selected && ready" class="m-0 grid grid-cols-1 gap-3 break-all">
-        <div><dt>用户 ID</dt><dd class="m-0">{{ selected.id }}</dd></div>
-        <div><dt>显示名称</dt><dd class="m-0">{{ selected.displayName }}</dd></div>
-        <div><dt>邮箱</dt><dd class="m-0">{{ selected.email }}（{{ selected.emailVerified ? '已验证' : '未验证' }}）</dd></div>
-        <div><dt>账号状态</dt><dd class="m-0">{{ selected.status === 'active' ? '正常' : '已停用' }}</dd></div>
-        <div><dt>当前平台角色</dt><dd class="m-0">{{ selected.roles.map(role => roleLabels[role] ?? role).join('、') || '普通用户' }}</dd></div>
-        <div><dt>创建时间</dt><dd class="m-0">{{ new Date(selected.createdAt).toLocaleString() }}</dd></div>
-      </dl>
-      <NForm v-else ref="formRef" :model="form" :rules="rules" :disabled="busy || loading || !ready" size="large"
+      <NForm ref="formRef" :model="form" :rules="rules" :disabled="busy || loading || !ready || mode === 'detail'" size="large"
         @submit.prevent="submit">
+        <NFormItem v-if="mode !== 'create'" label="用户 ID">
+          <NInput :value="selected?.id ?? ''" disabled :input-props="{ 'aria-label': '用户 ID' }" />
+        </NFormItem>
         <NFormItem label="邮箱" path="email">
           <NInput :value="form.email" :disabled="mode !== 'create'" :maxlength="254"
             :input-props="{ 'aria-label': '邮箱', autocomplete: 'email' }" @update:value="update('email', $event)" />
+        </NFormItem>
+        <NFormItem v-if="mode !== 'create'" label="邮箱验证">
+          <NInput :value="selected?.emailVerified ? '已验证' : '未验证'" disabled :input-props="{ 'aria-label': '邮箱验证' }" />
         </NFormItem>
         <NFormItem label="显示名称" path="displayName">
           <NInput :value="form.displayName" :maxlength="80" :input-props="{ 'aria-label': '显示名称' }" @update:value="update('displayName', $event)" />
@@ -67,7 +67,15 @@
         <NFormItem v-else label="账号状态" path="status">
           <NSelect :value="form.status" :options="statusOptions" aria-label="账号状态" @update:value="update('status', $event)" />
         </NFormItem>
-        <p class="mt-0 text-sm">{{ mode === 'create' ? '创建后需通过邮箱验证码验证身份。初始密码不符合要求时会显示具体提示。' : '停用会撤销全部会话。邮箱与角色需通过各自的验证、授权流程维护。' }}</p>
+        <NFormItem v-if="mode === 'detail'" label="当前平台角色">
+          <NInput :value="roleText" disabled :input-props="{ 'aria-label': '当前平台角色' }" />
+        </NFormItem>
+        <NFormItem v-if="mode === 'detail'" label="创建时间">
+          <NInput :value="createdText" disabled :input-props="{ 'aria-label': '创建时间' }" />
+        </NFormItem>
+        <p class="mt-0 text-sm">{{ mode === 'create' ? '创建后需通过邮箱验证码验证身份。初始密码不符合要求时会显示具体提示。'
+          : mode === 'detail' ? '邮箱、平台角色与账号生命周期需通过各自的验证、授权流程维护；此处的只读字段不可编辑。'
+          : '停用会撤销全部会话。邮箱与角色需通过各自的验证、授权流程维护。' }}</p>
       </NForm>
     </NSpin></div>
     <template #footer>

@@ -1,13 +1,19 @@
 import { randomUUID } from 'node:crypto'
-import type { CreateOrganization, OrganizationDecision, OrganizationDetail, OrganizationQuery } from '@refs-tools/contracts/organizations'
+import type { CreateOrganization, OrganizationDecision, OrganizationDetail, OrganizationQuery, UpdateOrganization } from '@refs-tools/contracts/organizations'
 import type { AuditAction } from '@refs-tools/contracts/audit'
-import { organizationStatusAfter } from '@refs-tools/domain'
+import { canUpdateOrganizationProfile, organizationStatusAfter } from '@refs-tools/domain'
 import { DomainError } from '../../application/errors.js'
 import { requirePermission } from '../authorization/authorization.service.js'
 import { appendAudit } from '../audit/audit.service.js'
 import type { OrganizationsDependencies, OrganizationsRepositories } from './organizations.types.js'
 
 function conflict() { return new DomainError('VERSION_CONFLICT', '组织已更新，请重新读取后再操作', 409) }
+/** 平台可维护的组织资料字段；去除首尾空格后任一为空即视为资料不完整。 */
+function normalizedProfile(input: Pick<CreateOrganization, 'name' | 'region' | 'purpose' | 'contact'>) {
+  const value = { name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim(), contact: input.contact.trim() }
+  if (Object.values(value).some((field) => !field)) throw new DomainError('INVALID_ORGANIZATION', '请完整填写组织与负责人资料', 422)
+  return value
+}
 async function target(repositories: OrganizationsRepositories, id: string, lock = false) {
   const result = await repositories.organizations.find(id, lock)
   if (!result) throw new DomainError('NOT_FOUND', '组织不存在', 404)
@@ -46,19 +52,31 @@ export class OrganizationsService {
   }
 
   async create(actor: string, input: CreateOrganization) {
-    const normalized = { name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim(),
-      ownerUserId: input.ownerUserId, contact: input.contact.trim() }
-    if ([normalized.name, normalized.region, normalized.purpose, normalized.contact].some((value) => !value)) {
-      throw new DomainError('INVALID_ORGANIZATION', '请完整填写组织与负责人资料', 422)
-    }
-    const now = this.dependencies.now(), id = randomUUID()
+    const profile = normalizedProfile(input), now = this.dependencies.now(), id = randomUUID()
     return this.dependencies.transaction.run(async (repositories) => {
       await this.authorize(repositories, actor, now)
-      await this.requireOwner(repositories, normalized.ownerUserId)
-      await repositories.organizations.create(id, normalized, now)
+      await this.requireOwner(repositories, input.ownerUserId)
+      await repositories.organizations.create(id, { ...profile, ownerUserId: input.ownerUserId }, now)
       const result = await target(repositories, id)
       await record(repositories, actor, id, 'organization.created', now, null, result)
       return result
+    })
+  }
+
+  /** 平台仅修正组织资料，不改状态、负责人与审核信息；版本条件更新与审计同事务。 */
+  async update(actor: string, id: string, input: UpdateOrganization) {
+    const profile = normalizedProfile(input), now = this.dependencies.now()
+    return this.dependencies.transaction.run(async (repositories) => {
+      await this.authorize(repositories, actor, now)
+      const before = await target(repositories, id, true)
+      if (before.version !== input.expectedVersion) throw conflict()
+      if (!canUpdateOrganizationProfile(before.status)) {
+        throw new DomainError('INVALID_ORGANIZATION_STATE', '当前组织状态不允许修改资料，请重新读取', 409)
+      }
+      if (!await repositories.organizations.updateProfile(id, { ...profile, expectedVersion: input.expectedVersion })) throw conflict()
+      const after = await target(repositories, id)
+      await record(repositories, actor, id, 'organization.updated', now, before, after)
+      return after
     })
   }
 

@@ -55,6 +55,21 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('组织治理 PostgreSQL', ()
     expect((await database.pool.query('SELECT id FROM organization_memberships WHERE organization_id=$1', [created.id])).rows).toEqual([])
     await expect(permission(created.id)).rejects.toMatchObject({ statusCode: 404 })
   })
+  it('资料修正真实落库，过期版本与终态组织被拒绝', async () => {
+    const created = await service.create(seed.ids.admin, input)
+    const updated = await service.update(seed.ids.admin, created.id, { name: ' 省裁判协会 ', region: '杭州',
+      purpose: '培训与赛事', contact: 'public@example.com', expectedVersion: 1 })
+    expect(updated).toMatchObject({ name: '省裁判协会', region: '杭州', contact: 'public@example.com', version: 2,
+      status: 'pending_review', ownerUserId: input.ownerUserId })
+    await expect(service.update(seed.ids.admin, created.id, { name: '甲', region: '乙', purpose: '丙', contact: '丁',
+      expectedVersion: 1 })).rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
+    await service.decide(seed.ids.admin, created.id, { action: 'reject', expectedVersion: 2, reason: '资料不足' })
+    await expect(service.update(seed.ids.admin, created.id, { name: '甲', region: '乙', purpose: '丙', contact: '丁',
+      expectedVersion: 3 })).rejects.toMatchObject({ code: 'INVALID_ORGANIZATION_STATE' })
+    const audits = (await database.pool.query('SELECT action FROM audit_events WHERE resource_id=$1', [created.id])).rows
+    expect(audits.map(row => row.action)).toContain('organization.updated')
+    expect(JSON.stringify(audits)).not.toContain('public@example.com')
+  })
   it('并发审核只有一次成功，只建立一个成员和两条角色', async () => {
     const created = await service.create(seed.ids.admin, input), decision = { action: 'approve' as const, expectedVersion: 1, reason: '核验通过' }
     const results = await Promise.allSettled([service.decide(seed.ids.admin, created.id, decision), service.decide(seed.ids.admin, created.id, decision)])

@@ -1,4 +1,4 @@
-import { getCurrentInstance, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { computed, getCurrentInstance, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import type { CreateOrganization, Organization, OrganizationDecision, OrganizationDetail } from '@refs-tools/contracts/organizations';
 import { organizationsApi, OrganizationsApiError } from '../../../api/system/organizations';
 
@@ -16,16 +16,22 @@ function message(error: unknown) {
   return error instanceof OrganizationsApiError ? messages[error.code] ?? '操作失败，请稍后重试' : '操作失败，请稍后重试';
 }
 const emptyForm = (): CreateOrganization => ({ name: '', region: '', purpose: '', ownerUserId: '', contact: '' });
+const emptyProfile = () => ({ name: '', region: '', purpose: '', contact: '' });
+/** 资料可编辑的状态投影；服务端仍是最终判定，拒绝终态组织的资料写入。 */
+const profileStatuses: Organization['status'][] = ['pending_review', 'active', 'frozen'];
 
 /** 页面局部状态；请求代次隔离筛选与详情，失败保留输入且不伪报成功。 */
 export function useOrganizations(api = organizationsApi) {
   const items = ref<Organization[]>([]), total = ref(0), page = ref(1), keyword = ref('');
   const status = ref<Organization['status'] | null>(null), selected = ref<OrganizationDetail | null>(null), selectedId = ref('');
-  const loading = ref(false), detailLoading = ref(false), ready = ref(false), busy = ref(false);
+  const loading = ref(false), detailLoading = ref(false), ready = ref(false), busy = ref(false), savingProfile = ref(false);
   const error = ref(''), formError = ref(''), notice = ref('');
   const online = ref(typeof navigator === 'undefined' || navigator.onLine);
   const mode = ref<'create' | 'detail' | null>(null), action = ref<OrganizationDecision['action'] | null>(null);
-  const reason = ref(''), confirming = ref(false), form = reactive(emptyForm());
+  const reason = ref(''), confirming = ref(false), form = reactive(emptyForm()), profile = reactive(emptyProfile());
+  const profileEditable = computed(() => !!selected.value && profileStatuses.includes(selected.value.status));
+  const profileDirty = computed(() => !!selected.value && (profile.name !== selected.value.name || profile.region !== selected.value.region
+    || profile.purpose !== selected.value.purpose || profile.contact !== selected.value.contact));
   let listSequence = 0, detailSequence = 0;
 
   async function load(nextPage = page.value) {
@@ -39,11 +45,20 @@ export function useOrganizations(api = organizationsApi) {
     finally { if (sequence === listSequence) loading.value = false; }
   }
 
+  function fillProfile(source: OrganizationDetail) {
+    Object.assign(profile, { name: source.name, region: source.region, purpose: source.purpose, contact: source.contact });
+  }
+
+  /** 丢弃本地输入，回到最近一次服务端确认的资料。 */
+  function resetProfile() {
+    if (selected.value) fillProfile(selected.value);
+  }
+
   function create() {
     if (busy.value) return;
     detailSequence++; detailLoading.value = false; ready.value = true; selected.value = null;
     action.value = null; reason.value = ''; confirming.value = false; formError.value = ''; notice.value = '';
-    Object.assign(form, emptyForm()); mode.value = 'create';
+    Object.assign(form, emptyForm()); Object.assign(profile, emptyProfile()); mode.value = 'create';
   }
 
   async function open(id: string) {
@@ -51,9 +66,10 @@ export function useOrganizations(api = organizationsApi) {
     const sequence = ++detailSequence;
     selectedId.value = id; selected.value = null; ready.value = false; detailLoading.value = true; mode.value = 'detail';
     action.value = null; reason.value = ''; confirming.value = false; formError.value = ''; notice.value = '';
+    Object.assign(profile, emptyProfile());
     try {
       const current = await api.detail(id);
-      if (sequence === detailSequence) { selected.value = current; ready.value = true; }
+      if (sequence === detailSequence) { selected.value = current; fillProfile(current); ready.value = true; }
     } catch (e) { if (sequence === detailSequence) formError.value = message(e); }
     finally { if (sequence === detailSequence) detailLoading.value = false; }
   }
@@ -62,6 +78,7 @@ export function useOrganizations(api = organizationsApi) {
     if (busy.value) return;
     detailSequence++; mode.value = null; selected.value = null; detailLoading.value = false;
     confirming.value = false; action.value = null; reason.value = ''; Object.assign(form, emptyForm());
+    Object.assign(profile, emptyProfile());
   }
 
   function requestDecision() {
@@ -76,6 +93,21 @@ export function useOrganizations(api = organizationsApi) {
     try { await api.create({ ...form }); mode.value = null; Object.assign(form, emptyForm()); notice.value = '组织申请已录入，等待审核'; await load(1); }
     catch (e) { formError.value = message(e); }
     finally { busy.value = false; }
+  }
+
+  /** 资料修正只提交四个可维护字段与当前版本；无改动时不伪装写入成功。 */
+  async function saveProfile() {
+    if (busy.value || !ready.value || !online.value || mode.value !== 'detail' || !selected.value) return;
+    if (!profileEditable.value) { formError.value = '当前组织状态不允许修改资料，请重新读取'; return; }
+    if (Object.values(profile).some(value => !value.trim())) { formError.value = '请完整填写组织名称、地区、用途与联系方式'; return; }
+    if (!profileDirty.value) { formError.value = ''; notice.value = '没有需要保存的修改'; return; }
+    busy.value = true; savingProfile.value = true; formError.value = ''; notice.value = '';
+    try {
+      const updated = await api.update(selected.value.id, { name: profile.name.trim(), region: profile.region.trim(),
+        purpose: profile.purpose.trim(), contact: profile.contact.trim(), expectedVersion: selected.value.version });
+      selected.value = updated; fillProfile(updated); notice.value = '组织资料已保存'; await load();
+    } catch (e) { formError.value = message(e); }
+    finally { busy.value = false; savingProfile.value = false; }
   }
 
   async function decide() {
@@ -99,5 +131,6 @@ export function useOrganizations(api = organizationsApi) {
     });
   }
   return { items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError, notice,
-    online, mode, action, reason, confirming, form, load, create, open, close, requestDecision, save, decide };
+    online, mode, action, reason, confirming, form, profile, profileDirty, profileEditable, savingProfile, load, create, open, close,
+    requestDecision, resetProfile, save, saveProfile, decide };
 }

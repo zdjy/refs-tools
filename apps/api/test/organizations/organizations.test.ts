@@ -13,6 +13,8 @@ function fixture() {
     organizations: { list: vi.fn(async () => ({ items: [organization], total: 1, page: 1, pageSize: 20 })),
       find: vi.fn(async () => ({ ...organization })), create: vi.fn(async () => {}),
       changeStatus: vi.fn(async (_id, _version, status) => { organization.status = status; organization.version++; return true }),
+      updateProfile: vi.fn(async (_id, profile) => { Object.assign(organization, { name: profile.name, region: profile.region,
+        purpose: profile.purpose, contact: profile.contact, version: organization.version + 1 }); return true }),
       activateOwnerMembership: vi.fn(async () => {}) },
     identities: { requireActiveActor: vi.fn(async () => true) },
     authorization: { resolveScope: vi.fn(async () => ({ type: 'platform' as const, id: null, organizationId: null,
@@ -83,6 +85,33 @@ describe('平台组织治理', () => {
     await f.service.decide(f.actor, f.id, { action: 'freeze', expectedVersion: 1, reason: '调查' })
     expect(f.repositories.authorization.revokeBinding).not.toHaveBeenCalled()
     await expect(f.service.decide(f.actor, f.id, { action: 'unfreeze', expectedVersion: 2, reason: '处理完毕' })).rejects.toMatchObject({ code: 'INVALID_OWNER_AUTHORITY' })
+  })
+  it('资料修改只写四个可维护字段，版本递增且审计不包含联系方式', async () => {
+    const f = fixture()
+    const result = await f.service.update(f.actor, f.id, { name: ' 省裁判协会 ', region: '杭州', purpose: ' 培训与赛事 ', contact: ' new@example.com ', expectedVersion: 1 })
+    expect(result).toMatchObject({ name: '省裁判协会', region: '杭州', purpose: '培训与赛事', contact: 'new@example.com', version: 2 })
+    expect(result.ownerUserId).toBe(f.owner); expect(result.status).toBe('pending_review')
+    expect(f.repositories.organizations.find).toHaveBeenCalledWith(f.id, true)
+    expect(f.repositories.organizations.updateProfile).toHaveBeenCalledWith(f.id, { name: '省裁判协会', region: '杭州', purpose: '培训与赛事',
+      contact: 'new@example.com', expectedVersion: 1 })
+    expect(f.repositories.audit.append).toHaveBeenCalledWith(expect.objectContaining({ action: 'organization.updated',
+      before: { status: 'pending_review', version: 1, subjectUserId: f.owner }, after: { status: 'pending_review', version: 2, subjectUserId: f.owner } }))
+    expect(JSON.stringify(vi.mocked(f.repositories.audit.append).mock.calls)).not.toContain('new@example.com')
+  })
+  it('资料修改拒绝空白字段、过期版本、终态组织与越权账号', async () => {
+    const f = fixture(), input = { name: '协会', region: '上海', purpose: '培训', contact: 'contact', expectedVersion: 1 }
+    await expect(f.service.update(f.actor, f.id, { ...input, region: ' ' })).rejects.toMatchObject({ code: 'INVALID_ORGANIZATION' })
+    await expect(f.service.update(f.actor, f.id, { ...input, expectedVersion: 2 })).rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
+    f.organization.status = 'dissolved'
+    await expect(f.service.update(f.actor, f.id, input)).rejects.toMatchObject({ code: 'INVALID_ORGANIZATION_STATE' })
+    f.organization.status = 'active'; f.permissions.isPermitted.mockReturnValue(false)
+    await expect(f.service.update(f.actor, f.id, input)).rejects.toMatchObject({ statusCode: 403 })
+    expect(f.repositories.organizations.updateProfile).not.toHaveBeenCalled()
+  })
+  it('资料修改审计失败不返回成功结果', async () => {
+    const f = fixture(); vi.mocked(f.repositories.audit.append).mockRejectedValue(new Error('audit failed'))
+    await expect(f.service.update(f.actor, f.id, { name: '协会', region: '上海', purpose: '培训', contact: 'c', expectedVersion: 1 }))
+      .rejects.toThrow('audit failed')
   })
   it('查询审计失败不返回私有详情，组织不存在返回 404', async () => {
     const f = fixture(); vi.mocked(f.repositories.audit.append).mockRejectedValue(new Error('audit failed'))

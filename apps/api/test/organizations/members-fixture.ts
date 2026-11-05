@@ -16,7 +16,7 @@ export function memberFixture() {
   const invitation: OrganizationInvitation = { id: randomUUID(), organizationId: id, organizationName: '协会', userId: user, displayName: '成员',
     status: 'pending', version: 1, createdAt: now.toISOString(), expiresAt: new Date(now.getTime() + 86400000).toISOString() }
   const r: MemberRepositories = {
-    organizations: { find: vi.fn(async () => organization), list: vi.fn(), create: vi.fn(), changeStatus: vi.fn(), activateOwnerMembership: vi.fn() },
+    organizations: { find: vi.fn(async () => organization), list: vi.fn(), create: vi.fn(), changeStatus: vi.fn(), updateProfile: vi.fn(), activateOwnerMembership: vi.fn() },
     identities: { requireActiveActor: vi.fn(async () => true) },
     members: { members: vi.fn(async () => ({ items: [member], total: 1, page: 1, pageSize: 20 })),
       invitations: vi.fn(async () => ({ items: [invitation], total: 1, page: 1, pageSize: 20 })),

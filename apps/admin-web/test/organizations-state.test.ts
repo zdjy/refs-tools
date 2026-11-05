@@ -8,7 +8,9 @@ function fixture() {
     status: 'pending_review', version: 1, createdAt: new Date().toISOString(), ownerLegalName: '负责人', contact: 'private@example.com',
     reviewedBy: null, reviewedAt: null, governanceReason: null };
   const api = { list: vi.fn(async () => ({ items: [organization], total: 1, page: 1, pageSize: 20 })),
-    detail: vi.fn(async () => organization), create: vi.fn(async () => organization), decide: vi.fn(async () => ({ ...organization, status: 'active' as const, version: 2 })) };
+    detail: vi.fn(async () => organization), create: vi.fn(async () => organization),
+    update: vi.fn(async () => ({ ...organization, name: '省裁判协会', version: 2 })),
+    decide: vi.fn(async () => ({ ...organization, status: 'active' as const, version: 2 })) };
   return { organization, api, state: useOrganizations(api) };
 }
 
@@ -63,8 +65,32 @@ describe('组织管理页面状态', () => {
     resolve({ ...f.organization, status: 'active', version: 2 }); await first;
     expect(f.state.selected.value?.version).toBe(2); expect(f.state.notice.value).toBe('组织申请已通过');
   });
+  it('资料表单只在可编辑状态开放，保存提交版本并在成功后同步服务端值', async () => {
+    const f = fixture(); await f.state.open(f.organization.id);
+    expect(f.state.profile.name).toBe('协会'); expect(f.state.profileEditable.value).toBe(true);
+    expect(f.state.profileDirty.value).toBe(false); await f.state.saveProfile();
+    expect(f.state.notice.value).toContain('没有需要保存的修改'); expect(f.api.update).not.toHaveBeenCalled();
+    f.state.profile.name = ' 省裁判协会 ';
+    await f.state.saveProfile();
+    expect(f.api.update).toHaveBeenCalledWith('org-id', { name: '省裁判协会', region: '上海', purpose: '培训',
+      contact: 'private@example.com', expectedVersion: 1 });
+    expect(f.state.selected.value?.version).toBe(2); expect(f.state.profile.name).toBe('省裁判协会');
+    expect(f.state.profileDirty.value).toBe(false); expect(f.state.notice.value).toBe('组织资料已保存');
+    f.state.profile.region = '杭州'; f.state.resetProfile(); expect(f.state.profile.region).toBe('上海');
+  });
+  it('终态组织禁用资料保存，版本冲突保留输入且不伪报成功', async () => {
+    const f = fixture(); f.organization.status = 'dissolved'; await f.state.open(f.organization.id);
+    expect(f.state.profileEditable.value).toBe(false);
+    await f.state.saveProfile(); expect(f.api.update).not.toHaveBeenCalled(); expect(f.state.formError.value).toContain('不允许修改资料');
+    f.organization.status = 'active'; await f.state.open(f.organization.id);
+    f.state.profile.contact = '新联系方式';
+    f.api.update.mockRejectedValueOnce(new OrganizationsApiError('VERSION_CONFLICT', 409)); await f.state.saveProfile();
+    expect(f.state.profile.contact).toBe('新联系方式'); expect(f.state.formError.value).toContain('重新读取');
+    expect(f.state.notice.value).toBe(''); expect(f.state.selected.value?.version).toBe(1);
+  });
   it('关闭弹窗清除详情和敏感输入', async () => {
-    const f = fixture(); await f.state.open(f.organization.id); f.state.reason.value = '治理依据'; f.state.close();
-    expect(f.state.selected.value).toBeNull(); expect(f.state.reason.value).toBe('');
+    const f = fixture(); await f.state.open(f.organization.id); f.state.reason.value = '治理依据';
+    f.state.profile.contact = '尚未保存的联系方式'; f.state.close();
+    expect(f.state.selected.value).toBeNull(); expect(f.state.reason.value).toBe(''); expect(f.state.profile.contact).toBe('');
   });
 });

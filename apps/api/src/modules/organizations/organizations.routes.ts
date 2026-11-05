@@ -1,10 +1,10 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { apiResponse } from '@refs-tools/contracts'
-import type { CreateOrganization, OrganizationDecision, OrganizationParams, OrganizationQuery } from '@refs-tools/contracts/organizations'
+import type { CreateOrganization, OrganizationDecision, OrganizationParams, OrganizationQuery, UpdateOrganization } from '@refs-tools/contracts/organizations'
 import type { SessionService } from '../auth/session.service.js'
 import { requireSameOrigin, sessionToken } from '../auth/auth.http.js'
 import type { OrganizationsService } from './organizations.service.js'
-import { createOrganizationSchema, decideOrganizationSchema, detailOrganizationSchema, listOrganizationsSchema } from './organizations.schema.js'
+import { createOrganizationSchema, decideOrganizationSchema, detailOrganizationSchema, listOrganizationsSchema, updateOrganizationSchema } from './organizations.schema.js'
 
 export type OrganizationsRouteDependencies = {
   service: OrganizationsService; sessions: Pick<SessionService, 'requireVerifiedSession'>; publicOrigin: string
@@ -29,6 +29,11 @@ export function organizationsRoutes({ service, sessions, publicOrigin }: Organiz
       const { user } = await sessions.requireVerifiedSession(sessionToken(request))
       return reply.code(201).send(apiResponse(await service.create(user.id, request.body)))
     })
+    app.patch<{ Params: OrganizationParams; Body: UpdateOrganization }>('/organizations/:id',
+      { schema: updateOrganizationSchema, bodyLimit: 8192 }, async (request) => {
+        const { user } = await sessions.requireVerifiedSession(sessionToken(request))
+        return apiResponse(await service.update(user.id, request.params.id, request.body))
+      })
     app.post<{ Params: OrganizationParams; Body: OrganizationDecision }>('/organizations/:id/decision',
       { schema: decideOrganizationSchema, bodyLimit: 8192 }, async (request) => {
         const { user } = await sessions.requireVerifiedSession(sessionToken(request))
