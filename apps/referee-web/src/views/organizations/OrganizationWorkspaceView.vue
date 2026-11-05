@@ -8,6 +8,7 @@ import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import InvitationsPanel from './components/InvitationsPanel.vue'
 import JoinCodesPanel from './components/JoinCodesPanel.vue'
 import MembersPanel from './components/MembersPanel.vue'
+import OwnershipPanel from './components/OwnershipPanel.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
 import OverviewPanel from './components/OverviewPanel.vue'
 import ReasonDialog from './components/ReasonDialog.vue'
@@ -69,6 +70,7 @@ async function leave() {
           <MembersPanel v-else-if="ws.tab.value === 'members'" :key="`m-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
           <InvitationsPanel v-else-if="ws.tab.value === 'invitations'" :key="`i-${id}`" :organization-id="id" />
           <JoinCodesPanel v-else-if="ws.tab.value === 'codes'" :key="`c-${id}`" :organization-id="id" />
+          <OwnershipPanel v-else-if="ws.tab.value === 'ownership'" :key="`o-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
           <RolesPanel v-else :key="`r-${id}`" :organization-id="id" />
         </div>
       </template>

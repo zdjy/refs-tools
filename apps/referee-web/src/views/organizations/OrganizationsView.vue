@@ -5,18 +5,23 @@ import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
 import UiPageBanner from '../../components/ui/UiPageBanner.vue'
 import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import InvitationInbox from './components/InvitationInbox.vue'
+import TransferInbox from './components/TransferInbox.vue'
 import OrganizationEntries from './components/OrganizationEntries.vue'
 import OrganizationRoster from './components/OrganizationRoster.vue'
 import OrganizationRosterFilters from './components/OrganizationRosterFilters.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
 import { useAuthGate } from './useAuthGate'
 import { useMyOrganizations } from './useMyOrganizations'
+import { useIncomingTransfers } from './useIncomingTransfers'
 import { useOrganizationRoster } from './useOrganizationRoster'
 
 const { items, invitations, loading, loadError, stale, action, load, respond } = useMyOrganizations()
+// 接受移交后本人成为负责人，角色与管理能力都变了，需要重新读取「我的组织」。
+const transfers = useIncomingTransfers(undefined, () => load())
 const { keyword, filter, counts, showTools, filtered, visible, hidden, nextCount, filtering, showMore, reset } = useOrganizationRoster(items)
-const { status, retry } = useAuthGate(load)
+const { status, retry } = useAuthGate(() => Promise.all([load(), transfers.load()]))
 useUiFeedback(action.done)
+useUiFeedback(transfers.action.done)
 </script>
 
 <template>
@@ -36,6 +41,10 @@ useUiFeedback(action.done)
             {{ stale }}<n-button text type="primary" class="ml-2" @click="load()">重新读取</n-button>
           </p>
           <InvitationInbox :items="invitations" :busy="action.busy.value" :error="action.error.value" @respond="respond" />
+          <p v-if="transfers.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
+            {{ transfers.stale.value }}<n-button text type="primary" class="ml-2" @click="transfers.load()">重新读取</n-button>
+          </p>
+          <TransferInbox :items="transfers.items.value" :busy="transfers.action.busy.value" :error="transfers.action.error.value" @respond="transfers.respond" />
           <section aria-labelledby="roster-title" class="grid gap-3">
             <div class="flex flex-wrap items-baseline gap-x-2">
               <h2 id="roster-title" class="m-0 text-xl text-ink">已加入与申请中</h2>

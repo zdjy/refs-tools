@@ -1,6 +1,7 @@
 import { Type, type Static } from '@sinclair/typebox'
 import { RoleSchema } from './authorization.js'
 import { OrganizationStatusSchema } from './organizations.js'
+import { PLATFORM_INVITE_PATTERN } from './platform-invites.js'
 import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 
 const Uuid = Type.String({ format: 'uuid' })
@@ -41,10 +42,13 @@ export const DirectoryItemSchema = Type.Object({
  * 自助申请载荷。`region` 是账户设置同款地区选择器产出的「省/市/区」展示文本；
  * 负责人实名与联系方式不由客户端提交，服务端在事务内取申请人账户资料（`Profile.legalName` / `Profile.phone`），
  * 因此 Schema 拒绝这两个字段。
+ * `platformInviteToken` 为平台一次性创建邀请码（`ro_` 前缀）：有效则组织直接以 active 创建，省去平台审核；
+ * 成员码（`rj_`）不匹配该格式，在入口即被拒绝，两类凭据用途隔离。
  */
 export const OrganizationApplicationSchema = Type.Object({
   name: Type.String({ minLength: 1, maxLength: 120 }), region: Type.String({ minLength: 1, maxLength: 100 }),
   purpose: Type.String({ minLength: 1, maxLength: 1000 }),
+  platformInviteToken: Type.Optional(Type.String({ pattern: PLATFORM_INVITE_PATTERN })),
 }, { additionalProperties: false })
 
 /**

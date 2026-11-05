@@ -3,7 +3,7 @@ import type { MyOrganization, OrganizationProfileUpdated } from '@refs-tools/con
 import { organizationsApi, type OrganizationsApi } from '../../api/organizations.api'
 import { useAction, useLoadable } from './organization-primitives'
 
-export type WorkspaceTab = 'overview' | 'members' | 'invitations' | 'codes' | 'roles'
+export type WorkspaceTab = 'overview' | 'members' | 'invitations' | 'codes' | 'roles' | 'ownership'
 
 /**
  * 单个组织的工作区：从「我的组织」中取出当前组织与本人成员关系，
@@ -23,7 +23,9 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
     if (!organization.value?.canManage) return base
     const managed: { id: WorkspaceTab; label: string }[] = [
       { id: 'members', label: '成员' }, { id: 'invitations', label: '邀请' }, { id: 'codes', label: '成员码' }]
-    return [...base, ...managed, { id: 'roles', label: '角色' }]
+    // 移交所有权只属于负责人：组织者能管理成员但不能移交，服务端同样只认 organization.manage。
+    const owner: { id: WorkspaceTab; label: string }[] = organization.value.isOwner ? [{ id: 'ownership', label: '移交' }] : []
+    return [...base, ...managed, { id: 'roles', label: '角色' }, ...owner]
   })
 
   async function load() {

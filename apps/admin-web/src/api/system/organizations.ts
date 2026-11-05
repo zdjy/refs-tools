@@ -1,4 +1,5 @@
 import type { CreateOrganization, OrganizationDecision, OrganizationDetail, OrganizationList, OrganizationQuery, UpdateOrganization } from '@refs-tools/contracts/organizations';
+import type { PlatformOwnershipTransfer } from '@refs-tools/contracts/organization-ownership';
 import { AdminApiError, platformClient, type PlatformClient } from '../http/platform-client';
 
 /** 组织网关只暴露上下文错误，不向页面传播传输层异常。 */
@@ -21,6 +22,7 @@ export function createOrganizationsApi(client: PlatformClient) {
     create: (input: CreateOrganization) => call(client.post<OrganizationDetail>('/admin/organizations', input)),
     update: (id: string, input: UpdateOrganization) => call(client.patch<OrganizationDetail>(`/admin/organizations/${encodeURIComponent(id)}`, input)),
     decide: (id: string, input: OrganizationDecision) => call(client.post<OrganizationDetail>(`/admin/organizations/${encodeURIComponent(id)}/decision`, input)),
+    transferOwner: (id: string, input: PlatformOwnershipTransfer) => call(client.post<OrganizationDetail>(`/admin/organizations/${encodeURIComponent(id)}/ownership`, input)),
   };
 }
 export const organizationsApi = createOrganizationsApi(platformClient);

@@ -5,20 +5,21 @@ import { organizationsErrorMessage, organizationsLoadErrorMessage } from './orga
  * 写操作的生命周期：忙碌期间拒绝重入；每次开始先清空 `done` 再赋值，
  * 因此连续两次相同的成功文案也会让同步观察者各触发一次（见前端规约「逐次而非重复通知」）。
  * 写操作永不自动重试，失败只留下错误文案，输入由调用方保留。
+ * `success` 可以是函数：文案取决于服务端返回时（例如凭邀请码创建的组织直接启用），在写入成功后再取文案。
  */
 export function useAction() {
   const busy = ref(false)
   const error = ref('')
   const done = ref('')
 
-  async function run(work: () => Promise<void>, success: string): Promise<boolean> {
+  async function run(work: () => Promise<void>, success: string | (() => string)): Promise<boolean> {
     if (busy.value) return false
     busy.value = true
     error.value = ''
     done.value = ''
     try {
       await work()
-      done.value = success
+      done.value = typeof success === 'function' ? success() : success
       return true
     } catch (cause) {
       error.value = organizationsErrorMessage(cause)

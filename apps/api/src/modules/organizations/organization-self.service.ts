@@ -6,7 +6,8 @@ import { canUpdateOrganizationProfile, isRoleBindingActive } from '@refs-tools/d
 import type { ScopedRoleBinding } from '@refs-tools/contracts/authorization'
 import { DomainError } from '../../application/errors.js'
 import { appendAudit } from '../audit/audit.service.js'
-import type { AccessDependencies, MineRow } from './organization-access.types.js'
+import type { AccessDependencies, AccessRepositories, MineRow, NewOrganizationApplication } from './organization-access.types.js'
+import { createOrganizationWithInvite } from './organization-platform-invites.redeem.js'
 
 /** 同一申请人同时待审核的组织申请上限，防止批量占用平台审核队列。 */
 export const PENDING_APPLICATION_LIMIT = 3
@@ -54,6 +55,8 @@ export class OrganizationSelfService {
    * 负责人即申请人；平台审核通过前不建立成员关系，也不授予任何角色。
    * 负责人实名与联系方式取自申请人账户资料，并在提交时快照进组织记录：审核看到的是提交当时的资料，
    * 之后本人修改账户资料不会改写已提交的申请。资料不完整返回 422 PROFILE_INCOMPLETE，前端据此引导补全。
+   * 携带平台邀请码时组织直接以 active 创建（见 `createOrganizationWithInvite`）；该路径不占用待审核名额，
+   * 因为它不会进入平台审核队列。邀请码无效统一返回 422 PLATFORM_INVITE_INVALID。
    */
   async apply(actor: string, input: OrganizationApplication) {
     const base = { name: input.name.trim(), region: input.region.trim(), purpose: input.purpose.trim() }
@@ -67,6 +70,7 @@ export class OrganizationSelfService {
         throw new DomainError('PROFILE_INCOMPLETE', '请先在账号设置中填写真实姓名和手机号，再提交组织申请', 422)
       }
       const value = { ...base, ownerLegalName, contact }
+      if (input.platformInviteToken) return this.applyWithInvite(r, actor, id, input.platformInviteToken, value, now)
       await r.self.lockApplicant(actor)
       if (await r.self.countPending(actor) >= PENDING_APPLICATION_LIMIT) {
         throw new DomainError('APPLICATION_LIMIT', `同时待审核的申请最多 ${PENDING_APPLICATION_LIMIT} 个，请等待平台审核后再提交`, 409)
@@ -79,6 +83,19 @@ export class OrganizationSelfService {
         ownerUserId: actor, createdAt: now.toISOString(), version: 1, governanceReason: null, membership: null }
       return project(row, actor, [], this.d, now)
     })
+  }
+
+  /** 邀请码路径与普通申请共用同一事务；创建后重读真实组织、成员关系与角色再投影，不拼凑返回值。 */
+  private async applyWithInvite(r: AccessRepositories, actor: string, id: string, token: string,
+    value: NewOrganizationApplication, now: Date) {
+    await createOrganizationWithInvite(r, actor, id, token, value, now)
+    const organization = (await r.organizations.find(id))!
+    const membership = await r.members.current(id, actor)
+    const row: MineRow = { id, name: organization.name, region: organization.region, purpose: organization.purpose,
+      status: organization.status, ownerUserId: organization.ownerUserId, createdAt: organization.createdAt,
+      version: organization.version, governanceReason: organization.governanceReason,
+      membership: membership && membership.status === 'active' ? { id: membership.id, status: 'active', version: membership.version } : null }
+    return project(row, actor, await r.authorization.findBindings(actor), this.d, now)
   }
 
   /**

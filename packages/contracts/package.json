@@ -24,6 +24,16 @@
       "development": "./src/organization-access.ts",
       "import": "./dist/organization-access.js"
     },
+    "./platform-invites": {
+      "types": "./src/platform-invites.ts",
+      "development": "./src/platform-invites.ts",
+      "import": "./dist/platform-invites.js"
+    },
+    "./organization-ownership": {
+      "types": "./src/organization-ownership.ts",
+      "development": "./src/organization-ownership.ts",
+      "import": "./dist/organization-ownership.js"
+    },
     "./organizations": {
       "types": "./src/organizations.ts",
       "development": "./src/organizations.ts",

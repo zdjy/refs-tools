@@ -15,7 +15,7 @@ function fixture() {
       changeStatus: vi.fn(async (_id, _version, status) => { organization.status = status; organization.version++; return true }),
       updateProfile: vi.fn(async (_id, profile) => { Object.assign(organization, { name: profile.name, region: profile.region,
         purpose: profile.purpose, contact: profile.contact, version: organization.version + 1 }); return true }),
-      activateOwnerMembership: vi.fn(async () => {}) },
+      activateOwnerMembership: vi.fn(async () => {}), changeOwner: vi.fn(async () => true) },
     identities: { requireActiveActor: vi.fn(async () => true) },
     authorization: { resolveScope: vi.fn(async () => ({ type: 'platform' as const, id: null, organizationId: null,
       eventId: null, matchId: null, ownerUserId: null, organizationStatus: null, state: null })),

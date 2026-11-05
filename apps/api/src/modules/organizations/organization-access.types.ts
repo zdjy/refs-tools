@@ -5,6 +5,8 @@ import type { PageQuery, Paged } from '@refs-tools/contracts/pagination'
 import type { TransactionRunner } from '../../application/transaction.js'
 import type { PermissionEvaluator } from '../authorization/authorization.types.js'
 import type { MemberRepositories } from './organization-members.types.js'
+import type { OrganizationOwnershipRepository } from './organization-ownership.types.js'
+import type { PlatformInvitesRepository } from './organization-platform-invites.types.js'
 
 /** 「我的组织」的持久化投影；能力与角色由 Service 按实时授权计算，不在 SQL 中判断。 */
 export type MineRow = {
@@ -55,5 +57,6 @@ export interface OrganizationCandidatesRepository {
 export type AccessRepositories = MemberRepositories & {
   self: OrganizationSelfRepository; joinCodes: OrganizationJoinCodesRepository
   roles: OrganizationRolesRepository; candidates: OrganizationCandidatesRepository
+  platformInvites: PlatformInvitesRepository; ownership: OrganizationOwnershipRepository
 }
 export type AccessDependencies = { transaction: TransactionRunner<AccessRepositories>; permissions: PermissionEvaluator; now: () => Date }

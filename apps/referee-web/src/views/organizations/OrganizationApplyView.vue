@@ -30,6 +30,11 @@ const steps = [
   { title: '平台审核', hint: '审核期间没有运营权限' },
   { title: '开始使用', hint: '通过后你成为负责人' },
 ] as const
+const activeSteps = [
+  { title: '提交资料', hint: '已完成' },
+  { title: '邀请码核验', hint: '已通过，免平台审核' },
+  { title: '开始使用', hint: '你已是负责人' },
+] as const
 </script>
 
 <template>
@@ -40,14 +45,18 @@ const steps = [
       </RouterLink>
       <header class="grid gap-2">
         <h1 class="m-0 text-[28px] leading-tight font-bold tracking-tight text-ink compact:text-[36px]">申请创建组织</h1>
-        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-body">提交后由平台审核。审核通过前，组织不能邀请成员、开展赛事或授予角色。</p>
+        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-body">{{ app.submitted.value?.active ? '组织已凭平台邀请码直接启用，无需平台审核。' : '提交后由平台审核。审核通过前，组织不能邀请成员、开展赛事或授予角色。' }}</p>
       </header>
       <OrganizationsSignIn v-if="status !== 'authenticated'" :status="status" @retry="retry" />
       <section v-else-if="app.submitted.value" role="status" class="grid gap-4 border-0 border-l border-solid border-ink pl-4">
-        <div class="flex items-center gap-3"><CircleCheck class="size-6 text-green" :stroke-width="1.75" aria-hidden="true" /><h2 class="m-0 text-xl text-ink">已提交「{{ app.submitted.value.name }}」</h2></div>
-        <UiSteps :items="steps" :current="1" label="申请进度" />
-        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink">平台审核结果会显示在「我的组织」里：通过后你成为负责人，被驳回会附上说明并可重新申请。目前不会发送邮件通知，请自行回来查看。</p>
-        <div><RouterLink to="/organizations" :class="linkButton.primary">查看我的组织</RouterLink></div>
+        <div class="flex items-center gap-3"><CircleCheck class="size-6 text-green" :stroke-width="1.75" aria-hidden="true" /><h2 class="m-0 text-xl text-ink">{{ app.submitted.value.active ? `已创建并启用「${app.submitted.value.name}」` : `已提交「${app.submitted.value.name}」` }}</h2></div>
+        <UiSteps :items="app.submitted.value.active ? activeSteps : steps" :current="app.submitted.value.active ? 2 : 1" label="申请进度" />
+        <p v-if="app.submitted.value.active" class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink">邀请码已使用，组织已直接启用，你已成为负责人并拥有组织者角色。现在可以进入组织邀请成员、生成成员码。</p>
+        <p v-else class="m-0 max-w-[60ch] text-sm leading-relaxed text-ink">平台审核结果会显示在「我的组织」里：通过后你成为负责人，被驳回会附上说明并可重新申请。目前不会发送邮件通知，请自行回来查看。</p>
+        <div class="flex flex-wrap gap-2">
+          <RouterLink v-if="app.submitted.value.active" :to="`/organizations/${app.submitted.value.id}`" :class="linkButton.primary">进入组织</RouterLink>
+          <RouterLink to="/organizations" :class="app.submitted.value.active ? linkButton.secondary : linkButton.primary">查看我的组织</RouterLink>
+        </div>
       </section>
       <div v-else class="grid gap-6 tablet:grid-cols-[minmax(0,1fr)_280px] tablet:items-start">
         <section ref="formArea" tabindex="-1" aria-labelledby="form-title" class="grid gap-5 focus:outline-hidden border-0 border-t border-solid border-ink pt-5 compact:p-6">

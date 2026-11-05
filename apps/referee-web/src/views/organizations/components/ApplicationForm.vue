@@ -6,6 +6,7 @@ import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 import { applicationLimits, type ApplicationFieldKey, type ApplicationFields } from '../useOrganizationApplication'
 import type { ApplicantProfile } from '../useApplicantProfile'
 import ApplicantSummary from './ApplicantSummary.vue'
+import InviteTokenField from './InviteTokenField.vue'
 
 /**
  * 创建组织申请表单。字段错误就近显示并通过 aria-describedby 关联；
@@ -44,6 +45,7 @@ const canSubmit = computed(() => props.applicant.complete)
         :input-props="{ 'aria-required': true, 'aria-invalid': !!fieldError.purpose, 'aria-describedby': fieldError.purpose ? 'app-purpose-error' : undefined, autocomplete: 'off' }" />
       <p v-if="fieldError.purpose" id="app-purpose-error" role="alert" class="m-0 text-[13px] text-danger">{{ fieldError.purpose }}</p>
     </div>
+    <InviteTokenField v-model="fields.inviteToken" :error="fieldError.inviteToken ?? ''" :busy="busy" />
     <ApplicantSummary :applicant="applicant" @reload="applicant.load()" />
     <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>
     <UiSubmitHint :busy="busy" />

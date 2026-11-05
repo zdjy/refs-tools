@@ -105,7 +105,7 @@ describe('目录、兑换与申请表单', () => {
     expect(await state.submit()).toBe(false); expect(apply).not.toHaveBeenCalled(); expect(state.fieldError.region).toContain('区/县')
     Object.assign(state.fields, { region: '浙江省/杭州市/西湖区', regionCode: '330106' })
     expect(await state.submit()).toBe(false); expect(state.fields.name).toBe('协会'); expect(state.action.error.value).toContain('上限')
-    expect(await state.submit()).toBe(true); expect(state.submitted.value).toEqual({ id: 'n', name: '协会' })
+    expect(await state.submit()).toBe(true); expect(state.submitted.value).toEqual({ id: 'n', name: '协会', active: false })
     // 负责人实名与联系方式由服务端取账号资料，客户端载荷不得携带；regionCode 只用于回显。
     expect(apply).toHaveBeenLastCalledWith({ name: '协会', region: '浙江省/杭州市/西湖区', purpose: '培训' })
   })

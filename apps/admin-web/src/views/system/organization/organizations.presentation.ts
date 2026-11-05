@@ -27,8 +27,12 @@ export const actionDescriptions: Record<OrganizationDecision['action'], string> 
   unfreeze: '解冻后恢复正常运营，已撤销的角色和已结束的成员关系不会恢复。',
 };
 
-/** 列表仅显示组织摘要；实名与联系方式只在详情中读取。 */
-export function organizationColumns(open: (id: string) => void, members?: (organization: Organization) => void): DataTableColumns<Organization> {
+/**
+ * 列表仅显示组织摘要；实名与联系方式只在详情中读取。
+ * 移交所有权入口只对 active / frozen 显示：待审核、已驳回、已解散的组织服务端也会拒绝（见 canTransferOwnership）。
+ */
+export function organizationColumns(open: (id: string) => void, members?: (organization: Organization) => void,
+  transfer?: (organization: Organization) => void): DataTableColumns<Organization> {
   return [
     { title: '组织名称', key: 'name', width: 230, ellipsis: { tooltip: true } },
     { title: '地区', key: 'region', width: 140, render: row => row.region || '未填写' },
@@ -36,9 +40,11 @@ export function organizationColumns(open: (id: string) => void, members?: (organ
     { title: '状态', key: 'status', width: 120, render: row => h(NTag, { bordered: false,
       type: row.status === 'active' ? 'success' : row.status === 'pending_review' ? 'warning' : 'default' }, () => statusLabels[row.status]) },
     { title: '创建时间', key: 'createdAt', width: 190, render: row => new Date(row.createdAt).toLocaleString() },
-    { title: '操作', key: 'actions', width: 270, render: row => h(NSpace, {}, { default: () => [
+    { title: '操作', key: 'actions', width: 400, render: row => h(NSpace, {}, { default: () => [
       h(NButton, { size: 'large', onClick: () => open(row.id) }, () => '查看 / 管理'),
       ...(members ? [h(NButton, { size: 'large', onClick: () => members(row) }, () => '成员管理')] : []),
+      ...(transfer && (row.status === 'active' || row.status === 'frozen')
+        ? [h(NButton, { size: 'large', onClick: () => transfer(row) }, () => '移交所有权')] : []),
     ] }) },
   ];
 }

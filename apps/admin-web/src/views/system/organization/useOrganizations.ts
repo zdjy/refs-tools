@@ -122,6 +122,17 @@ export function useOrganizations(api = organizationsApi) {
     finally { busy.value = false; confirming.value = false; }
   }
 
+  /**
+   * 移交所有权前重读详情：列表行只有摘要，版本号必须取自最新详情，避免用陈旧版本提交。
+   * 读取失败只提示、不打开弹窗。
+   */
+  async function fetchForTransfer(id: string): Promise<OrganizationDetail | null> {
+    if (busy.value || !online.value) return null;
+    error.value = '';
+    try { return await api.detail(id); }
+    catch (e) { error.value = message(e); return null; }
+  }
+
   function updateOnline() { online.value = navigator.onLine; }
   if (getCurrentInstance()) {
     onMounted(() => { window.addEventListener('online', updateOnline); window.addEventListener('offline', updateOnline); void load(); });
@@ -132,5 +143,5 @@ export function useOrganizations(api = organizationsApi) {
   }
   return { items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError, notice,
     online, mode, action, reason, confirming, form, profile, profileDirty, profileEditable, savingProfile, load, create, open, close,
-    requestDecision, resetProfile, save, saveProfile, decide };
+    requestDecision, resetProfile, save, saveProfile, decide, fetchForTransfer };
 }

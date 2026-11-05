@@ -10,7 +10,7 @@ import { useOrganizationProfile } from '../useOrganizationProfile'
 /**
  * 概览：简介与本人的成员关系。简介只有组织负责人可改（服务端同样只认组织记录上的负责人），
  * pending 申请显示「撤回申请」，active 成员显示「退出组织」；负责人不能直接退出
- * （需先移交所有权，移交属于后续平台流程），因此只说明原因而不给无效按钮。
+ * （需先移交所有权），因此只说明原因而不给无效按钮。
  */
 const props = defineProps<{ organization: MyOrganization; refresh: () => Promise<boolean> }>()
 const emit = defineEmits<{ leave: []; saved: [OrganizationProfileUpdated] }>()
@@ -47,7 +47,7 @@ useUiFeedback(profile.action.done)
       <h2 id="mine-title" class="m-0 text-lg text-ink">我的成员关系</h2>
       <p class="m-0 text-sm leading-relaxed text-body">
         <template v-if="organization.membership?.status === 'pending'">你的加入申请正在等待组织管理者审核，审核通过前没有成员权限。</template>
-        <template v-else-if="organization.isOwner">你是该组织的负责人。负责人不能直接退出，所有权移交需联系平台管理员。</template>
+        <template v-else-if="organization.isOwner">你是该组织的负责人。负责人不能直接退出，请先到「移交」标签页把负责人身份移交给另一位正式成员，或联系平台管理员处理。</template>
         <template v-else>你是该组织的正式成员。退出后将撤销你在该组织及其赛事中的全部角色，重新加入不会恢复这些角色。</template>
       </p>
       <div v-if="organization.membership && !organization.isOwner">

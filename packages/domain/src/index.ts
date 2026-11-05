@@ -10,6 +10,8 @@ export {
 export type { ProfileFields, ProfileValidationError } from './profile.js'
 export { membershipStatusAfter } from './membership-state.js'
 export { joinCodeStatus } from './join-code.js'
+export { platformInviteStatus } from './platform-invite.js'
+export { canTransferOwnership, ownershipTransferStatus } from './ownership-transfer.js'
 export { canUpdateOrganizationProfile, organizationStatusAfter } from './organization-state.js'
 export { createGb2312Codec } from './gb2312.js'
 export type {

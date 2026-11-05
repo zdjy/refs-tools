@@ -4,7 +4,7 @@
 
 ## 迁移与后续表扩展
 
-执行 `pnpm --filter @refs-tools/api db:migrate` 应用 `0003`。它建立角色、审计，以及组织/成员/赛事/比赛的归属和状态骨架。Task 7/15 用新增迁移补齐业务字段，不改写本迁移、不重复建表。组织治理与成员/定向邀请已由 `0006`、`0007` 接续，成员码由 `0009` 接续（[FS-0027](../../../docs/specs/0027-referee-organizations.md)），见 [FS-0015](../../../docs/specs/0015-admin-organization-management.md) 与 [FS-0016](../../../docs/specs/0016-organization-membership.md)；部署本轮 API 前须应用全部迁移，并授予下述新表权限。赛事仍为归属骨架。
+执行 `pnpm --filter @refs-tools/api db:migrate` 应用 `0003`。它建立角色、审计，以及组织/成员/赛事/比赛的归属和状态骨架。Task 7/15 用新增迁移补齐业务字段，不改写本迁移、不重复建表。组织治理与成员/定向邀请已由 `0006`、`0007` 接续，成员码由 `0009` 接续（[FS-0027](../../../docs/specs/0027-referee-organizations.md)），平台邀请码与所有权移交由 `0010` 接续（[FS-0028](../../../docs/specs/0028-platform-invites-and-ownership-transfer.md)），见 [FS-0015](../../../docs/specs/0015-admin-organization-management.md) 与 [FS-0016](../../../docs/specs/0016-organization-membership.md)；部署本轮 API 前须应用全部迁移，并授予下述新表权限。赛事仍为归属骨架。
 
 `db:rollback` 的 down 会销毁本任务的数据和骨架，只适用于未投产环境或经批准的恢复流程；投产后需先按部署留存策略备份和审批，不能以回滚代替审计清理。
 
@@ -24,7 +24,8 @@ GRANT SELECT, INSERT, UPDATE ON app_schema.users, app_schema.email_challenges,
   app_schema.auth_sessions, app_schema.auth_rate_limits, app_schema.role_bindings TO api_runtime;
 -- 组织治理与成员流程需要 INSERT；归属锁定的 FOR SHARE 需要 UPDATE。
 GRANT SELECT, INSERT, UPDATE ON app_schema.organizations, app_schema.organization_memberships,
-  app_schema.organization_invitations, app_schema.organization_join_codes TO api_runtime;
+  app_schema.organization_invitations, app_schema.organization_join_codes,
+  app_schema.platform_organization_invites, app_schema.organization_ownership_transfers TO api_runtime;
 GRANT SELECT, UPDATE ON app_schema.events, app_schema.matches TO api_runtime;
 REVOKE ALL ON app_schema.audit_events FROM api_runtime;
 GRANT SELECT, INSERT ON app_schema.audit_events TO api_runtime;

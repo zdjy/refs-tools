@@ -2,7 +2,7 @@
 
 ## 范围与边界
 
-接续 [FS-0015](0015-admin-organization-management.md)，在管理端组织详情旁提供成员管理入口：分页查看成员与邀请、发起和撤销定向邀请、审核自主入会申请、移除成员。沿用 [FS-0010](0010-admin-color-theme.md) 与管理端 Tailwind 3 例外。组织成员码、组织角色编辑、自助创建及裁判端页面已由 [FS-0027](0027-referee-organizations.md) 接续；所有权移交仍为后续任务。
+接续 [FS-0015](0015-admin-organization-management.md)，在管理端组织详情旁提供成员管理入口：分页查看成员与邀请、发起和撤销定向邀请、审核自主入会申请、移除成员。沿用 [FS-0010](0010-admin-color-theme.md) 与管理端 Tailwind 3 例外。组织成员码、组织角色编辑、自助创建及裁判端页面已由 [FS-0027](0027-referee-organizations.md) 接续；所有权移交已由 [FS-0028](0028-platform-invites-and-ownership-transfer.md) 交付。
 
 平台管理员可审计读取成员与邀请；写操作必须独立拥有当前组织的 owner/organizer 角色和正式成员关系，平台角色不隐式授予运营权限。页面显示服务端计算的操作能力，无能力时只读。冻结组织可由平台读取历史，但禁止新邀请、入会及成员写入。
 

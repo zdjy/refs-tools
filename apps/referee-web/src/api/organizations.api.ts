@@ -8,6 +8,7 @@ import type {
   DirectoryList, DirectoryQuery, MyOrganization, MyOrganizationList, OrganizationApplication, OrganizationProfileUpdate, OrganizationProfileUpdated,
 } from '@refs-tools/contracts/organization-self'
 import type { PageQuery } from '@refs-tools/contracts/pagination'
+import type { DecideOwnershipTransfer, OwnershipTransfer, OwnershipTransferList } from '@refs-tools/contracts/organization-ownership'
 import { HttpError } from './http/errors'
 import { createPlatformClient, type PlatformClient } from './http/platform-client'
 
@@ -71,6 +72,13 @@ export function createOrganizationsApi(client: PlatformClient) {
       call(client.patch<OrganizationProfileUpdated>(`/organizations/${id(orgId)}/profile`, body)),
     revokeRole: (orgId: string, bindingId: string) =>
       call(client.post<{ revoked: true }>(`/organizations/${id(orgId)}/roles/${id(bindingId)}/revoke`, {})),
+    incomingTransfers: (value: PageQuery = {}) => call(client.get<OwnershipTransferList>(`/me/ownership-transfers${page(value)}`)),
+    transfers: (orgId: string, value: PageQuery = {}) =>
+      call(client.get<OwnershipTransferList>(`/organizations/${id(orgId)}/ownership-transfers${page(value)}`)),
+    startTransfer: (orgId: string, toUserId: string) =>
+      call(client.post<OwnershipTransfer>(`/organizations/${id(orgId)}/ownership-transfers`, { toUserId })),
+    decideTransfer: (orgId: string, transferId: string, action: 'accept' | 'decline' | 'cancel', body: DecideOwnershipTransfer) =>
+      call(client.post<OwnershipTransfer>(`/organizations/${id(orgId)}/ownership-transfers/${id(transferId)}/${action}`, body)),
   }
 }
 

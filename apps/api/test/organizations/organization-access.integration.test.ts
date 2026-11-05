@@ -8,6 +8,8 @@ import { PgOrganizationMembersRepository } from '../../src/modules/organizations
 import { PgOrganizationSelfRepository } from '../../src/modules/organizations/organization-self.repository.js'
 import { PgOrganizationJoinCodesRepository } from '../../src/modules/organizations/organization-join-codes.repository.js'
 import { PgOrganizationCandidatesRepository, PgOrganizationRolesRepository } from '../../src/modules/organizations/organization-roles.repository.js'
+import { PgPlatformInvitesRepository } from '../../src/modules/organizations/organization-platform-invites.repository.js'
+import { PgOrganizationOwnershipRepository } from '../../src/modules/organizations/organization-ownership.repository.js'
 import { OrganizationMembersService } from '../../src/modules/organizations/organization-members.service.js'
 import { OrganizationSelfService } from '../../src/modules/organizations/organization-self.service.js'
 import { OrganizationJoinCodesService } from '../../src/modules/organizations/organization-join-codes.service.js'
@@ -29,7 +31,8 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('用户视角组织 PostgreSQ
       members: new PgOrganizationMembersRepository(client), identities: new PgAdminUsersRepository(client),
       authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client), self: new PgOrganizationSelfRepository(client),
       joinCodes: new PgOrganizationJoinCodesRepository(client), roles: new PgOrganizationRolesRepository(client),
-      candidates: new PgOrganizationCandidatesRepository(client) })), permissions: seed.permissions, now: () => now }
+      candidates: new PgOrganizationCandidatesRepository(client), platformInvites: new PgPlatformInvitesRepository(client),
+      ownership: new PgOrganizationOwnershipRepository(client) })), permissions: seed.permissions, now: () => now }
     self = new OrganizationSelfService(d); codes = new OrganizationJoinCodesService(d)
     roles = new OrganizationRolesService(d); candidates = new OrganizationCandidatesService(d)
   })

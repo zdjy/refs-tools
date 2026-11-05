@@ -1,6 +1,7 @@
 import type { Role } from '@refs-tools/contracts/authorization'
 import type { JoinCode } from '@refs-tools/contracts/organization-access'
 import type { Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members'
+import type { OwnershipTransfer } from '@refs-tools/contracts/organization-ownership'
 import type { Organization } from '@refs-tools/contracts/organizations'
 import { OrganizationsApiError } from '../../api/organizations.api'
 
@@ -32,6 +33,9 @@ export const joinCodeStatusLabels: Record<JoinCode['status'], string> = {
   active: '可使用', exhausted: '已用尽', expired: '已过期', revoked: '已撤销',
 }
 export const relationLabels = { none: '', invited: '已邀请', pending: '申请中', active: '已是成员' } as const
+export const transferStatusLabels: Record<OwnershipTransfer['status'], string> = {
+  pending: '等待接受', accepted: '已接受', declined: '已拒绝', cancelled: '已取消', expired: '已过期', superseded: '已被平台处理取代',
+}
 
 export function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' })
@@ -71,6 +75,12 @@ const messages: Record<string, string> = {
   ROLE_ALREADY_BOUND: '该成员已拥有此角色。',
   KEYWORD_TOO_SHORT: '请至少输入 2 个字符。',
   INVALID_AUDIT_EVENT: '理由中不能包含链接、密码或令牌等敏感内容。',
+  PLATFORM_INVITE_INVALID: '邀请码无效、已使用或已过期，请向平台确认；已填写的组织资料仍保留。',
+  SAME_OWNER: '新负责人不能是当前负责人。',
+  INVALID_OWNER: '新负责人须为有效且邮箱已验证的用户。',
+  NOT_ACTIVE_MEMBER: '新负责人须为本组织的正式成员。',
+  TRANSFER_PENDING: '已有待处理的移交请求，请先取消或等待对方处理。',
+  TRANSFER_NOT_PENDING: '这个移交请求已失效或已处理，请刷新后查看最新状态。',
 }
 
 /** 面向用户的中文反馈不依赖服务端异常文本。 */

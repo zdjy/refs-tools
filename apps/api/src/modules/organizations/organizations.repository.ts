@@ -59,6 +59,13 @@ export class PgOrganizationsRepository implements OrganizationsRepository {
     return result.rows.length > 0
   }
 
+  async changeOwner(id: string, expectedVersion: number, ownerUserId: string, ownerLegalName: string, contact: string): Promise<boolean> {
+    // 版本条件更新：与资料修改、治理动作及并发移交共用行版本，只有一方命中当前版本。
+    const result = await this.connection.query(`UPDATE organizations SET owner_user_id=$3,owner_legal_name=$4,contact=$5,version=version+1
+      WHERE id=$1 AND version=$2 RETURNING id`, [id, expectedVersion, ownerUserId, ownerLegalName, contact])
+    return result.rows.length > 0
+  }
+
   async activateOwnerMembership(id: string, organizationId: string, userId: string): Promise<void> {
     // 当前 pending/active 唯一索引使审批重复请求不会建立两份当前关系，历史关系保留。
     await this.connection.query(`INSERT INTO organization_memberships(id,organization_id,user_id,status) VALUES($1,$2,$3,'active')

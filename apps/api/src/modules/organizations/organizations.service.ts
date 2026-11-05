@@ -5,6 +5,7 @@ import { canUpdateOrganizationProfile, organizationStatusAfter } from '@refs-too
 import { DomainError } from '../../application/errors.js'
 import { requirePermission } from '../authorization/authorization.service.js'
 import { appendAudit } from '../audit/audit.service.js'
+import { grantOwnerRoles } from './organization-owner-roles.js'
 import type { OrganizationsDependencies, OrganizationsRepositories } from './organizations.types.js'
 
 function conflict() { return new DomainError('VERSION_CONFLICT', '组织已更新，请重新读取后再操作', 409) }
@@ -115,15 +116,7 @@ export class OrganizationsService {
 
   private async activateOwner(repositories: OrganizationsRepositories, actor: string, organization: OrganizationDetail, now: Date) {
     await repositories.organizations.activateOwnerMembership(randomUUID(), organization.id, organization.ownerUserId)
-    for (const role of ['owner', 'organizer'] as const) {
-      const bindingId = randomUUID()
-      const inserted = await repositories.authorization.insertBinding({ id: bindingId, subjectUserId: organization.ownerUserId,
-        role, scopeType: 'organization', scopeId: organization.id, grantedBy: actor, startsAt: now.toISOString(), expiresAt: null, revokedAt: null })
-      if (!inserted) throw new DomainError('ROLE_ALREADY_BOUND', '组织已有负责人角色，请核对后再审核', 409)
-      await appendAudit(repositories.audit, { actorUserId: actor, action: 'role.granted', resourceType: 'role_binding',
-        resourceId: bindingId, scopeType: 'organization', scopeId: organization.id, organizationId: organization.id,
-        reason: null, before: null, after: { role, subjectUserId: organization.ownerUserId, scopeType: 'organization', scopeId: organization.id } }, now)
-    }
+    await grantOwnerRoles(repositories, { actor, grantedBy: actor, organizationId: organization.id, userId: organization.ownerUserId }, now, true)
   }
 
   private async requireOwnerAuthority(repositories: OrganizationsRepositories, organization: OrganizationDetail, now: Date) {

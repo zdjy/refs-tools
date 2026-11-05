@@ -8,6 +8,8 @@ export const AuditActionSchema = Type.Union([
   Type.Literal('user.queried'), Type.Literal('user.created'), Type.Literal('user.updated'), Type.Literal('user.deleted'),
   Type.Literal('membership.queried'), Type.Literal('membership.changed'), Type.Literal('invitation.queried'), Type.Literal('invitation.changed'),
   Type.Literal('join_code.queried'), Type.Literal('join_code.changed'), Type.Literal('candidate.queried'),
+  Type.Literal('platform_invite.queried'), Type.Literal('platform_invite.changed'),
+  Type.Literal('ownership_transfer.queried'), Type.Literal('ownership_transfer.changed'),
   Type.Literal('organization.queried'), Type.Literal('organization.created'), Type.Literal('organization.unfrozen'),
   Type.Literal('organization.updated'),
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
@@ -18,6 +20,7 @@ export const AuditActionSchema = Type.Union([
 ])
 export const AuditResourceTypeSchema = Type.Union([
   Type.Literal('membership'), Type.Literal('organization_invitation'), Type.Literal('organization_join_code'),
+  Type.Literal('platform_organization_invite'), Type.Literal('organization_ownership_transfer'),
   Type.Literal('role_binding'), Type.Literal('audit_log'), Type.Literal('organization'), Type.Literal('user'),
   Type.Literal('certification'), Type.Literal('exam'), Type.Literal('question'), Type.Literal('attempt'),
   Type.Literal('media'), Type.Literal('forum_resource'), Type.Literal('assignment'), Type.Literal('attendance'), Type.Literal('post_game_record'),
@@ -30,7 +33,7 @@ export const AuditSnapshotSchema = Type.Object({
     'needs_more_information', 'pending_upload', 'available', 'expired', 'deleted', 'in_progress', 'passed', 'failed',
     'pending_acceptance', 'accepted', 'declined', 'replacing', 'replaced', 'completed', 'cancelled',
     'partially_confirmed', 'confirmed', 'exception', 'not_checked_in', 'checked_in', 'corrected', 'excused',
-    'returned', 'missing', 'hidden', 'restored', 'banned', 'muted', 'overridden', 'exhausted',
+    'returned', 'missing', 'hidden', 'restored', 'banned', 'muted', 'overridden', 'exhausted', 'used', 'superseded',
   ].map((value) => Type.Literal(value)))),
 
   version: Type.Optional(Type.Integer({ minimum: 1 })), role: Type.Optional(RoleSchema),

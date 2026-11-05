@@ -8,13 +8,21 @@
   import OrganizationCreateForm from './components/OrganizationCreateForm.vue';
   import OrganizationDetail from './components/OrganizationDetail.vue';
   import OrganizationMembers from './components/OrganizationMembers.vue';
+  import OwnershipTransfer from './components/OwnershipTransfer.vue';
+  import PlatformInvites from './components/PlatformInvites.vue';
 
   const { items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError,
     notice, online, mode, action, reason, confirming, form, profile, profileDirty, profileEditable, savingProfile, load, create, open,
-    close, requestDecision, resetProfile, save, saveProfile, decide } = useOrganizations();
+    close, requestDecision, resetProfile, save, saveProfile, decide, fetchForTransfer } = useOrganizations();
   useUiFeedback(notice);
   const memberPanel = ref<InstanceType<typeof OrganizationMembers> | null>(null);
-  const columns = organizationColumns(open, organization => memberPanel.value?.open(organization));
+  const transferPanel = ref<InstanceType<typeof OwnershipTransfer> | null>(null);
+  const invitePanel = ref<InstanceType<typeof PlatformInvites> | null>(null);
+  async function startTransfer(organization: { id: string }) {
+    const detail = await fetchForTransfer(organization.id);
+    if (detail) await transferPanel.value?.open(detail);
+  }
+  const columns = organizationColumns(open, organization => memberPanel.value?.open(organization), startTransfer);
   function updateForm(value: typeof form) { Object.assign(form, value); }
   function updateProfile(value: typeof profile) { Object.assign(profile, value); }
 </script>
@@ -40,6 +48,7 @@
             <NButton size="large" :disabled="loading || !online" @click="keyword = ''; status = null; load(1)">重置</NButton>
           </NSpace>
           <NButton type="primary" size="large" class="sm:ml-auto" :disabled="busy || !online" @click="create">代录组织申请</NButton>
+          <NButton size="large" :disabled="busy || !online" @click="invitePanel?.show()">平台邀请码</NButton>
         </div>
       </NForm>
       <NAlert v-if="error" type="error" title="读取失败，列表可能已陈旧" class="mb-4" role="alert">
@@ -47,7 +56,7 @@
       </NAlert>
       <UiLoadingHint :loading="loading" label="读取组织列表" @retry="load()" />
       <div class="min-w-0 overflow-x-auto">
-        <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1290" />
+        <NDataTable :columns="columns" :data="items" :loading="loading" :row-key="row => row.id" :scroll-x="1420" />
       </div>
       <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
         <span>共 {{ total }} 个组织</span>
@@ -56,6 +65,8 @@
       </div>
     </NCard>
     <OrganizationMembers ref="memberPanel" />
+    <OwnershipTransfer ref="transferPanel" @done="load()" />
+    <PlatformInvites ref="invitePanel" />
     <NModal :show="!!mode" preset="card" :title="mode === 'create' ? '代录组织申请' : '组织详情与治理'"
       class="max-h-[calc(100dvh-32px)] overflow-y-auto"
       :style="{ width: 'min(680px, calc(100vw - 32px))' }" :mask-closable="!busy" :close-on-esc="!busy" :closable="false"

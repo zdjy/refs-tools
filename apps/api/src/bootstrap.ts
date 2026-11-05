@@ -13,6 +13,10 @@ import { OrganizationRolesService } from './modules/organizations/organization-r
 import { OrganizationCandidatesService } from './modules/organizations/organization-candidates.service.js'
 import { PgOrganizationSelfRepository } from './modules/organizations/organization-self.repository.js'
 import { PgOrganizationJoinCodesRepository } from './modules/organizations/organization-join-codes.repository.js'
+import { PlatformInvitesService } from './modules/organizations/organization-platform-invites.service.js'
+import { PgPlatformInvitesRepository } from './modules/organizations/organization-platform-invites.repository.js'
+import { OrganizationOwnershipService } from './modules/organizations/organization-ownership.service.js'
+import { PgOrganizationOwnershipRepository } from './modules/organizations/organization-ownership.repository.js'
 import { PgOrganizationRolesRepository, PgOrganizationCandidatesRepository } from './modules/organizations/organization-roles.repository.js'
 import { OrganizationsService } from './modules/organizations/organizations.service.js'
 import { PgOrganizationsRepository } from './modules/organizations/organizations.repository.js'
@@ -53,6 +57,7 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
         identities: new PgAdminUsersRepository(client), authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
         self: new PgOrganizationSelfRepository(client), joinCodes: new PgOrganizationJoinCodesRepository(client),
         roles: new PgOrganizationRolesRepository(client), candidates: new PgOrganizationCandidatesRepository(client),
+        platformInvites: new PgPlatformInvitesRepository(client), ownership: new PgOrganizationOwnershipRepository(client),
       })), permissions, now: () => new Date(),
     }
     return await buildApp({ logger: true }, {
@@ -61,6 +66,8 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
         candidates: new OrganizationCandidatesService(memberDependencies) },
       organizationMembers: { sessions: service, publicOrigin, members: new OrganizationMembersService(memberDependencies),
         invitations: new OrganizationInvitationsService(memberDependencies) },
+      platformInvites: { sessions: service, publicOrigin, service: new PlatformInvitesService(memberDependencies) },
+      organizationOwnership: { sessions: service, publicOrigin, service: new OrganizationOwnershipService(memberDependencies) },
       auth: { service, publicOrigin },
       profiles: { sessions: service, publicOrigin, service: new ProfilesService({
         transaction: createTransactionRunner(pool, (client) => ({

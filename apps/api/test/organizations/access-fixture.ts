@@ -7,6 +7,10 @@ import { OrganizationSelfService } from '../../src/modules/organizations/organiz
 import { OrganizationJoinCodesService } from '../../src/modules/organizations/organization-join-codes.service.js'
 import { OrganizationRolesService } from '../../src/modules/organizations/organization-roles.service.js'
 import { OrganizationCandidatesService } from '../../src/modules/organizations/organization-candidates.service.js'
+import { PlatformInvitesService } from '../../src/modules/organizations/organization-platform-invites.service.js'
+import { OrganizationOwnershipService } from '../../src/modules/organizations/organization-ownership.service.js'
+import type { OwnershipTransfer } from '@refs-tools/contracts/organization-ownership'
+import type { PlatformInvite } from '@refs-tools/contracts/platform-invites'
 import { permissions } from '../helpers/permissions.js'
 import { memberFixture } from './members-fixture.js'
 
@@ -21,6 +25,11 @@ export function accessFixture() {
   const code: JoinCode = { id: randomUUID(), hint: 'abcd', status: 'active', maxUses: 2, uses: 0, version: 1,
     createdAt: base.now.toISOString(), expiresAt: new Date(base.now.getTime() + 86_400_000).toISOString() }
   const bindings: Array<{ id: string; userId: string; displayName: string; role: 'owner' | 'organizer' | 'certifier'; grantedAt: string }> = []
+  const invite: PlatformInvite = { id: randomUUID(), hint: 'wxyz', status: 'active', version: 1, createdAt: base.now.toISOString(),
+    expiresAt: new Date(base.now.getTime() + 3 * 86_400_000).toISOString(), usedOrganizationId: null, usedAt: null }
+  const transfer: OwnershipTransfer = { id: randomUUID(), organizationId: base.id, organizationName: '协会', fromUserId: base.actor,
+    fromDisplayName: '负责人', toUserId: base.user, toDisplayName: '成员', status: 'pending', version: 1,
+    createdAt: base.now.toISOString(), expiresAt: new Date(base.now.getTime() + 7 * 86_400_000).toISOString(), decidedAt: null }
   const r: AccessRepositories = { ...base.r,
     self: { mine: vi.fn(async () => paged<MineRow>([])), directory: vi.fn(async () => paged([], 20)),
       lockApplicant: vi.fn(async () => {}), countPending: vi.fn(async () => 0), apply: vi.fn(async () => {}),
@@ -31,12 +40,20 @@ export function accessFixture() {
     roles: { list: vi.fn(async () => paged<OrganizationRole>(bindings)),
       find: vi.fn(async (_organizationId: string, id: string) => bindings.find(item => item.id === id) ?? null) },
     candidates: { search: vi.fn(async () => paged<Candidate>([], 10)) },
+    platformInvites: { list: vi.fn(async () => paged<PlatformInvite>([invite], 20)), create: vi.fn(async () => {}),
+      find: vi.fn(async () => ({ ...invite })), revoke: vi.fn(async () => true),
+      consume: vi.fn(async () => ({ id: invite.id, createdBy: base.actor, version: 2 })) },
+    ownership: { listByOrganization: vi.fn(async () => paged<OwnershipTransfer>([], 20)),
+      incoming: vi.fn(async () => paged<OwnershipTransfer>([], 20)), find: vi.fn(async () => ({ ...transfer })),
+      create: vi.fn(async () => true), decide: vi.fn(async () => true),
+      expireStale: vi.fn(async () => []), supersedePending: vi.fn(async () => []) },
   }
   base.r.authorization.insertBinding = vi.fn(async binding => {
     bindings.push({ id: binding.id, userId: binding.subjectUserId, displayName: '成员', role: binding.role as 'organizer' | 'certifier', grantedAt: binding.startsAt })
     return true
   })
   const d = { transaction: { run: async <T>(work: (repositories: AccessRepositories) => Promise<T>) => work(r) }, permissions, now: () => base.now }
-  return { ...base, r, code, bindings, d, self: new OrganizationSelfService(d), joinCodes: new OrganizationJoinCodesService(d),
-    roles: new OrganizationRolesService(d), candidates: new OrganizationCandidatesService(d) }
+  return { ...base, r, code, invite, transfer, bindings, d, self: new OrganizationSelfService(d), joinCodes: new OrganizationJoinCodesService(d),
+    roles: new OrganizationRolesService(d), candidates: new OrganizationCandidatesService(d),
+    platformInvites: new PlatformInvitesService(d), ownership: new OrganizationOwnershipService(d) }
 }
