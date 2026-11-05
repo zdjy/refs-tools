@@ -9,7 +9,7 @@ import type { WorkbenchPorts } from '../src/infrastructure/workbench-storage'
 function setup(overrides: Partial<WorkbenchPorts> = {}) {
   const ports: WorkbenchPorts = {
     load: vi.fn(() => ({ sessions: [], activeId: '' })), save: vi.fn(),
-    download: vi.fn(), dispose: vi.fn(), ...overrides,
+    download: vi.fn(), downloadRaw: vi.fn(() => true), dispose: vi.fn(), ...overrides,
   }
   const scope = effectScope()
   const state = scope.run(() => createWorkbenchState(ports))!
@@ -103,6 +103,23 @@ describe('工作台应用状态（不挂载组件库）', () => {
     expect(vi.getTimerCount()).toBe(1)
   })
 
+  it('读取失败时可原样导出原始数据，结果如实反馈且不改动存储', () => {
+    const load = vi.fn(() => { throw new Error('bad json') })
+    const downloadRaw = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false).mockImplementationOnce(() => { throw new Error('blocked') })
+    const { state, ports } = setup({ load, downloadRaw })
+    state.initialize()
+    expect(state.restoreFailed.value).toBe(true)
+    expect(state.storageError.value).toContain('导出原始数据')
+    state.exportRawData()
+    expect(state.sessionNotice.value).toContain('已发起原始数据导出')
+    state.exportRawData()
+    expect(state.sessionNotice.value).toBe('本设备没有可导出的比赛记录。')
+    state.exportRawData()
+    expect(state.sessionNotice.value).toContain('原始数据导出失败')
+    expect(state.restoreFailed.value).toBe(true)
+    expect(ports.save).not.toHaveBeenCalled()
+  })
+
   it('再次进入按时间戳结算且到时不重复写事件', () => {
     vi.useFakeTimers()
     vi.setSystemTime(1000)
@@ -169,7 +186,7 @@ describe('工作台应用状态（不挂载组件库）', () => {
     view.createDialogVisible.value = true
     view.startSession()
     expect(state.restoreFailed.value).toBe(true)
-    expect(state.storageError.value).toContain('旧数据保持不变')
+    expect(state.storageError.value).toContain('原数据没有被改动')
     expect(view.createDialogVisible.value).toBe(true)
     expect(view.formError.value).toBe('')
     expect(ports.save).not.toHaveBeenCalled()

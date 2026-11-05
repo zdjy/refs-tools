@@ -1,3 +1,4 @@
+import type { WorkbenchRuleInput } from '../../domain/workbench-commands'
 import { formatClock, remainingMs, type ClockKind, type ClockState } from '../../domain/workbench'
 
 export const clockEntries: Array<{ kind: ClockKind; label: string }> = [
@@ -5,6 +6,19 @@ export const clockEntries: Array<{ kind: ClockKind; label: string }> = [
   { kind: 'shot', label: '进攻计时' },
   { kind: 'timeout', label: '暂停计时' },
 ]
+
+/**
+ * 新建比赛的参数预填项：只覆盖下方表单的数值，创建后与手填参数无区别；
+ * 名称只描述时长配置，不代表任何赛事的完整规则集（FS-0003 §7）。
+ */
+export const rulePresets: ReadonlyArray<{ id: string; label: string; values: Partial<WorkbenchRuleInput> }> = [
+  { id: '4x10', label: '4 × 10 分钟 · 24 秒', values: { periodCount: 4, periodMinutes: 10, shotSeconds: 24, shortShotSeconds: 14 } },
+  { id: '4x12', label: '4 × 12 分钟 · 24 秒', values: { periodCount: 4, periodMinutes: 12, shotSeconds: 24, shortShotSeconds: 14 } },
+  { id: '2x20', label: '2 × 20 分钟 · 30 秒', values: { periodCount: 2, periodMinutes: 20, shotSeconds: 30, shortShotSeconds: 20 } },
+]
+
+/** 常用参数直接展示，其余参数折叠到“高级”，减少新建时需要核对的字段数。 */
+export const basicRuleKeys = ['periodCount', 'periodMinutes', 'shotSeconds'] as const
 
 export const ruleFields = [
   { key: 'periodCount', label: '比赛节数', max: 12 },
@@ -43,3 +57,7 @@ export const formatTime = (at: number) => timeFormat.format(at)
  * @param at Unix 时间戳（毫秒）。
  */
 export const formatDate = (at: number) => new Date(at).toLocaleDateString('zh-CN')
+
+/** 常规节数内显示“第 n 节”，超出部分按加时序号显示，与规则集的 periodCount 对应。 */
+export const periodLabel = (period: number, periodCount: number) =>
+  period > periodCount ? `加时 ${period - periodCount}` : `第 ${period} 节`

@@ -14,7 +14,7 @@ afterEach(() => {
 function setup(overrides: Partial<WorkbenchPorts> = {}) {
   const ports: WorkbenchPorts = {
     load: vi.fn(() => ({ sessions: [], activeId: '' })), save: vi.fn(),
-    download: vi.fn(), dispose: vi.fn(), ...overrides,
+    download: vi.fn(), downloadRaw: vi.fn(() => true), dispose: vi.fn(), ...overrides,
   }
   const pinia = createPinia()
   pins.push(pinia)

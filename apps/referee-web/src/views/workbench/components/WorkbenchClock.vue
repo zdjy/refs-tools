@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { refereeControlThemes } from '../../../ui-theme'
+import { RotateCcw } from '@lucide/vue'
 import { NButton, NCard, NInputNumber, NPopconfirm } from 'naive-ui'
 import { remainingMs, type ClockKind, type ClockState } from '../../../domain/workbench'
 import { presentClock } from '../workbench.presentation'
@@ -18,7 +19,7 @@ const display = computed(() => presentClock(props.clock, props.now))
   >
     <div class="p-4">
       <div class="flex items-center justify-between gap-2 text-[13px] text-body">
-        <span>{{ clock.label }}</span><span class="text-[12px]" :class="display.expired ? 'text-red-hover' : clock.status === 'running' ? 'text-green' : ''" role="status">{{ display.state }}</span>
+        <span>{{ clock.label }}</span><span class="text-[13px]" :class="display.expired ? 'text-red-hover' : clock.status === 'running' ? 'text-green' : ''" role="status">{{ display.state }}</span>
       </div>
       <div class="mx-0 my-3.5 text-[clamp(32px,7vw,42px)] leading-[1.1] font-[650] text-ink tabular-nums md:text-[34px] xl:text-[32px] 2xl:text-[38px]" role="timer" :aria-label="clock.label" aria-live="off">{{ display.value }}</div>
       <div class="flex items-center gap-2">
@@ -26,7 +27,7 @@ const display = computed(() => presentClock(props.clock, props.now))
           {{ display.action }}
         </n-button>
         <n-popconfirm positive-text="重置" negative-text="取消" @positive-click="emit('reset', clock.kind)">
-          <template #trigger><n-button quaternary circle class="size-11" :theme-overrides="refereeControlThemes.iconButton" :disabled="disabled" :aria-label="`重置${clock.label}`"><span class="text-[22px]">↺</span></n-button></template>
+          <template #trigger><n-button quaternary circle class="size-11" :theme-overrides="refereeControlThemes.iconButton" :disabled="disabled" :aria-label="`重置${clock.label}`"><RotateCcw class="size-5" aria-hidden="true" /></n-button></template>
           重置{{ clock.label }}？当前剩余时间将被覆盖。
         </n-popconfirm>
       </div>

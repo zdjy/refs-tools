@@ -17,6 +17,10 @@ export const refereeControlThemes = {
   // 会话列表项属于侧栏导航项，圆角取 rounded-xl（12px）而非胶囊。
   sessionButton: { heightMedium: 'auto', paddingMedium: '10px 18px', borderRadiusMedium: '12px' },
   wrappingButton: { heightMedium: 'auto' },
+  // 手机上两队卡片并排、+1/+2/+3 三键同行，默认 18px 左右内边距会让 44px 宽的格子溢出；高度仍保持 44px 触控下限。
+  compactButton: { paddingMedium: '0 6px' },
+  // 吸顶记分条：两行读数的时钟按钮，内边距收窄以给队名留出宽度。
+  stripButton: { heightMedium: 'auto', paddingMedium: '4px 8px' },
 } satisfies Record<string, NonNullable<GlobalThemeOverrides['Button']>>
 
 // 覆盖 Naive UI 默认品牌色和尺寸，统一映射共享 token，不在页面逐个修补（ADR 0007）。

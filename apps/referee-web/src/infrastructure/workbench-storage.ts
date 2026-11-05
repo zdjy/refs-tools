@@ -86,17 +86,24 @@ export function createBrowserWorkbenchPorts(): WorkbenchPorts {
     if (exportUrl) URL.revokeObjectURL(exportUrl)
     exportUrl = undefined
   }
+  // 保留本次 URL 供浏览器完成下载；下次导出或离开页面时释放，避免 Blob 累积。
+  function saveFile(content: string, type: string, filename: string) {
+    dispose()
+    exportUrl = URL.createObjectURL(new Blob([content], { type }))
+    const link = document.createElement('a')
+    link.href = exportUrl
+    link.download = filename
+    link.click()
+  }
   return {
     load: () => loadWorkbench(localStorage),
     save: (snapshot) => saveWorkbench(localStorage, snapshot),
-    download(session) {
-      // 保留本次 URL 供浏览器完成下载；下次导出或离开页面时释放，避免 Blob 累积。
-      dispose()
-      exportUrl = URL.createObjectURL(new Blob([JSON.stringify(session, null, 2)], { type: 'application/json' }))
-      const link = document.createElement('a')
-      link.href = exportUrl
-      link.download = `比赛工作台-${new Date(session.createdAt).toISOString().slice(0, 10)}.json`
-      link.click()
+    download: (session) => saveFile(JSON.stringify(session, null, 2), 'application/json', `比赛工作台-${new Date(session.createdAt).toISOString().slice(0, 10)}.json`),
+    downloadRaw() {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw === null) return false
+      saveFile(raw, 'application/json', `比赛工作台-原始数据-${new Date().toISOString().slice(0, 10)}.json`)
+      return true
     },
     dispose,
   }

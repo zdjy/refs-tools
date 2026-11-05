@@ -37,7 +37,7 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
       sessionNotice.value = activeId.value ? '已恢复本地比赛会话。数据保存在此设备，不会自动同步到业务比赛记录。' : ''
     } catch {
       restoreFailed.value = true
-      storageError.value = '读取本地比赛记录失败。旧数据保持不变，请重试；清空前请先备份浏览器中的原始记录。'
+      storageError.value = '读取本地比赛记录失败，原数据没有被改动。可先导出原始数据备份，再重试读取；在此之前不要清空。'
     }
   }
 
@@ -159,9 +159,21 @@ export function createWorkbenchState(ports: WorkbenchPorts) {
     ports.dispose()
   })
 
+  /** 读取失败时的备份出口：导出不经解析，结果仅以端口是否成功为准。 */
+  function exportRawData() {
+    sessionNotice.value = ''
+    try {
+      sessionNotice.value = ports.downloadRaw()
+        ? '已发起原始数据导出，请确认浏览器已保存文件。文件可能包含比赛数据，请妥善保管。'
+        : '本设备没有可导出的比赛记录。'
+    } catch {
+      sessionNotice.value = '原始数据导出失败，记录未被删除，请重试。'
+    }
+  }
+
   return {
     sessions, activeId, now, activeSession, presets, storageError, sessionNotice,
-    restoreFailed, commandError, undoCount, undo, initialize, startSession, selectSession, exportSession,
+    restoreFailed, commandError, undoCount, undo, initialize, startSession, selectSession, exportSession, exportRawData,
     recordStat: (side: TeamSide, stat: TeamStat) => updateSession((session, at) => recordTeamStat(session, side, stat, at)),
     correctScore: (side: TeamSide, delta: number) => updateSession((session, at) => correctScore(session, side, delta, at)),
     renameTeam: (side: TeamSide, name: string) => updateSession((session, at) => renameTeam(session, side, name, at)),
