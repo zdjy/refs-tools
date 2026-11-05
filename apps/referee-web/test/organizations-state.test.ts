@@ -10,6 +10,7 @@ import { useMyOrganizations } from '../src/views/organizations/useMyOrganization
 import { useOrganizationDirectory } from '../src/views/organizations/useOrganizationDirectory'
 import { useApplicantProfile } from '../src/views/organizations/useApplicantProfile'
 import { useOrganizationApplication } from '../src/views/organizations/useOrganizationApplication'
+import { maskJoinCode } from '../src/views/organizations/organizations.presentation'
 
 const api = (patch: Record<string, unknown> = {}) => ({ mine: vi.fn(async () => ({ items: [] })), inbox: vi.fn(async () => ({ items: [] })),
   acceptInvitation: vi.fn(async () => ({})), declineInvitation: vi.fn(async () => ({})), ...patch }) as unknown as OrganizationsApi
@@ -73,6 +74,12 @@ describe('成员码', () => {
     const codes = useJoinCodes(ref('o'), a); await codes.generate(); await codes.copy()
     expect(codes.copyNotice.value).toContain('手动复制'); expect(codes.copyNotice.value).not.toContain('已复制')
     vi.unstubAllGlobals()
+  })
+  it('明文默认遮蔽：只保留 rj_ 前缀，长度与字符数不变', () => {
+    const masked = maskJoinCode(token)
+    expect(masked.startsWith('rj_')).toBe(true); expect(masked).toHaveLength(token.length)
+    expect(masked.slice(3)).toBe('*'.repeat(token.length - 3)); expect(masked).not.toContain('a')
+    expect(maskJoinCode('rj')).toBe('rj')
   })
 })
 

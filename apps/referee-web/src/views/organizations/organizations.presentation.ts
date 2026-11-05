@@ -27,6 +27,10 @@ export const relationLabels = { none: '', invited: '已邀请', pending: '申请
 export function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' })
 }
+/** 成员码默认遮蔽：保留 `rj_` 前缀便于认出码类型，其余按位替换为 `*`，字数与整串一致。 */
+export function maskJoinCode(token: string): string {
+  return `${token.slice(0, 3)}${'*'.repeat(Math.max(token.length - 3, 0))}`
+}
 export function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
