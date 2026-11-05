@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { NAlert, NButton, NSelect } from 'naive-ui'
+import { NAlert, NButton, NPopconfirm, NSelect } from 'naive-ui'
 import type { OrganizationRole } from '@refs-tools/contracts/organization-access'
 import UiLoadingRegion from '../../../components/ui/UiLoadingRegion.vue'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 import { useUiFeedback } from '../../../components/ui/useUiFeedback'
 import { roleLabels } from '../organizations.presentation'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 import { useMemberManagement } from '../useMemberManagement'
 import { useOrganizationRoles } from '../useOrganizationRoles'
 
@@ -53,7 +54,10 @@ async function submit() {
       <ul class="m-0 grid list-none gap-0 overflow-hidden rounded-xl border border-solid border-line p-0">
         <li v-for="item in roles.items.value" :key="item.id" class="flex flex-wrap items-center justify-between gap-3 border-0 border-b border-solid border-line p-4 last:border-b-0">
           <span class="grid min-w-0 gap-0.5"><span class="text-base font-semibold text-ink wrap-anywhere">{{ item.displayName }}</span><span class="text-[13px] text-body">{{ roleLabels[item.role] }}</span></span>
-          <n-button v-if="removable(item)" secondary :disabled="roles.revoke.busy.value" :aria-label="`撤销${item.displayName}的${roleLabels[item.role]}角色`" @click="roles.revokeRole(item)">撤销角色</n-button>
+          <n-popconfirm v-if="removable(item)" :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认撤销" negative-text="取消" @positive-click="roles.revokeRole(item)">
+            <template #trigger><n-button secondary :disabled="roles.revoke.busy.value" :aria-label="`撤销${item.displayName}的${roleLabels[item.role]}角色`">撤销角色</n-button></template>
+            撤销后「{{ item.displayName }}」立即失去{{ roleLabels[item.role] }}权限，需要重新授予。
+          </n-popconfirm>
         </li>
       </ul>
       <form v-if="roles.canGrant.value" class="grid gap-3 border-0 border-l border-solid border-line pl-4 compact:grid-cols-[minmax(0,1fr)_160px_auto] compact:items-end" @submit.prevent="submit">

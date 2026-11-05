@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import SkipLink from '../../components/navigation/SkipLink.vue'
 import BrandLink from '../../components/navigation/BrandLink.vue'
 import { useUiFeedback } from '../../components/ui/useUiFeedback'
+import { cancelButtonProps, confirmButtonProps } from '../../components/ui/confirm-buttons'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NPopconfirm } from 'naive-ui'
@@ -95,7 +96,7 @@ onMounted(initialize)
           </section>
           <div class="mt-3 flex min-h-[62px] items-center gap-3.5 border-0 border-l border-solid border-ink py-2 pl-3.5 text-[13px] text-body">
             <span>节次</span><strong class="text-[18px] text-ink">{{ String(activeSession.period).padStart(2, '0') }} <small class="text-[13px] font-medium text-body">/ {{ activeSession.rules.periodCount }}</small></strong>
-            <div class="ml-auto"><n-popconfirm positive-text="确认换节" negative-text="取消" @positive-click="switchPeriod">
+            <div class="ml-auto"><n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认换节" negative-text="取消" @positive-click="switchPeriod">
               <template #trigger><n-button secondary>{{ activeSession.period >= activeSession.rules.periodCount ? '进入加时' : '下一节' }}</n-button></template>
               换节将停止并重置时钟，清零本节球队犯规并补足本节暂停。比分和技术统计保留，确认继续？
             </n-popconfirm></div>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { NAlert, NButton, NInputNumber } from 'naive-ui'
+import { NAlert, NButton, NInputNumber, NPopconfirm } from 'naive-ui'
 import type { JoinCode } from '@refs-tools/contracts/organization-access'
 import UiLoadingRegion from '../../../components/ui/UiLoadingRegion.vue'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 import { useUiFeedback } from '../../../components/ui/useUiFeedback'
 import { formatDate, joinCodeStatusLabels } from '../organizations.presentation'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 import { useJoinCodes } from '../useJoinCodes'
 import JoinCodeReveal from './JoinCodeReveal.vue'
 
@@ -50,7 +51,10 @@ const lock = (code: JoinCode) => code.status !== 'active' || codes.revoke.busy.v
           <span class="text-base font-semibold text-ink">以 <span class="font-mono">{{ code.hint }}</span> 结尾 · {{ joinCodeStatusLabels[code.status] }}</span>
           <span class="text-[13px] tabular-nums text-body">已使用 {{ code.uses }} / {{ code.maxUses }} 次 · {{ formatDate(code.expiresAt) }} 到期</span>
         </div>
-        <n-button v-if="code.status === 'active'" secondary :disabled="lock(code)" :aria-label="`撤销以${code.hint}结尾的成员码`" @click="codes.revokeCode(code)">撤销</n-button>
+        <n-popconfirm v-if="code.status === 'active'" :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认撤销" negative-text="取消" @positive-click="codes.revokeCode(code)">
+          <template #trigger><n-button secondary :disabled="lock(code)" :aria-label="`撤销以${code.hint}结尾的成员码`">撤销</n-button></template>
+          撤销后以「{{ code.hint }}」结尾的成员码立即失效，已发出的码无法再兑换，需要重新生成。
+        </n-popconfirm>
       </li>
     </ul>
     <p v-else-if="codes.list.data.value" class="m-0 text-sm text-body">还没有生成过成员码。</p>

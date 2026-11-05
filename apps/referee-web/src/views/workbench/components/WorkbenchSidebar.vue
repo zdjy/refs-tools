@@ -2,6 +2,7 @@
 import { refereeControlThemes } from '../../../ui-theme'
 import { Plus } from '@lucide/vue'
 import { NButton, NPopconfirm } from 'naive-ui'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 import type { WorkbenchSession } from '../../../domain/workbench'
 import { formatDate } from '../workbench.presentation'
 
@@ -29,7 +30,7 @@ const emit = defineEmits<{ create: []; select: [id: string]; clear: [] }>()
     <div class="mt-3 border-0 border-l border-solid border-ink py-0.5 pl-3.5 tablet:mt-auto">
       <p class="mt-0 mr-0 mb-1.5 ml-0 text-[13px] font-bold">共享设备提示</p>
       <p class="m-0 text-[13px] leading-[1.6] text-body">赛后请导出需要保留的记录，并清除此设备中的比赛数据。</p>
-      <n-popconfirm positive-text="清空" negative-text="取消" @positive-click="emit('clear')">
+      <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认清空" negative-text="取消" @positive-click="emit('clear')">
         <template #trigger><n-button class="mt-2" secondary type="error" :disabled="!canClear">清空本设备全部比赛</n-button></template>
         清空本设备的全部比赛会话？此操作无法撤销，请先导出需要保留的记录。
       </n-popconfirm>

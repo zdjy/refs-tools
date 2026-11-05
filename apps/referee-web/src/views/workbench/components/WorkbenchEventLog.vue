@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { NButton, NEmpty, NPopconfirm } from 'naive-ui'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 import { formatClock, type WorkbenchEvent } from '../../../domain/workbench'
 import { formatTime } from '../workbench.presentation'
 
@@ -13,7 +14,7 @@ const emit = defineEmits<{ clear: [] }>()
       <h3 class="m-0 text-[16px] text-ink">操作日志</h3>
       <div class="flex items-center gap-2">
         <span class="text-[13px] text-body">{{ events.length }} 条</span>
-        <n-popconfirm v-if="events.length" positive-text="清除" negative-text="取消" @positive-click="emit('clear')">
+        <n-popconfirm v-if="events.length" :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认清除" negative-text="取消" @positive-click="emit('clear')">
           <template #trigger><n-button quaternary>清除日志</n-button></template>
           清除当前比赛的操作日志？
         </n-popconfirm>

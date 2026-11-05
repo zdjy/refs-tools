@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { NAlert, NButton } from 'naive-ui'
+import { NAlert, NButton, NPopconfirm } from 'naive-ui'
 import { useUiFeedback } from '../../components/ui/useUiFeedback'
+import { cancelButtonProps, confirmButtonProps } from '../../components/ui/confirm-buttons'
 import { Eraser, Search } from '@lucide/vue'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import UiPageBanner from '../../components/ui/UiPageBanner.vue'
@@ -9,7 +10,7 @@ import Gb2312Result from './components/Gb2312Result.vue'
 import { useGb2312 } from './useGb2312'
 
 const {
-  characterInput, codeInput, batchInput, characterResult, codeResult, batchResult, batchRows, copyError, copyNotice,
+  characterInput, codeInput, batchInput, characterResult, codeResult, batchResult, batchRows, hasContent, copyError, copyNotice,
   lookupCharacter, lookupCode, convertBatch, clearAll, copy,
 } = useGb2312()
 useUiFeedback(copyNotice)
@@ -19,7 +20,12 @@ useUiFeedback(copyError, 'error')
 <template>
   <NavigationShell>
     <UiPageBanner title="GB 2312 区位码工具" title-id="gb2312-title" description="查询汉字区位码、国标码与十六进制机内码，也可以批量检查文本。ASCII 字符单独标记，未收录字符不会被强行转换。" status="本地工具 · Beta" tone="available">
-      <template #actions><n-button secondary @click="clearAll"><Eraser :size="16" aria-hidden="true" />清空</n-button></template>
+      <template #actions>
+        <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认清空" negative-text="取消" :disabled="!hasContent" @positive-click="clearAll">
+          <template #trigger><n-button secondary :disabled="!hasContent"><Eraser :size="16" aria-hidden="true" />清空</n-button></template>
+          清空将删除三项输入的文本与已有查询结果，无法恢复。
+        </n-popconfirm>
+      </template>
     </UiPageBanner>
 
     <n-alert v-if="copyError" type="error" role="alert" class="mt-4">{{ copyError }}</n-alert>

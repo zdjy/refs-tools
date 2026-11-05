@@ -754,7 +754,7 @@ export type AuditEvent = {
 ### Task 18：GB 2312 区位码工具
 
 - **依赖**：无业务 API 依赖；工具数据/标准实现需先确认来源和许可。
-- **实现**：汉字双向查询、区位码/国标码/机内码、ASCII/符号和批量转换。
+- **实现**：汉字双向查询、区位码/国标码/机内码、ASCII/符号和批量转换。清空输入与结果属破坏性操作，经二次确认（`取消 / 确认清空`）才执行，输入全空时按钮禁用。
 - **文件**：`packages/domain/src/gb2312/*`、`apps/referee-web/src/features/gb2312/*`。
 - **测试**：`packages/domain/test/gb2312/round-trip.test.ts`、`boundary-cases.test.ts`、`batch-input.test.ts`；覆盖未收录字符和非法输入。
 

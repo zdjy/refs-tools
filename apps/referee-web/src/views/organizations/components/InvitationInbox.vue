@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Check, MailOpen, X } from '@lucide/vue'
-import { NButton } from 'naive-ui'
+import { NButton, NPopconfirm } from 'naive-ui'
 import type { OrganizationInvitation } from '@refs-tools/contracts/organization-members'
 import { vReveal } from '../../../components/ui/motion/reveal'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 import { formatDate } from '../organizations.presentation'
 
@@ -30,7 +31,10 @@ const emit = defineEmits<{ respond: [item: OrganizationInvitation, accept: boole
           <span class="text-[13px] text-body">{{ formatDate(item.expiresAt) }} 前有效</span>
         </div>
         <div class="flex flex-wrap gap-2">
-          <n-button secondary :disabled="busy" :aria-label="`拒绝${item.organizationName}的邀请`" @click="emit('respond', item, false)"><template #icon><X class="size-4" aria-hidden="true" /></template>拒绝</n-button>
+          <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认拒绝" negative-text="取消" @positive-click="emit('respond', item, false)">
+            <template #trigger><n-button secondary :disabled="busy" :aria-label="`拒绝${item.organizationName}的邀请`"><template #icon><X class="size-4" aria-hidden="true" /></template>拒绝</n-button></template>
+            拒绝后这次邀请即失效，需要对方重新邀请才能加入。
+          </n-popconfirm>
           <n-button type="primary" :disabled="busy" :loading="busy" :aria-label="`接受${item.organizationName}的邀请`" @click="emit('respond', item, true)"><template #icon><Check class="size-4" aria-hidden="true" /></template>接受</n-button>
         </div>
       </li>

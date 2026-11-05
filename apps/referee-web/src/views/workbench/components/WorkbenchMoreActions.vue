@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronDown } from '@lucide/vue'
 import { NButton, NPopconfirm } from 'naive-ui'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 
 defineProps<{ muted: boolean; shortcutsEnabled: boolean }>()
 const emit = defineEmits<{
@@ -26,11 +27,11 @@ const emit = defineEmits<{
       <p v-if="shortcutsEnabled" class="m-0 hidden text-[13px] leading-[1.6] text-body tablet:block">Space 启停比赛钟 · R/T 重置进攻钟 · P 球权 · H 蜂鸣 · Ctrl/Cmd+Z 撤销。输入或弹窗中不生效。</p>
       <div class="flex flex-wrap gap-2" role="group" aria-label="导出与重置">
         <n-button secondary @click="emit('exportSession')">导出会话 JSON</n-button>
-        <n-popconfirm positive-text="重置整场" negative-text="取消" @positive-click="emit('resetMatch')">
+        <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认重置" negative-text="取消" @positive-click="emit('resetMatch')">
           <template #trigger><n-button quaternary>重置整场</n-button></template>
           重置比分、统计、犯规、暂停、节次和日志？队名与规则保留，建议先导出。
         </n-popconfirm>
-        <n-popconfirm positive-text="删除" negative-text="取消" @positive-click="emit('removeSession')">
+        <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认删除" negative-text="取消" @positive-click="emit('removeSession')">
           <template #trigger><n-button quaternary>删除这场比赛</n-button></template>
           删除这场本地比赛？请先导出需要保留的记录。
         </n-popconfirm>

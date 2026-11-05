@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
-import { NButton } from 'naive-ui'
+import { NButton, NPopconfirm } from 'naive-ui'
 import type { UploadState } from '../../../features/media/direct-upload'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 
 const props = defineProps<{ url: string; name: string; state: UploadState; busy: boolean }>()
 const emit = defineEmits<{ select: [file: File]; retry: []; remove: [] }>()
@@ -33,7 +34,10 @@ function pick(event: Event) {
           <label :for="id" class="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-soft px-4 text-[13px] font-semibold hover:bg-line focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink">{{ uploading ? '头像上传中…' : '选择头像图片' }}</label>
           <input :id="id" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp" :disabled="busy || uploading" @change="pick" />
           <n-button v-if="state.status === 'failed'" secondary @click="emit('retry')">重试上传</n-button>
-          <n-button v-if="url && !uploading" secondary :disabled="busy" @click="emit('remove')">移除头像</n-button>
+          <n-popconfirm v-if="url && !uploading" :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认移除" negative-text="取消" @positive-click="emit('remove')">
+            <template #trigger><n-button secondary :disabled="busy">移除头像</n-button></template>
+            移除后头像恢复为昵称首字，需要重新选择图片上传。
+          </n-popconfirm>
         </div>
         <p class="m-0 text-[12px] leading-[1.7] text-body" :class="state.error ? 'text-danger' : ''" role="status">
           {{ state.error ?? (uploading ? progress : '支持 JPEG、PNG、WebP，保存为不超过 2 MiB、最长边 1600px 的预览图。') }}

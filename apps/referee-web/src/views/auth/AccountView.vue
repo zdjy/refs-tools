@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NPopconfirm, useMessage } from 'naive-ui'
+import { cancelButtonProps, confirmButtonProps } from '../../components/ui/confirm-buttons'
 import { useAuthStore } from '../../stores/auth'
 import AuthShell from './components/AuthShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
@@ -43,7 +44,7 @@ onMounted(() => { void auth.restore() })
         <section class="mt-6 border-0 border-t border-solid border-line pt-6" aria-labelledby="session-heading">
           <h3 class="text-ink mt-0 mr-0 mb-2 ml-0 text-[18px]" id="session-heading">当前登录</h3>
           <p class="mt-0 mr-0 mb-5 ml-0 text-[13px] leading-[1.8] text-body">共享设备使用完毕后，请退出账号。本地比赛记录仍保存在此设备。</p>
-          <n-popconfirm positive-text="退出登录" negative-text="取消" :disabled="busy" @positive-click="logout">
+          <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认退出" negative-text="取消" :disabled="busy" @positive-click="logout">
             <template #trigger><n-button secondary block :loading="busy" :disabled="busy">退出登录</n-button></template>
             确认结束当前账号的登录会话？
           </n-popconfirm>

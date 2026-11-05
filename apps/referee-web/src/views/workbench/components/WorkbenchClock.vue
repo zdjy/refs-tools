@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { refereeControlThemes } from '../../../ui-theme'
 import { RotateCcw } from '@lucide/vue'
 import { NButton, NInputNumber, NPopconfirm } from 'naive-ui'
+import { cancelButtonProps, confirmButtonProps } from '../../../components/ui/confirm-buttons'
 import { remainingMs, type ClockKind, type ClockState } from '../../../domain/workbench'
 import { presentClock } from '../workbench.presentation'
 
@@ -23,7 +24,7 @@ const display = computed(() => presentClock(props.clock, props.now))
         <n-button class="min-w-[86px]" type="primary" :disabled="disabled || display.cannotStart" :aria-label="`${display.action}${clock.label}`" @click="emit('toggle', clock.kind)">
           {{ display.action }}
         </n-button>
-        <n-popconfirm positive-text="重置" negative-text="取消" @positive-click="emit('reset', clock.kind)">
+        <n-popconfirm :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps" positive-text="确认重置" negative-text="取消" @positive-click="emit('reset', clock.kind)">
           <template #trigger><n-button quaternary circle class="size-11" :theme-overrides="refereeControlThemes.iconButton" :disabled="disabled" :aria-label="`重置${clock.label}`"><RotateCcw class="size-5" aria-hidden="true" /></n-button></template>
           重置{{ clock.label }}？当前剩余时间将被覆盖。
         </n-popconfirm>

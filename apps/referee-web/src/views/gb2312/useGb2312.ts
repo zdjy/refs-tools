@@ -18,6 +18,8 @@ export function useGb2312(clipboard: Pick<Clipboard, 'writeText'> | undefined = 
   const copying = ref(false)
 
   const batchRows = computed(() => batchResult.value.items.filter((item) => item.status !== 'invalid'))
+  /** 输入为空时清空按钮没有可执行的内容，据此禁用避免空操作。 */
+  const hasContent = computed(() => !!(characterInput.value || codeInput.value || batchInput.value))
 
   function lookupCharacter() {
     characterResult.value = codec.lookupCharacter(characterInput.value)
@@ -56,7 +58,7 @@ export function useGb2312(clipboard: Pick<Clipboard, 'writeText'> | undefined = 
   }
 
   return {
-    characterInput, codeInput, batchInput, characterResult, codeResult, batchResult, batchRows, copiedLabel, copyError, copyNotice, copying,
+    characterInput, codeInput, batchInput, characterResult, codeResult, batchResult, batchRows, hasContent, copiedLabel, copyError, copyNotice, copying,
     lookupCharacter, lookupCode, convertBatch, clearAll, copy,
   }
 }

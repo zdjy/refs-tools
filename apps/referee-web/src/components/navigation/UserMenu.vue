@@ -26,7 +26,7 @@ function confirmLogout(): void {
   dialog.warning({
     title: '退出登录',
     content: '确认结束当前账号的登录会话？本地比赛记录仍保存在此设备。',
-    positiveText: '退出登录',
+    positiveText: '确认退出',
     negativeText: '取消',
     // 取消后焦点回到触发按钮，避免键盘用户在弹框关闭后丢失位置。
     onAfterLeave: () => trigger.value?.focus(),
