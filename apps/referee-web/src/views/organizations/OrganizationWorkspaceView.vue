@@ -54,10 +54,12 @@ async function leave() {
       </section>
       <template v-else-if="ws.organization.value">
         <WorkspaceHeader :organization="ws.organization.value" />
-        <div ref="tablist" role="tablist" aria-label="组织工作区" class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" @keydown="onKeydown">
+        <!-- 手机端五个标签均分整行、不出现横向滚动条；窄到 320px 才退回局部横滑，滚动条本身不显示。 -->
+        <div ref="tablist" role="tablist" aria-label="组织工作区"
+          class="-mx-1 flex gap-2 overflow-x-auto overscroll-x-contain scroll-smooth px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" @keydown="onKeydown">
           <button v-for="item in ws.tabs.value" :id="`ws-tab-${item.id}`" :key="item.id" type="button" role="tab" :data-tab="item.id"
             :aria-selected="ws.tab.value === item.id" :aria-controls="`ws-panel-${item.id}`" :tabindex="ws.tab.value === item.id ? 0 : -1"
-            class="inline-flex min-h-11 shrink-0 items-center rounded-full border-0 px-5 text-sm whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[.98]"
+            class="inline-flex min-h-11 min-w-max flex-1 items-center justify-center rounded-full border-0 px-2 text-sm whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[.98] sm:flex-none sm:px-5"
             :class="ws.tab.value === item.id ? 'bg-ink font-semibold text-surface' : 'bg-soft text-body hover:bg-sand hover:text-ink'" @click="ws.tab.value = item.id">{{ item.label }}</button>
         </div>
         <div :id="`ws-panel-${ws.tab.value}`" role="tabpanel" :aria-labelledby="`ws-tab-${ws.tab.value}`" tabindex="0"

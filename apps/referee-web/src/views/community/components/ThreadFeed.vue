@@ -29,7 +29,7 @@ const boardTitle = computed(() => boardTabs.find((tab) => tab.id === board.value
       </div>
     </div>
     <!-- 示例声明放在列表上方，用左侧一条细线标出，不再混在计数文字后面。 -->
-    <p class="mt-0 mb-3 flex items-start gap-2 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-[1.6] text-ink"><Info class="mt-0.5 size-4 shrink-0" :stroke-width="1.75" aria-hidden="true" />自编情境与示例角色，非真实用户帖子；发帖、回复与点赞尚未开放。</p>
+    <!-- <p class="mt-0 mb-3 flex items-start gap-2 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-[1.6] text-ink"><Info class="mt-0.5 size-4 shrink-0" :stroke-width="1.75" aria-hidden="true" />自编情境与示例角色，非真实用户帖子；发帖、回复与点赞尚未开放。</p> -->
     <div id="thread-list" class="border-0 border-t border-solid border-ink">
       <ThreadCard v-for="(thread, index) in threads" :key="thread.id" :index="index" :thread="thread" :open="expanded.has(thread.id)" @toggle="toggle" />
       <div v-if="!threads.length" class="px-5 py-12 text-center">
