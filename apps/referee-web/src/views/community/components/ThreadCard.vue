@@ -16,11 +16,12 @@ const boardTitle = (id: string) => boards.find((board) => board.id === id)?.titl
       <PersonaAvatar :shape="findPersona(thread.personaId).shape" class="mt-1 shrink-0" />
       <div class="min-w-0 grow">
         <p class="m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-body"><span class="font-semibold text-accent-hover">{{ boardTitle(thread.board) }}</span><span>{{ findPersona(thread.personaId).name }}</span><span>{{ thread.moment }}</span></p>
+        <!-- 标题与正文摘要都在信息流内截断，超长文本以省略号收尾，完整内容留在阅读页或回应区。 -->
         <h3 class="mt-1 mb-0 text-lg leading-[1.5] font-bold tracking-[-0.01em] text-ink">
-          <RouterLink v-if="thread.articleId" :to="`/read/${thread.articleId}`" class="block min-h-11 content-center rounded-xl text-ink no-underline transition-colors duration-200 hover:text-accent-hover active:scale-[.98]">{{ thread.title }}</RouterLink>
-          <button v-else type="button" :aria-expanded="open" :aria-controls="`replies-${thread.id}`" class="block min-h-11 w-full cursor-pointer rounded-xl border-0 bg-transparent p-0 text-left text-inherit transition-colors duration-200 hover:text-accent-hover active:scale-[.98]" @click="$emit('toggle', thread.id)">{{ thread.title }}</button>
+          <RouterLink v-if="thread.articleId" :to="`/read/${thread.articleId}`" class="block min-h-11 content-center rounded-xl text-ink no-underline transition-colors duration-200 hover:text-accent-hover active:scale-[.98]"><span class="line-clamp-2">{{ thread.title }}</span></RouterLink>
+          <button v-else type="button" :aria-expanded="open" :aria-controls="`replies-${thread.id}`" class="block min-h-11 w-full cursor-pointer rounded-xl border-0 bg-transparent p-0 text-left text-inherit transition-colors duration-200 hover:text-accent-hover active:scale-[.98]" @click="$emit('toggle', thread.id)"><span class="line-clamp-2">{{ thread.title }}</span></button>
         </h3>
-        <p class="mt-1 mb-0 text-base leading-[1.7] text-body">{{ thread.body }}</p>
+        <p class="mt-1 mb-0 line-clamp-3 text-base leading-[1.7] text-body">{{ thread.body }}</p>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <ul class="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-[13px] text-body" aria-label="话题标签"><li v-for="tag in thread.tags" :key="tag"># {{ tag }}</li></ul>
           <button type="button" :aria-expanded="open" :aria-controls="`replies-${thread.id}`" class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 bg-soft px-3 text-[13px] font-medium text-body transition-colors duration-200 hover:bg-sand hover:text-ink active:scale-95" @click="$emit('toggle', thread.id)">
