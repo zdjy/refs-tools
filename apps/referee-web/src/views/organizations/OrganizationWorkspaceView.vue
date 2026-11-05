@@ -43,7 +43,7 @@ async function leave() {
     <div class="mx-auto grid max-w-[980px] gap-6">
       <OrganizationsSignIn v-if="status !== 'authenticated'" :status="status" @retry="retry" />
       <UiLoadingRegion v-else-if="ws.mine.loading.value && !ws.mine.data.value" :loading="true" label="读取组织" :lines="5" @retry="ws.load()" />
-      <div v-else-if="ws.mine.error.value" class="grid max-w-[560px] gap-3">
+      <div v-else-if="ws.mine.error.value && !ws.mine.data.value" class="grid max-w-[560px] gap-3">
         <n-alert type="error" :show-icon="false" role="alert">{{ ws.mine.error.value }}</n-alert>
         <div class="flex gap-2"><n-button type="primary" @click="ws.load()">重新读取</n-button><RouterLink to="/organizations" :class="linkButton.secondary">返回我的组织</RouterLink></div>
       </div>
@@ -64,7 +64,8 @@ async function leave() {
         </div>
         <div :id="`ws-panel-${ws.tab.value}`" role="tabpanel" :aria-labelledby="`ws-tab-${ws.tab.value}`" tabindex="0"
           class="min-w-0 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent compact:p-6">
-          <OverviewPanel v-if="ws.tab.value === 'overview'" :organization="ws.organization.value" @leave="confirm.open(true)" />
+          <OverviewPanel v-if="ws.tab.value === 'overview'" :organization="ws.organization.value" :refresh="ws.load"
+            @leave="confirm.open(true)" @saved="ws.applyPurpose" />
           <MembersPanel v-else-if="ws.tab.value === 'members'" :key="`m-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
           <InvitationsPanel v-else-if="ws.tab.value === 'invitations'" :key="`i-${id}`" :organization-id="id" />
           <JoinCodesPanel v-else-if="ws.tab.value === 'codes'" :key="`c-${id}`" :organization-id="id" />

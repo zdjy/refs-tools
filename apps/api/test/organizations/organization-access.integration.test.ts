@@ -126,6 +126,24 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('用户视角组织 PostgreSQ
     const again = await members.request(seed.ids.outsider, seed.ids.orgA)
     expect(again.id).not.toBe(pending.id); expect(again.status).toBe('pending')
   })
+  it('负责人自助修改简介真实落库并递增版本，非负责人与陈旧版本被拒绝，审计不含简介正文', async () => {
+    const before = (await self.mine(seed.ids.owner)).items.find(item => item.id === seed.ids.orgA)!
+    expect(before.version).toBe(1)
+    expect(await self.updateProfile(seed.ids.owner, seed.ids.orgA, { purpose: ' 面向省市联赛 ', expectedVersion: before.version }))
+      .toEqual({ id: seed.ids.orgA, purpose: '面向省市联赛', version: 2 })
+    expect((await db.pool.query('SELECT purpose,version FROM organizations WHERE id=$1', [seed.ids.orgA])).rows[0])
+      .toEqual({ purpose: '面向省市联赛', version: 2 })
+    expect((await self.mine(seed.ids.owner)).items.find(item => item.id === seed.ids.orgA)).toMatchObject({ purpose: '面向省市联赛', version: 2 })
+    await expect(self.updateProfile(seed.ids.owner, seed.ids.orgA, { purpose: '再次修改', expectedVersion: 1 }))
+      .rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
+    await expect(self.updateProfile(seed.ids.actor, seed.ids.orgA, { purpose: '越权修改', expectedVersion: 2 }))
+      .rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 })
+    const audits = (await db.pool.query("SELECT before,after FROM audit_events WHERE action='organization.updated'")).rows
+    expect(audits).toHaveLength(1)
+    expect(audits[0]).toEqual({ before: { status: 'active', version: 1, subjectUserId: seed.ids.owner },
+      after: { status: 'active', version: 2, subjectUserId: seed.ids.owner } })
+    expect(JSON.stringify(audits)).not.toContain('面向省市联赛')
+  })
   it('列表查询都按分页返回并带总数，越界页为空且翻页不重不漏', async () => {
     await completeProfile(seed.ids.outsider)
     for (const name of ['甲协会', '乙协会', '丙协会']) await self.apply(seed.ids.outsider, { ...input, name })

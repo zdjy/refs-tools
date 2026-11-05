@@ -27,8 +27,9 @@ describe('组织成员 HTTP 边界', () => {
   it('合法路径使用当前 Cookie 主体，响应只包含契约字段', async () => {
     const f = await fixture()
     try {
-      const response = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships?page=1&pageSize=20`, headers: f.headers })
+      const response = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships?page=1&pageSize=20&keyword=%E6%88%90`, headers: f.headers })
       expect(response.statusCode).toBe(200); expect(response.json().data).toMatchObject({ canManage: true, total: 1 })
+      expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '1', pageSize: '20', keyword: '成' })
       const created = await f.app.inject({ method: 'POST', url: `/api/v1/organizations/${f.id}/invitations`, headers: f.headers, payload: { userId: f.user } })
       expect(created.statusCode).toBe(201)
       expect(f.r.members.createInvitation).toHaveBeenCalledWith(expect.any(String), f.id, f.user, f.actor, f.now, new Date(f.now.getTime() + 7 * 86400000))
@@ -40,7 +41,8 @@ describe('组织成员 HTTP 边界', () => {
   it('非法 ID、分页、越界有效期与附加角色拒绝', async () => {
     const f = await fixture()
     try {
-      for (const url of [`/api/v1/organizations/invalid/memberships`, `/api/v1/organizations/${f.id}/invitations?pageSize=500`]) {
+      for (const url of [`/api/v1/organizations/invalid/memberships`, `/api/v1/organizations/${f.id}/invitations?pageSize=500`,
+        `/api/v1/organizations/${f.id}/memberships?keyword=${'长'.repeat(101)}`, `/api/v1/organizations/${f.id}/memberships?keyword=x&role=owner`]) {
         expect((await f.app.inject({ url, headers: f.headers })).statusCode).toBe(400)
       }
       for (const payload of [{ userId: f.user, validDays: 0 }, { userId: f.user, validDays: 31 }, { userId: f.user, validDays: 7, role: 'owner' }]) {

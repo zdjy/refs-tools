@@ -1,5 +1,5 @@
 import { computed, ref, type Ref } from 'vue'
-import type { MyOrganization } from '@refs-tools/contracts/organization-self'
+import type { MyOrganization, OrganizationProfileUpdated } from '@refs-tools/contracts/organization-self'
 import { organizationsApi, type OrganizationsApi } from '../../api/organizations.api'
 import { useAction, useLoadable } from './organization-primitives'
 
@@ -33,6 +33,16 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
     return ok
   }
 
+  /**
+   * 简介保存后把服务端回执合并进当前列表：简介与版本都取服务端结果，
+   * 不再多发一次列表请求，避免「写入成功但刷新失败」的中间态。
+   */
+  function applyPurpose(value: OrganizationProfileUpdated) {
+    if (!mine.data.value) return
+    mine.data.value = mine.data.value.map(item =>
+      item.id === value.id ? { ...item, purpose: value.purpose, version: value.version } : item)
+  }
+
   /** 退出：pending 申请即「撤回申请」，active 成员即「退出组织」，共用同一接口与版本条件。 */
   async function leaveOrganization(reason: string): Promise<boolean> {
     const current = organization.value
@@ -45,5 +55,5 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
     return ok
   }
 
-  return { organization, notFound, tab, tabs, mine, leave, left, load, leaveOrganization }
+  return { organization, notFound, tab, tabs, mine, leave, left, load, leaveOrganization, applyPurpose }
 }

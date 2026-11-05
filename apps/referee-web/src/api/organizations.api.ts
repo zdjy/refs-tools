@@ -2,9 +2,11 @@ import type {
   CandidateList, CreateJoinCode, GrantRole, JoinCode, JoinCodeList, OrganizationRole, OrganizationRoleList,
 } from '@refs-tools/contracts/organization-access'
 import type {
-  InvitationList, MemberChange, MemberPageQuery, Membership, MembershipDecision, MembershipList, OrganizationInvitation,
+  InvitationList, MemberChange, MemberListQuery, MemberPageQuery, Membership, MembershipDecision, MembershipList, OrganizationInvitation,
 } from '@refs-tools/contracts/organization-members'
-import type { DirectoryList, DirectoryQuery, MyOrganization, MyOrganizationList, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type {
+  DirectoryList, DirectoryQuery, MyOrganization, MyOrganizationList, OrganizationApplication, OrganizationProfileUpdate, OrganizationProfileUpdated,
+} from '@refs-tools/contracts/organization-self'
 import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { HttpError } from './http/errors'
 import { createPlatformClient, type PlatformClient } from './http/platform-client'
@@ -46,7 +48,7 @@ export function createOrganizationsApi(client: PlatformClient) {
     redeemCode: (token: string) => call(client.post<Membership>('/organization-join-codes/redeem', { token })),
     leave: (orgId: string, recordId: string, body: MemberChange) =>
       call(client.post<Membership>(`/organizations/${id(orgId)}/memberships/${id(recordId)}/leave`, body)),
-    members: (orgId: string, value: MemberPageQuery = {}) => call(client.get<MembershipList>(`/organizations/${id(orgId)}/memberships${page(value)}`)),
+    members: (orgId: string, value: MemberListQuery = {}) => call(client.get<MembershipList>(`/organizations/${id(orgId)}/memberships${query({ ...value })}`)),
     decideMember: (orgId: string, recordId: string, body: MembershipDecision) =>
       call(client.post<Membership>(`/organizations/${id(orgId)}/memberships/${id(recordId)}/decision`, body)),
     invitations: (orgId: string, value: MemberPageQuery = {}) => call(client.get<InvitationList>(`/organizations/${id(orgId)}/invitations${page(value)}`)),
@@ -65,6 +67,8 @@ export function createOrganizationsApi(client: PlatformClient) {
     roles: (orgId: string, value: PageQuery = {}) =>
       call(client.get<OrganizationRoleList>(`/organizations/${id(orgId)}/roles${page(value)}`)),
     grantRole: (orgId: string, body: GrantRole) => call(client.post<OrganizationRole>(`/organizations/${id(orgId)}/roles`, body)),
+    updateProfile: (orgId: string, body: OrganizationProfileUpdate) =>
+      call(client.patch<OrganizationProfileUpdated>(`/organizations/${id(orgId)}/profile`, body)),
     revokeRole: (orgId: string, bindingId: string) =>
       call(client.post<{ revoked: true }>(`/organizations/${id(orgId)}/roles/${id(bindingId)}/revoke`, {})),
   }

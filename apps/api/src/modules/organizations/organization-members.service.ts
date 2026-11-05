@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { MemberChange, MemberPageQuery, MembershipDecision } from '@refs-tools/contracts/organization-members'
+import type { MemberChange, MemberListQuery, MembershipDecision } from '@refs-tools/contracts/organization-members'
 import { membershipStatusAfter } from '@refs-tools/domain'
 import { DomainError } from '../../application/errors.js'
 import { appendAudit } from '../audit/audit.service.js'
@@ -10,7 +10,7 @@ import type { MemberDependencies } from './organization-members.types.js'
 export class OrganizationMembersService {
   constructor(private readonly d: MemberDependencies) {}
 
-  async list(actor: string, id: string, query: MemberPageQuery) {
+  async list(actor: string, id: string, query: MemberListQuery) {
     const now = this.d.now()
     return this.d.transaction.run(async r => {
       const { canManage } = await memberAccess(r, this.d, actor, id, now, 'read')

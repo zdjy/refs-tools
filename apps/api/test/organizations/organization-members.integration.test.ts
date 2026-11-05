@@ -26,6 +26,20 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('组织成员与邀请 Postgr
   })
   const create = () => invites.create(seed.ids.owner, seed.ids.orgA, { userId: seed.ids.outsider, validDays: 1 })
 
+  it('成员名单按昵称关键词过滤后分页，计数与页数都来自筛选结果', async () => {
+    for (const name of ['张三', '李四', '张裁判']) {
+      const id = randomUUID()
+      await db.pool.query("INSERT INTO users(id,email,display_name,email_verified_at) VALUES($1,$2,$3,now())", [id, `${id}@example.com`, name])
+      await db.pool.query("INSERT INTO organization_memberships(id,organization_id,user_id,status) VALUES($1,$2,$3,'active')", [randomUUID(), seed.ids.orgA, id])
+    }
+    expect((await members.list(seed.ids.owner, seed.ids.orgA, {})).total).toBe(5)
+    const filtered = await members.list(seed.ids.owner, seed.ids.orgA, { keyword: ' 张 ', pageSize: '10' })
+    expect(filtered).toMatchObject({ total: 2, page: 1, pageSize: 10 })
+    expect(filtered.items.map(item => item.displayName).sort()).toEqual(['张三', '张裁判'].sort())
+    // 关键词只收窄结果，不影响其他组织；无匹配时返回空页而不是退回全部成员。
+    expect(await members.list(seed.ids.owner, seed.ids.orgA, { keyword: '王' })).toMatchObject({ total: 0, items: [] })
+    expect(await members.list(seed.ids.admin, seed.ids.orgB, { keyword: '张' })).toMatchObject({ total: 0, items: [] })
+  })
   it('邀请、本人收件箱、确认与重放真实落库，不授角色且投影不泄露邮箱', async () => {
     const invite = await create()
     expect((await invites.inbox(seed.ids.outsider, {})).items.map(i => i.id)).toEqual([invite.id])

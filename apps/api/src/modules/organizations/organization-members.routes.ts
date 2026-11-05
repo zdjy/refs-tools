@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { apiResponse } from '@refs-tools/contracts'
-import type { CreateInvitation, MemberChange, MemberOrganizationParams, MemberPageQuery, MemberRecordParams, MembershipDecision } from '@refs-tools/contracts/organization-members'
+import type { CreateInvitation, MemberChange, MemberListQuery, MemberOrganizationParams, MemberPageQuery, MemberRecordParams, MembershipDecision } from '@refs-tools/contracts/organization-members'
 import { requireSameOrigin, sessionToken } from '../auth/auth.http.js'
 import type { SessionService } from '../auth/session.service.js'
 import type { OrganizationMembersService } from './organization-members.service.js'
@@ -17,7 +17,7 @@ export function organizationMembersRoutes({ members, invitations, sessions, publ
       reply.header('cache-control', 'no-store').header('vary', 'Cookie')
       requireSameOrigin(request, publicOrigin)
     })
-    app.get<{ Params: MemberOrganizationParams; Querystring: MemberPageQuery }>('/organizations/:id/memberships', { schema: schemas.memberListSchema }, async request => {
+    app.get<{ Params: MemberOrganizationParams; Querystring: MemberListQuery }>('/organizations/:id/memberships', { schema: schemas.memberListSchema }, async request => {
       const { user } = await sessions.requireVerifiedSession(sessionToken(request))
       return apiResponse(await members.list(user.id, request.params.id, request.query))
     })

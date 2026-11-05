@@ -9,7 +9,7 @@ import type { MemberRepositories } from './organization-members.types.js'
 /** 「我的组织」的持久化投影；能力与角色由 Service 按实时授权计算，不在 SQL 中判断。 */
 export type MineRow = {
   id: string; name: string; region: string; purpose: string; status: Organization['status']
-  ownerUserId: string; createdAt: string; governanceReason: string | null
+  ownerUserId: string; createdAt: string; version: number; governanceReason: string | null
   membership: { id: string; status: 'pending' | 'active'; version: number } | null
 }
 /** 落库的申请：组织资料来自请求，负责人实名与联系方式由服务端从申请人账户资料快照而来。 */
@@ -26,6 +26,8 @@ export interface OrganizationSelfRepository {
   /** 读取有效账号的资料投影；账号不存在或已失效返回 null。 */
   applicantProfile(userId: string): Promise<ApplicantProfile | null>
   apply(id: string, ownerUserId: string, input: NewOrganizationApplication, now: Date): Promise<void>
+  /** 负责人自助修改简介：版本条件更新，返回是否命中当前版本。 */
+  updatePurpose(organizationId: string, expectedVersion: number, purpose: string): Promise<boolean>
 }
 export type NewJoinCode = { id: string; organizationId: string; tokenHash: string; hint: string; maxUses: number; createdBy: string }
 export interface OrganizationJoinCodesRepository {

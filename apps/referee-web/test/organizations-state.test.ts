@@ -11,6 +11,11 @@ import { useOrganizationDirectory } from '../src/views/organizations/useOrganiza
 import { useApplicantProfile } from '../src/views/organizations/useApplicantProfile'
 import { useOrganizationApplication } from '../src/views/organizations/useOrganizationApplication'
 import { maskJoinCode } from '../src/views/organizations/organizations.presentation'
+import { useMemberManagement } from '../src/views/organizations/useMemberManagement'
+import { useOrganizationProfile } from '../src/views/organizations/useOrganizationProfile'
+import { useOrganizationWorkspace } from '../src/views/organizations/useOrganizationWorkspace'
+import type { MyOrganization } from '@refs-tools/contracts/organization-self'
+import type { Membership } from '@refs-tools/contracts/organization-members'
 
 const api = (patch: Record<string, unknown> = {}) => ({ mine: vi.fn(async () => ({ items: [] })), inbox: vi.fn(async () => ({ items: [] })),
   acceptInvitation: vi.fn(async () => ({})), declineInvitation: vi.fn(async () => ({})), ...patch }) as unknown as OrganizationsApi
@@ -143,5 +148,112 @@ describe('理由与二次确认', () => {
     const confirm = useConfirmReason<string>(); confirm.open('m'); confirm.reason.value = '  ok  '
     expect(confirm.take()).toBe('ok'); confirm.close()
     expect(confirm.visible.value).toBe(false); expect(confirm.target.value).toBe('m'); expect(confirm.reason.value).toBe('')
+  })
+})
+
+const member = (patch: Partial<Membership> = {}): Membership => ({ id: 'm', organizationId: 'o', userId: 'u', displayName: '张三',
+  status: 'active', version: 1, createdAt: '2024-01-01T00:00:00.000Z', ...patch })
+
+describe('成员名单检索与分页', () => {
+  it('关键词在提交时生效并回到第一页；空关键词取消筛选但仍按服务端分页', async () => {
+    const members = vi.fn(async () => ({ items: [member()], total: 21, page: 1, pageSize: 20 })), state = useMemberManagement(ref('o'), api({ members }))
+    await state.load(); await state.go(2)
+    expect(state.page.value).toBe(2)
+    state.keyword.value = ' 张 '
+    await state.search()
+    expect(members).toHaveBeenLastCalledWith('o', { page: '1', pageSize: '20', keyword: '张' })
+    expect(state.page.value).toBe(1); expect(state.filtering.value).toBe(true)
+    state.keyword.value = '   '
+    await state.search()
+    expect(members).toHaveBeenLastCalledWith('o', { page: '1', pageSize: '20', keyword: '' })
+    expect(state.filtering.value).toBe(false)
+  })
+  it('移除后当前页越界时回退到新的最后一页，而不是停在空列表', async () => {
+    const pages = [{ items: [member()], total: 21 }, { items: [member({ id: 'm2' })], total: 21 },
+      { items: [], total: 20 }, { items: [member({ id: 'm3' })], total: 20 }]
+    const members = vi.fn(async () => ({ page: 1, pageSize: 20, ...pages.shift()! }))
+    const decideMember = vi.fn(async () => ({}))
+    const state = useMemberManagement(ref('o'), api({ members, decideMember }))
+    await state.load(); await state.go(2)
+    expect(state.items.value.map(item => item.id)).toEqual(['m2'])
+    expect(await state.decide(state.items.value[0]!, 'remove', '结束成员关系')).toBe(true)
+    expect(decideMember).toHaveBeenCalledWith('o', 'm2', { action: 'remove', expectedVersion: 1, reason: '结束成员关系' })
+    expect(state.page.value).toBe(1); expect(state.items.value.map(item => item.id)).toEqual(['m3'])
+    expect(state.stale.value).toBe('')
+  })
+  it('移除成功但刷新失败时保留成功事实并只提示重新读取', async () => {
+    const members = vi.fn().mockResolvedValueOnce({ items: [member()], total: 1, page: 1, pageSize: 20 })
+      .mockRejectedValueOnce(new OrganizationsApiError('NETWORK_ERROR', 0))
+    const state = useMemberManagement(ref('o'), api({ members, decideMember: vi.fn(async () => ({})) }))
+    await state.load()
+    expect(await state.decide(state.items.value[0]!, 'remove', '结束成员关系')).toBe(true)
+    expect(state.action.done.value).toContain('已移除'); expect(state.action.error.value).toBe('')
+    expect(state.stale.value).toContain('不要重复提交')
+  })
+})
+
+const organization = (patch: Partial<MyOrganization> = {}): MyOrganization => ({
+  id: 'o', name: '协会', region: '浙江省/杭州市/西湖区', purpose: '原简介', status: 'active', createdAt: '2024-01-01T00:00:00.000Z',
+  version: 2, isOwner: true, ownerUserId: 'u1', membership: { id: 'm', status: 'active', version: 1 }, roles: ['owner'],
+  canManage: true, canGrantRoles: true, governanceReason: null, ...patch,
+})
+
+describe('负责人编辑组织简介', () => {
+  it('打开时载入现有简介；未变化或空白时说明无需保存且不发请求', async () => {
+    const updateProfile = vi.fn(), state = useOrganizationProfile(ref(organization()), vi.fn(), async () => true, api({ updateProfile }))
+    state.open(); expect(state.draft.value).toBe('原简介'); expect(state.canSave.value).toBe(false)
+    state.draft.value = ' 原简介 '; expect(state.canSave.value).toBe(false); expect(state.notice.value).toContain('无需保存')
+    expect(await state.save()).toBe(false)
+    state.draft.value = '   '; expect(state.canSave.value).toBe(false); expect(await state.save()).toBe(false)
+    expect(updateProfile).not.toHaveBeenCalled(); expect(state.editing.value).toBe(true)
+  })
+  it('保存成功裁剪简介、回传新版本并关闭表单', async () => {
+    const updateProfile = vi.fn(async () => ({ id: 'o', purpose: '新简介', version: 3 })), saved = vi.fn()
+    const state = useOrganizationProfile(ref(organization()), saved, async () => true, api({ updateProfile }))
+    state.open(); state.draft.value = ' 新简介 '
+    expect(await state.save()).toBe(true)
+    expect(updateProfile).toHaveBeenCalledWith('o', { purpose: '新简介', expectedVersion: 2 })
+    expect(saved).toHaveBeenCalledWith({ id: 'o', purpose: '新简介', version: 3 })
+    expect(state.editing.value).toBe(false); expect(state.action.done.value).toContain('已更新')
+  })
+  it('保存失败保留草稿与编辑状态且不报成功；取消丢弃草稿', async () => {
+    const updateProfile = vi.fn(async () => { throw new OrganizationsApiError('VERSION_CONFLICT', 409) })
+    const state = useOrganizationProfile(ref(organization()), vi.fn(), async () => true, api({ updateProfile }))
+    state.open(); state.draft.value = '新简介'
+    expect(await state.save()).toBe(false)
+    expect(state.editing.value).toBe(true); expect(state.draft.value).toBe('新简介')
+    expect(state.action.done.value).toBe(''); expect(state.action.error.value).toContain('刷新')
+    state.close(); expect(state.editing.value).toBe(false); expect(state.action.error.value).toBe('')
+  })
+  it('版本冲突后可重新读取组织并保留草稿，再提交时使用最新版本', async () => {
+    const current = ref(organization())
+    const updateProfile = vi.fn().mockRejectedValueOnce(new OrganizationsApiError('VERSION_CONFLICT', 409))
+      .mockResolvedValueOnce({ id: 'o', purpose: '新简介', version: 4 })
+    const refresh = vi.fn(async () => { current.value = organization({ version: 3 }); return true })
+    const state = useOrganizationProfile(current, vi.fn(), refresh, api({ updateProfile }))
+    state.open(); state.draft.value = '新简介'
+    expect(await state.save()).toBe(false); expect(state.action.error.value).toContain('刷新')
+    expect(await state.reload()).toBe(true); expect(state.action.error.value).toBe(''); expect(state.draft.value).toBe('新简介')
+    expect(await state.save()).toBe(true)
+    expect(updateProfile).toHaveBeenLastCalledWith('o', { purpose: '新简介', expectedVersion: 3 })
+    expect(state.editing.value).toBe(false)
+  })
+  it('重新读取失败时就地说明，不清空草稿也不报成功', async () => {
+    const state = useOrganizationProfile(ref(organization()), vi.fn(), async () => false, api({ updateProfile: vi.fn() }))
+    state.open(); state.draft.value = '新简介'
+    expect(await state.reload()).toBe(false)
+    expect(state.action.error.value).toContain('重新读取失败'); expect(state.action.done.value).toBe('')
+    expect(state.draft.value).toBe('新简介'); expect(state.editing.value).toBe(true)
+  })
+})
+
+describe('工作区简介回执', () => {
+  it('保存后的简介与新版本写回当前组织，其他组织不受影响', async () => {
+    const mine = vi.fn(async () => ({ items: [organization(), organization({ id: 'o2', purpose: '另一个组织' })] }))
+    const ws = useOrganizationWorkspace(ref('o'), api({ mine }))
+    await ws.load()
+    ws.applyPurpose({ id: 'o', purpose: '更新后的简介', version: 3 })
+    expect(ws.organization.value).toMatchObject({ purpose: '更新后的简介', version: 3 })
+    expect(ws.mine.data.value?.find(item => item.id === 'o2')).toMatchObject({ purpose: '另一个组织', version: 2 })
   })
 })

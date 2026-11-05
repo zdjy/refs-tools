@@ -6,10 +6,13 @@ import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 const Uuid = Type.String({ format: 'uuid' })
 const Time = Type.String({ format: 'date-time' })
 
-/** 用户视角的组织：membership 为 null 表示仅是负责人的待审核或被驳回申请，尚无成员关系。 */
+/**
+ * 用户视角的组织：membership 为 null 表示仅是负责人的待审核或被驳回申请，尚无成员关系。
+ * `version` 是组织行的乐观锁版本，负责人自助修改简介时作为 expectedVersion 回传，与平台治理共用同一行版本。
+ */
 export const MyOrganizationSchema = Type.Object({
   id: Uuid, name: Type.String(), region: Type.String(), purpose: Type.String(),
-  status: OrganizationStatusSchema, createdAt: Time, isOwner: Type.Boolean(),
+  status: OrganizationStatusSchema, createdAt: Time, version: Type.Integer({ minimum: 1 }), isOwner: Type.Boolean(),
   /** 负责人账号 ID：成员名单据此标注负责人并隐藏其移除入口；只是账号标识，不含联系方式。 */
   ownerUserId: Uuid,
   membership: Type.Union([Type.Null(), Type.Object({
@@ -44,10 +47,24 @@ export const OrganizationApplicationSchema = Type.Object({
   purpose: Type.String({ minLength: 1, maxLength: 1000 }),
 }, { additionalProperties: false })
 
+/**
+ * 负责人自助修改组织简介。只开放 `purpose`：名称、地区、联系方式与实名归属平台治理或申请流程，
+ * 状态与负责人变更走各自用例，因此 Schema 拒绝其他字段。
+ */
+export const OrganizationProfileUpdateSchema = Type.Object({
+  purpose: Type.String({ minLength: 1, maxLength: 1000 }),
+  expectedVersion: Type.Integer({ minimum: 1 }),
+}, { additionalProperties: false })
+/** 简介更新的最小回执：前端据此把新版本合并进本地列表，不必为拿版本号再读一次。 */
+export const OrganizationProfileUpdatedSchema = Type.Object({
+  id: Uuid, purpose: Type.String(), version: Type.Integer({ minimum: 1 }),
+}, { additionalProperties: false })
+
 /** 本人组织列表；默认页大小 100，保留更大数量时可继续翻页。 */
 export const MyOrganizationQuerySchema = PageQuerySchema
 export const MyOrganizationResponseSchema = Type.Object({ data: MyOrganizationSchema })
 export const MyOrganizationListResponseSchema = pagedResponseSchema(MyOrganizationSchema)
+export const OrganizationProfileUpdatedResponseSchema = Type.Object({ data: OrganizationProfileUpdatedSchema })
 export const DirectoryResponseSchema = pagedResponseSchema(DirectoryItemSchema)
 export type MyOrganization = Static<typeof MyOrganizationSchema>
 export type MyOrganizationQuery = Static<typeof MyOrganizationQuerySchema>
@@ -55,4 +72,6 @@ export type DirectoryQuery = Static<typeof DirectoryQuerySchema>
 export type DirectoryItem = Static<typeof DirectoryItemSchema>
 export type DirectoryList = Static<typeof DirectoryResponseSchema>['data']
 export type OrganizationApplication = Static<typeof OrganizationApplicationSchema>
+export type OrganizationProfileUpdate = Static<typeof OrganizationProfileUpdateSchema>
+export type OrganizationProfileUpdated = Static<typeof OrganizationProfileUpdatedSchema>
 export type MyOrganizationList = Static<typeof MyOrganizationListResponseSchema>['data']

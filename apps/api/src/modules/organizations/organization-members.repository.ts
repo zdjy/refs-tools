@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg'
-import type { MemberPageQuery, Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members'
+import type { MemberListQuery, MemberPageQuery, Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members'
 import type { OrganizationMembersRepository } from './organization-members.types.js'
 
 type MemberRow = { id: string; organization_id: string; user_id: string; display_name: string;
@@ -13,16 +13,19 @@ const mapMember = (row: MemberRow): Membership => ({ id: row.id, organizationId:
 const mapInvite = (row: InviteRow): OrganizationInvitation => ({ ...mapMember({ ...row, status: 'pending' }),
   status: row.status, organizationName: row.organization_name, expiresAt: row.expires_at.toISOString() })
 const pagination = (query: MemberPageQuery) => ({ page: Number(query.page ?? 1), pageSize: Number(query.pageSize ?? 20) })
-
 /** 成员与邀请持久化由组织模块拥有；调用方先锁组织以串行化入会和成员变更。 */
 export class PgOrganizationMembersRepository implements OrganizationMembersRepository {
   constructor(private readonly connection: Pick<PoolClient, 'query'>) {}
 
-  async members(id: string, query: MemberPageQuery) {
+  async members(id: string, query: MemberListQuery) {
     const { page, pageSize } = pagination(query)
-    const count = await this.connection.query<{ total: string }>('SELECT count(*) AS total FROM organization_memberships WHERE organization_id=$1', [id])
-    const rows = await this.connection.query<MemberRow>(`SELECT ${memberColumns} FROM organization_memberships m
-      JOIN users u ON u.id=m.user_id WHERE m.organization_id=$1 ORDER BY m.created_at DESC,m.id DESC LIMIT $2 OFFSET $3`, [id, pageSize, (page - 1) * pageSize])
+    // 关键词只按昵称子串过滤，计数与取页共用同一条件，因此筛选后的分页总数与页数一致。
+    const keyword = (query.keyword ?? '').trim().toLowerCase()
+    const from = `FROM organization_memberships m JOIN users u ON u.id=m.user_id
+      WHERE m.organization_id=$1 AND ($2='' OR strpos(lower(u.display_name),$2)>0)`
+    const count = await this.connection.query<{ total: string }>(`SELECT count(*) AS total ${from}`, [id, keyword])
+    const rows = await this.connection.query<MemberRow>(`SELECT ${memberColumns} ${from}
+      ORDER BY m.created_at DESC,m.id DESC LIMIT $3 OFFSET $4`, [id, keyword, pageSize, (page - 1) * pageSize])
     return { items: rows.rows.map(mapMember), total: Number(count.rows[0]!.total), page, pageSize }
   }
 

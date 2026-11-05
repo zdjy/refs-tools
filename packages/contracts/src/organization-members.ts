@@ -15,6 +15,14 @@ export const OrganizationInvitationSchema = Type.Object({
 }, { additionalProperties: false })
 /** 成员/邀请列表分页；沿用通用页大小枚举，默认由 Repository 解析为 20。 */
 export const MemberPageQuerySchema = PageQuerySchema
+/**
+ * 成员名单查询：在分页之外接受昵称关键词，服务端按昵称子串过滤后分页，避免只筛当前页。
+ * 邀请列表不提供关键词，仍用 `MemberPageQuerySchema`。
+ */
+export const MemberListQuerySchema = Type.Object({
+  ...PageQuerySchema.properties,
+  keyword: Type.Optional(Type.String({ maxLength: 100 })),
+}, { additionalProperties: false })
 export const MemberOrganizationParamsSchema = Type.Object({ id: Uuid }, { additionalProperties: false })
 export const MemberRecordParamsSchema = Type.Object({ id: Uuid, recordId: Uuid }, { additionalProperties: false })
 export const CreateInvitationSchema = Type.Object({ userId: Uuid,
@@ -33,6 +41,7 @@ export const InvitationListResponseSchema = pagedResponseSchema(OrganizationInvi
 export type Membership = Static<typeof MembershipSchema>
 export type OrganizationInvitation = Static<typeof OrganizationInvitationSchema>
 export type MemberPageQuery = Static<typeof MemberPageQuerySchema>
+export type MemberListQuery = Static<typeof MemberListQuerySchema>
 export type MemberOrganizationParams = Static<typeof MemberOrganizationParamsSchema>
 export type MemberRecordParams = Static<typeof MemberRecordParamsSchema>
 export type CreateInvitation = Static<typeof CreateInvitationSchema>

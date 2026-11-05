@@ -73,6 +73,14 @@ describe('用户视角组织 HTTP 边界', () => {
       expect((await f.app.inject({ method: 'POST', url: '/api/v1/me/organization-applications', headers: f.headers, payload: { name: '协会' } })).statusCode).toBe(400)
       const search = await f.app.inject({ url: `/api/v1/organizations/${f.id}/member-candidates?keyword=al`, headers: f.headers })
       expect(search.statusCode).toBe(200); expect(search.json().data.items).toEqual([])
+      // 负责人自助修改简介：只接受 purpose 与 expectedVersion，回执为新版本的最小投影。
+      const updated = await f.app.inject({ method: 'PATCH', url: `/api/v1/organizations/${f.id}/profile`, headers: f.headers,
+        payload: { purpose: ' 新简介 ', expectedVersion: 1 } })
+      expect(updated.statusCode).toBe(200); expect(updated.json().data).toEqual({ id: f.id, purpose: '新简介', version: 2 })
+      for (const payload of [{ purpose: '新简介' }, { purpose: '新简介', expectedVersion: 0 }, { purpose: '新简介', expectedVersion: 1, name: '改名' }]) {
+        expect((await f.app.inject({ method: 'PATCH', url: `/api/v1/organizations/${f.id}/profile`, headers: f.headers, payload })).statusCode).toBe(400)
+      }
+      expect(f.r.self.updatePurpose).toHaveBeenCalledTimes(1)
     } finally { await f.app.close() }
   })
 })

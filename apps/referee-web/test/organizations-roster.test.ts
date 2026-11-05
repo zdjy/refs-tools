@@ -5,7 +5,7 @@ import { ROSTER_PAGE_SIZE, ROSTER_TOOL_MIN, rosterBucket, useOrganizationRoster 
 
 const org = (patch: Partial<MyOrganization> = {}): MyOrganization => ({
   id: 'o1', name: '甲协会', region: '浙江/杭州/西湖', purpose: '', status: 'active',
-  createdAt: '2024-01-01T00:00:00.000Z', isOwner: false, ownerUserId: 'u1',
+  createdAt: '2024-01-01T00:00:00.000Z', version: 1, isOwner: false, ownerUserId: 'u1',
   membership: { id: 'm1', status: 'active', version: 1 }, roles: [], canManage: false, canGrantRoles: false,
   governanceReason: null, ...patch,
 })

@@ -2,7 +2,7 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { apiResponse } from '@refs-tools/contracts'
 import type { CandidateQuery, CreateJoinCode, GrantRole, JoinCodeParams, RedeemJoinCode, RevokeJoinCode, RoleParams } from '@refs-tools/contracts/organization-access'
 import type { MemberOrganizationParams } from '@refs-tools/contracts/organization-members'
-import type { DirectoryQuery, MyOrganizationQuery, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type { DirectoryQuery, MyOrganizationQuery, OrganizationApplication, OrganizationProfileUpdate } from '@refs-tools/contracts/organization-self'
 import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { requireSameOrigin, sessionToken } from '../auth/auth.http.js'
 import type { SessionService } from '../auth/session.service.js'
@@ -34,6 +34,8 @@ export function organizationAccessRoutes(d: AccessRouteDependencies): FastifyPlu
       async request => apiResponse(await d.self.directory(await actor(request), request.query)))
     app.post<{ Body: OrganizationApplication }>('/me/organization-applications', { schema: schemas.applySchema, bodyLimit: 4096 },
       async (request, reply) => reply.code(201).send(apiResponse(await d.self.apply(await actor(request), request.body))))
+    app.patch<Org & { Body: OrganizationProfileUpdate }>('/organizations/:id/profile', { schema: schemas.profileUpdateSchema, bodyLimit: 4096 },
+      async request => apiResponse(await d.self.updateProfile(await actor(request), request.params.id, request.body)))
     app.post<{ Body: RedeemJoinCode }>('/organization-join-codes/redeem', { schema: schemas.redeemSchema, bodyLimit: 1024 },
       async request => apiResponse(await d.joinCodes.redeem(await actor(request), request.body.token)))
     app.get<OrgPage>('/organizations/:id/join-codes', { schema: schemas.joinCodeListSchema },

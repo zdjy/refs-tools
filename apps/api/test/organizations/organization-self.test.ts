@@ -5,7 +5,7 @@ import type { MineRow } from '../../src/modules/organizations/organization-acces
 
 const input = { name: ' 协会 ', region: '浙江省/杭州市/西湖区', purpose: '培训' }
 const row = (f: ReturnType<typeof accessFixture>, patch: Partial<MineRow> = {}): MineRow => ({ id: f.id, name: '协会', region: '杭州', purpose: '培训',
-  status: 'active', ownerUserId: f.actor, createdAt: f.now.toISOString(), governanceReason: '说明',
+  status: 'active', ownerUserId: f.actor, createdAt: f.now.toISOString(), version: 1, governanceReason: '说明',
   membership: { id: randomUUID(), status: 'active', version: 1 }, ...patch })
 
 describe('我的组织投影', () => {
@@ -77,5 +77,42 @@ describe('自助创建组织申请', () => {
   it('账户资料读取为 null（账号已失效）同样按资料不完整拒绝', async () => {
     const f = accessFixture(); vi.mocked(f.r.self.applicantProfile).mockResolvedValue(null)
     await expect(f.self.apply(f.actor, input)).rejects.toMatchObject({ code: 'PROFILE_INCOMPLETE' })
+  })
+})
+
+describe('负责人自助修改组织简介', () => {
+  const update = { purpose: ' 面向省市联赛与裁判培训 ', expectedVersion: 1 }
+  it('负责人裁剪简介后以版本条件更新并审计，回执只含标识、简介与新版本', async () => {
+    const f = accessFixture()
+    expect(await f.self.updateProfile(f.actor, f.id, update)).toEqual({ id: f.id, purpose: '面向省市联赛与裁判培训', version: 2 })
+    expect(f.r.self.updatePurpose).toHaveBeenCalledWith(f.id, 1, '面向省市联赛与裁判培训')
+    expect(f.r.audit.append).toHaveBeenCalledWith(expect.objectContaining({ action: 'organization.updated',
+      before: { status: 'active', version: 1, subjectUserId: f.actor }, after: { status: 'active', version: 2, subjectUserId: f.actor } }))
+    expect(JSON.stringify(vi.mocked(f.r.audit.append).mock.calls)).not.toContain('面向省市联赛')
+  })
+  it('非负责人返回 403 且不写入，即使其拥有成员管理权限', async () => {
+    const f = accessFixture()
+    await expect(f.self.updateProfile(f.user, f.id, update)).rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 })
+    expect(f.r.self.updatePurpose).not.toHaveBeenCalled(); expect(f.r.audit.append).not.toHaveBeenCalled()
+  })
+  it('版本不一致、超出可编辑状态与更新未命中都要求重新读取', async () => {
+    const f = accessFixture()
+    await expect(f.self.updateProfile(f.actor, f.id, { ...update, expectedVersion: 2 })).rejects.toMatchObject({ code: 'VERSION_CONFLICT', statusCode: 409 })
+    vi.mocked(f.r.organizations.find).mockResolvedValue({ ...f.organization, status: 'dissolved' })
+    await expect(f.self.updateProfile(f.actor, f.id, update)).rejects.toMatchObject({ code: 'INVALID_ORGANIZATION_STATE', statusCode: 409 })
+    vi.mocked(f.r.organizations.find).mockResolvedValue({ ...f.organization })
+    vi.mocked(f.r.self.updatePurpose).mockResolvedValue(false)
+    await expect(f.self.updateProfile(f.actor, f.id, update)).rejects.toMatchObject({ code: 'VERSION_CONFLICT' })
+    expect(f.r.audit.append).not.toHaveBeenCalled()
+  })
+  it('空白简介与失效账号在写入前拒绝，组织不存在返回 404', async () => {
+    const f = accessFixture()
+    await expect(f.self.updateProfile(f.actor, f.id, { ...update, purpose: '   ' })).rejects.toMatchObject({ code: 'INVALID_ORGANIZATION', statusCode: 422 })
+    vi.mocked(f.r.identities.requireActiveActor).mockResolvedValue(false)
+    await expect(f.self.updateProfile(f.actor, f.id, update)).rejects.toMatchObject({ statusCode: 401 })
+    vi.mocked(f.r.identities.requireActiveActor).mockResolvedValue(true)
+    vi.mocked(f.r.organizations.find).mockResolvedValue(null)
+    await expect(f.self.updateProfile(f.actor, f.id, update)).rejects.toMatchObject({ statusCode: 404 })
+    expect(f.r.self.updatePurpose).not.toHaveBeenCalled()
   })
 })

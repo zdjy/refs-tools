@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 import { memberFixture } from './members-fixture.js'
 
 describe('组织成员用例', () => {
+  it('成员名单把页码与关键词一起透传给 Repository，筛选后的计数由 SQL 保证', async () => {
+    const f = memberFixture()
+    await f.members.list(f.actor, f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' })
+    expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' })
+  })
   it('平台只有只读治理能力，不能隐式邀请或审核成员', async () => {
     const f = memberFixture()
     expect((await f.members.list(f.user, f.id, {})).canManage).toBe(false)

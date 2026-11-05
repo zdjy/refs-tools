@@ -4,7 +4,7 @@ import type { PlatformClient } from '../src/api/http/platform-client'
 import { OrganizationsApiError, createOrganizationsApi } from '../src/api/organizations.api'
 import { organizationsErrorMessage, organizationsLoadErrorMessage } from '../src/views/organizations/organizations.presentation'
 
-const platform = (): PlatformClient => ({ get: vi.fn(async () => ({})), post: vi.fn(async () => ({})), patch: vi.fn() } as unknown as PlatformClient)
+const platform = (): PlatformClient => ({ get: vi.fn(async () => ({})), post: vi.fn(async () => ({})), patch: vi.fn(async () => ({})) } as unknown as PlatformClient)
 
 describe('组织网关错误翻译', () => {
   it.each([
@@ -41,6 +41,16 @@ describe('组织网关路径与方法', () => {
     expect(client.get).toHaveBeenNthCalledWith(1, '/organization-directory?keyword=%E6%9D%AD%E5%B7%9E+%E5%8D%8F%E4%BC%9A%26x%3D1&page=2')
     expect(client.get).toHaveBeenNthCalledWith(2, '/organization-directory')
     expect(client.get).toHaveBeenNthCalledWith(3, '/organizations/a%2Fb/member-candidates?keyword=al%40x.com')
+  })
+
+  it('成员名单透传关键词与分页，空关键词不出现在查询串；简介更新使用 PATCH', async () => {
+    const client = platform(), api = createOrganizationsApi(client)
+    await api.members('o', { page: '2', pageSize: '20', keyword: '张 三' })
+    await api.members('o', { keyword: '' })
+    await api.updateProfile('o', { purpose: '新简介', expectedVersion: 3 })
+    expect(client.get).toHaveBeenNthCalledWith(1, '/organizations/o/memberships?page=2&pageSize=20&keyword=%E5%BC%A0+%E4%B8%89')
+    expect(client.get).toHaveBeenNthCalledWith(2, '/organizations/o/memberships')
+    expect(client.patch).toHaveBeenCalledWith('/organizations/o/profile', { purpose: '新简介', expectedVersion: 3 })
   })
 
   it('写操作使用 POST 且带版本与理由，成员码只通过请求体传输', async () => {

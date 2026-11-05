@@ -1,10 +1,10 @@
-import type { MemberPageQuery, Membership, MembershipList, OrganizationInvitation, InvitationList } from '@refs-tools/contracts/organization-members'
+import type { MemberListQuery, MemberPageQuery, Membership, MembershipList, OrganizationInvitation, InvitationList } from '@refs-tools/contracts/organization-members'
 import type { OrganizationsRepositories } from './organizations.types.js'
 import type { TransactionRunner } from '../../application/transaction.js'
 import type { PermissionEvaluator } from '../authorization/authorization.types.js'
 
 export interface OrganizationMembersRepository {
-  members(id: string, query: MemberPageQuery): Promise<Omit<MembershipList, 'canManage'>>
+  members(id: string, query: MemberListQuery): Promise<Omit<MembershipList, 'canManage'>>
   invitations(filter: { organizationId?: string; userId?: string }, query: MemberPageQuery, now: Date): Promise<Omit<InvitationList, 'canManage'>>
   membership(organizationId: string, id: string): Promise<Membership | null>
   current(organizationId: string, userId: string): Promise<Membership | null>

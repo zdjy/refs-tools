@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { NAlert, NButton } from 'naive-ui'
+import { NAlert, NButton, NInput } from 'naive-ui'
+import { Search } from '@lucide/vue'
 import type { Membership } from '@refs-tools/contracts/organization-members'
 import UiLoadingRegion from '../../../components/ui/UiLoadingRegion.vue'
 import { useUiFeedback } from '../../../components/ui/useUiFeedback'
@@ -30,6 +31,11 @@ async function submit() {
 <template>
   <section aria-labelledby="members-title" class="grid gap-4">
     <h2 id="members-title" class="m-0 text-lg text-ink">成员与入会申请</h2>
+    <form class="grid gap-2 compact:grid-cols-[minmax(0,1fr)_auto]" role="search" @submit.prevent="members.search()">
+      <label for="member-keyword" class="sr-only">按成员昵称搜索，留空显示全部</label>
+      <n-input id="member-keyword" v-model:value="members.keyword.value" placeholder="输入昵称搜索成员，留空显示全部" clearable :input-props="{ autocomplete: 'off' }" />
+      <n-button type="primary" attr-type="submit" :loading="members.list.loading.value"><template #icon><Search class="size-4" aria-hidden="true" /></template>搜索</n-button>
+    </form>
     <p v-if="members.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
       {{ members.stale.value }}<n-button text type="primary" class="ml-2" @click="members.load()">重新读取</n-button>
     </p>
@@ -40,6 +46,7 @@ async function submit() {
       <div><n-button type="primary" @click="members.load()">重新读取</n-button></div>
     </div>
     <template v-else-if="members.list.data.value">
+      <p role="status" class="m-0 text-[13px] text-body">{{ members.filtering.value ? `匹配 ${members.total.value} 位成员` : `共 ${members.total.value} 位成员` }}</p>
       <ul class="m-0 grid list-none gap-0 overflow-hidden rounded-xl border border-solid border-line p-0">
         <li v-for="member in members.items.value" :key="member.id" class="grid gap-2 border-0 border-b border-solid border-line p-4 last:border-b-0 compact:grid-cols-[minmax(0,1fr)_auto] compact:items-center">
           <div class="grid min-w-0 gap-0.5">
@@ -55,7 +62,7 @@ async function submit() {
           </div>
         </li>
       </ul>
-      <p v-if="!members.items.value.length" class="m-0 text-sm text-body">还没有成员记录。</p>
+      <p v-if="!members.items.value.length" class="m-0 text-sm text-body">{{ members.filtering.value ? '没有匹配的成员。' : '还没有成员记录。' }}</p>
       <PagerBar :page="members.page.value" :page-count="members.pageCount.value" :busy="members.list.loading.value" label="成员分页" @go="members.go" />
     </template>
     <ReasonDialog :show="confirm.visible.value" v-model:reason="confirm.reason.value" :title="confirm.target.value ? labels[confirm.target.value.decision].title : ''"

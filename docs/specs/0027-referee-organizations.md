@@ -40,6 +40,8 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 - **申请加入 / 撤回**：沿用 `membership-requests`；申请人可撤回自己的 pending 申请，记为 `left` 保留历史，之后可重新申请。
 - **成员码**：创建时一次性返回明文（`rj_` + 43 位 base64url），库内只存 SHA-256 与末 4 位；有效 1–30 天、可用 1–100 次，每组织同时有效最多 10 个。兑换在组织行锁内以单条条件 `UPDATE` 消费；已是正式成员幂等返回且不消耗次数；未知、撤销、过期、用尽统一返回 `JOIN_CODE_INVALID`（422）。成员码只授予成员关系，永不授予角色，重新入会不恢复旧角色。
 - **角色**：仅组织负责人可授予/撤销 `organizer`、`certifier`；`owner` 不可经此接口授予或撤销；目标必须是有效正式成员。平台管理员不具备此能力。撤销绑定必须属于路径中的组织，否则 404。
+- **组织简介**：概览里的组织简介只有组织负责人可编辑（按钮仅对 `isOwner` 出现）；写权限只认组织记录上的 `owner_user_id`，待审核组织尚无成员关系与 `owner` 角色也能改，平台管理员不能经此接口代替修改。请求体只接受 `purpose`（1–1000 字）与 `expectedVersion`，其他字段 400；版本条件更新与审计同事务，审计快照只含状态、版本与负责人标识，不含简介正文。状态可编辑范围复用平台同一个领域函数 `canUpdateOrganizationProfile`（待审核/运行中/冻结可改，已驳回/已解散 409）。
+- **成员名单检索**：成员标签页的关键词只按昵称子串过滤，与分页一起由服务端处理，计数与页数都是筛选后的结果，不只筛当前页；关键词在提交时生效并回到第 1 页，留空即取消筛选。界面按是否筛选区分「共 N 位成员」与「匹配 N 位成员」及两种空态；移除或审核后若当前页越界则回退到新的最后一页。
 - **候选人检索**：需要组织成员管理权限；关键词至少 2 字符；含 `@` 只精确匹配完整邮箱，否则昵称子串匹配；仅返回有效且邮箱已验证账号的昵称、ID 尾号与关系，不返回邮箱；每次检索写审计但不记录关键词。分页只接受 `page`，每页固定 10 条（`pageSize` 不由客户端指定），避免分页放大账号枚举面。
 - **理由与二次确认**：移除、驳回、批准、撤销邀请、退出/撤回都经理由对话框，理由 ≤ 500 字符且不含链接或凭据（与服务端审计白名单一致）。成员码撤销只需版本号。
 - **无需理由的二次确认**：成员码撤销、角色撤销、拒绝邀请不要求理由（服务端也不需要），但都必须先经 `NPopconfirm` 二次确认（按钮为「取消 / 确认撤销」「取消 / 确认拒绝」），并写清后果；取消不发出任何请求。
@@ -51,6 +53,7 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 | `GET /me/organizations` | 本人组织，含角色与能力，分页（默认 `pageSize=100`） |
 | `GET /organization-directory` | 公开目录，分页 |
 | `POST /me/organization-applications` | 自助创建申请，201 |
+| `PATCH /organizations/:id/profile` | 负责人自助修改简介，`{purpose,expectedVersion}`，回执 `{id,purpose,version}` |
 | `POST /organization-join-codes/redeem` | `{token}`，兑换成员码 |
 | `GET/POST /organizations/:id/join-codes` | 列表（无明文，分页，默认 `pageSize=50`）/ 创建（一次性明文） |
 | `POST /organizations/:id/join-codes/:codeId/revoke` | `{expectedVersion}` |
@@ -58,7 +61,7 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 | `POST /organizations/:id/roles/:bindingId/revoke` | 撤销 |
 | `GET /organizations/:id/member-candidates?keyword=&page=` | 候选人检索，每页固定 10 条 |
 
-沿用 FS-0016 的成员、邀请、本人收件箱、接受/拒绝、申请与退出接口。迁移 `0009` 新增 `organization_join_codes` 与两个索引。
+沿用 FS-0016 的成员、邀请、本人收件箱、接受/拒绝、申请与退出接口；成员名单额外接受可选 `keyword`（昵称子串，≤100 字符），邀请、收件箱等其他列表不接受。`GET /me/organizations` 的每项新增 `version`，与组织行版本一致，供简介更新的条件写入。迁移 `0009` 新增 `organization_join_codes` 与两个索引。
 
 ## 5. 交互与可访问性
 
@@ -133,3 +136,11 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 - 真实 PostgreSQL（`TEST_DATABASE_URL` 指向 5433 的 test-db，`NODE_OPTIONS=--max-old-space-size=256`）：`pnpm test:db` 15 文件、70 项通过。新增 1 项组织分页用例 `organization-access.integration.test.ts > 列表查询都按分页返回并带总数，越界页为空且翻页不重不漏`，覆盖「我的组织」总数与越界空页、角色列表 `owner → organizer` 顺序与总数、成员码总数与空页、候选人固定每页 10 条（14 条数据分两页且无重复）。
 - 该用例发现并已修复一处真实缺陷：候选人检索的取页 SQL 复用了计数 SQL 的占位符编号，导致 `$3`（关键词）在取页语句中未被引用，PostgreSQL 报 `could not determine data type of parameter $3`。现由 `match(actorParam, keywordParam)` 按两条 SQL 各自的位置生成条件，查询恢复正确。夹具级单测无法发现此类问题，故真实数据库验证是必需的。
 - **未覆盖**：未做浏览器验收（本轮只改接口形状与默认值，既有页面行为不变）；未验证组织或成员数超过一页时的「加载更多」交互，因为界面尚未提供该入口。
+
+## 13. 负责人编辑简介与成员名单检索修订验收
+
+- 变更：概览的「组织简介」新增负责人编辑入口（`useOrganizationProfile.ts` + `OverviewPanel.vue`），成员标签页新增昵称关键词检索与结果计数（`useMemberManagement.ts` + `MembersPanel.vue`）。后端新增 `PATCH /organizations/:id/profile`（`OrganizationSelfService.updateProfile`、`PgOrganizationSelfRepository.updatePurpose`），成员名单读取改用 `MemberListQuerySchema` 并把关键词下推到 SQL。`MyOrganization` 新增 `version`，`invitations`、收件箱等列表仍用原有分页契约。无迁移、无新表、无新依赖。
+- 权限与版本：简介写入只比较 `organizations.owner_user_id`（待审核组织没有成员关系和 `owner` 角色，因此不要求角色绑定），并用组织行锁 + 版本条件 `UPDATE` 串行化；审计与写入同事务，快照只有状态、版本与负责人标识，不含简介正文。成员关键词沿用 `memberAccess` 的管理权限判定，未放宽读取范围。
+- 前端行为：简介无变化或为空时保存按钮禁用并说明「无需保存」，不发请求；提交期间不能取消，失败保留草稿与编辑态并就近显示错误；成功后用服务端回执把简介与新版本合并进「我的组织」列表，不再多发一次列表请求，因此不存在「写入成功但刷新失败」的中间态；版本冲突时就地提供「重新读取」，保留草稿，读取成功后重新提交会用最新版本。顺带修正工作区在已有数据时刷新失败会把整页替换成错误提示的问题：现在只有完全没有数据时才显示整页错误。成员关键词在提交时生效并回到第 1 页，留空取消筛选；筛选后总数、页数与空态都取服务端结果；移除/审核后当前页越界时回退到新的最后一页。
+- 已验证：`pnpm typecheck` 四个包通过；`pnpm test` 98 文件、570 项通过（新增后端成员关键词透传、简介用例 4 项、HTTP 断言与前端网关/状态用例 10 项）；`pnpm test:db`（`TEST_DATABASE_URL` 指向 5433，`NODE_OPTIONS=--max-old-space-size=256`）15 文件、72 项通过，新增 2 项真实 PostgreSQL 用例：简介版本落库/陈旧版本与越权拒绝/审计不含正文，以及成员昵称过滤后的计数与页数；`vite build` 与 `test:styles` 通过。构建产物 JS 合计 1,209,917 bytes（gzip 388,021），CSS 合计 53,758 bytes（gzip 9,935），工作区分块 45,514 bytes；本轮没有改动前的构建基线，不声明前后差值。
+- 未覆盖：没有浏览器验收（Chrome 未连接远程调试），因此 320px/桌面布局、编辑表单的焦点顺序、`prefers-reduced-motion` 与 Light/Dark 主题下的新控件均未实测；关键词与简介编辑的真实点击也只在单测与真实数据库用例中验证，未走本机开发服务器的真实界面。

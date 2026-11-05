@@ -1,9 +1,9 @@
 import { Type } from '@sinclair/typebox'
 import { CreateInvitationSchema, InvitationListResponseSchema, InvitationResponseSchema, MemberChangeSchema,
-  MemberOrganizationParamsSchema, MemberPageQuerySchema, MemberRecordParamsSchema,
+  MemberListQuerySchema, MemberOrganizationParamsSchema, MemberPageQuerySchema, MemberRecordParamsSchema,
   MembershipDecisionSchema, MembershipListResponseSchema, MembershipResponseSchema } from '@refs-tools/contracts/organization-members'
 
-export const memberListSchema = { params: MemberOrganizationParamsSchema, querystring: MemberPageQuerySchema, response: { 200: MembershipListResponseSchema } }
+export const memberListSchema = { params: MemberOrganizationParamsSchema, querystring: MemberListQuerySchema, response: { 200: MembershipListResponseSchema } }
 export const invitationListSchema = { params: MemberOrganizationParamsSchema, querystring: MemberPageQuerySchema, response: { 200: InvitationListResponseSchema } }
 export const invitationInboxSchema = { querystring: MemberPageQuerySchema, response: { 200: InvitationListResponseSchema } }
 export const invitationCreateSchema = { params: MemberOrganizationParamsSchema, body: CreateInvitationSchema, response: { 201: InvitationResponseSchema } }

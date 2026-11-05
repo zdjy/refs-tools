@@ -7,7 +7,8 @@ import {
 import { MemberOrganizationParamsSchema } from '@refs-tools/contracts/organization-members'
 import {
   DirectoryQuerySchema, DirectoryResponseSchema, MyOrganizationListResponseSchema, MyOrganizationQuerySchema,
-  MyOrganizationResponseSchema, OrganizationApplicationSchema,
+  MyOrganizationResponseSchema, OrganizationApplicationSchema, OrganizationProfileUpdatedResponseSchema,
+  OrganizationProfileUpdateSchema,
 } from '@refs-tools/contracts/organization-self'
 import { PageQuerySchema } from '@refs-tools/contracts/pagination'
 
@@ -23,3 +24,4 @@ export const roleListSchema = { ...organization, querystring: PageQuerySchema, r
 export const roleGrantSchema = { ...organization, body: GrantRoleSchema, response: { 201: RoleResponseSchema } }
 export const roleRevokeSchema = { params: RoleParamsSchema, body: Type.Object({}, { additionalProperties: false }), response: { 200: RoleRevokedResponseSchema } }
 export const candidateSchema = { ...organization, querystring: CandidateQuerySchema, response: { 200: CandidateListResponseSchema } }
+export const profileUpdateSchema = { ...organization, body: OrganizationProfileUpdateSchema, response: { 200: OrganizationProfileUpdatedResponseSchema } }
