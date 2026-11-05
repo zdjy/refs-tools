@@ -4,7 +4,7 @@ import type { RosterFilter } from './organizations.presentation'
 
 /** 组织数低于该值时工具行不出现：短列表直接看比先筛选更快。 */
 export const ROSTER_TOOL_MIN = 6
-/** 首屏渲染行数与「再显示」的增量；总量受 `GET /me/organizations` 的 100 条上限约束。 */
+/** 首屏渲染行数与「再显示」的增量；服务端分页默认 `pageSize=100`，因此本页最多处理 100 个组织。 */
 export const ROSTER_PAGE_SIZE = 8
 
 export type RosterBucket = Exclude<RosterFilter, 'all'>
@@ -26,7 +26,7 @@ const byName = new Intl.Collator('zh-Hans-CN')
 
 /**
  * 「我的组织」名册的浏览状态：分组计数、关键词检索、状态筛选与渐进显示。
- * 检索在本地完成，不额外请求接口；服务端一次返回全部本人组织，最多 100 条。
+ * 检索在本地完成，不额外请求接口；服务端分页默认返回第一页（最多 100 个组织），界面尚未接入服务端翻页。
  */
 export function useOrganizationRoster(source: Readonly<Ref<readonly MyOrganization[]>>) {
   const keyword = ref('')

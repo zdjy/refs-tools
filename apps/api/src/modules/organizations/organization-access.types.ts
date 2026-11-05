@@ -1,6 +1,7 @@
 import type { DirectoryList, DirectoryQuery, OrganizationApplication } from '@refs-tools/contracts/organization-self'
 import type { Candidate, JoinCode, OrganizationRole } from '@refs-tools/contracts/organization-access'
 import type { Organization } from '@refs-tools/contracts/organizations'
+import type { PageQuery, Paged } from '@refs-tools/contracts/pagination'
 import type { TransactionRunner } from '../../application/transaction.js'
 import type { PermissionEvaluator } from '../authorization/authorization.types.js'
 import type { MemberRepositories } from './organization-members.types.js'
@@ -16,7 +17,8 @@ export type NewOrganizationApplication = OrganizationApplication & { ownerLegalN
 /** 申请人账户资料中与申请相关的最小投影；字段为 null 表示尚未填写。 */
 export type ApplicantProfile = { legalName: string | null; phone: string | null }
 export interface OrganizationSelfRepository {
-  mine(userId: string): Promise<MineRow[]>
+  /** 本人组织分页；默认页大小 100，与前端名册一次取全的交互保持一致。 */
+  mine(userId: string, query: PageQuery): Promise<Paged<MineRow>>
   directory(userId: string, query: DirectoryQuery): Promise<DirectoryList>
   /** 事务级咨询锁，串行化同一申请人的并发申请，使数量上限不被「先查再写」绕过。 */
   lockApplicant(userId: string): Promise<void>
@@ -27,7 +29,8 @@ export interface OrganizationSelfRepository {
 }
 export type NewJoinCode = { id: string; organizationId: string; tokenHash: string; hint: string; maxUses: number; createdBy: string }
 export interface OrganizationJoinCodesRepository {
-  list(organizationId: string, now: Date): Promise<JoinCode[]>
+  /** 成员码分页；默认页大小 50，不返回哈希或明文。 */
+  list(organizationId: string, query: PageQuery, now: Date): Promise<Paged<JoinCode>>
   countActive(organizationId: string, now: Date): Promise<number>
   create(input: NewJoinCode, now: Date, expires: Date): Promise<void>
   find(organizationId: string, id: string, now: Date): Promise<JoinCode | null>
@@ -37,9 +40,15 @@ export interface OrganizationJoinCodesRepository {
   consume(tokenHash: string, organizationId: string, now: Date): Promise<JoinCode | null>
   revoke(id: string, version: number, now: Date): Promise<boolean>
 }
-export interface OrganizationRolesRepository { list(organizationId: string, now: Date): Promise<OrganizationRole[]> }
+export interface OrganizationRolesRepository {
+  /** 组织角色分页；默认页大小 100，排序固定为 owner → organizer → certifier。 */
+  list(organizationId: string, query: PageQuery, now: Date): Promise<Paged<OrganizationRole>>
+  /** 单条读取，供授予后取回同一投影，不必依赖当前页。 */
+  find(organizationId: string, bindingId: string, now: Date): Promise<OrganizationRole | null>
+}
 export interface OrganizationCandidatesRepository {
-  search(organizationId: string, actorId: string, keyword: string, now: Date): Promise<Candidate[]>
+  /** 候选人检索分页：只接受页码，页大小固定为 `CANDIDATE_PAGE_SIZE`。 */
+  search(organizationId: string, actorId: string, keyword: string, page: number, now: Date): Promise<Paged<Candidate>>
 }
 export type AccessRepositories = MemberRepositories & {
   self: OrganizationSelfRepository; joinCodes: OrganizationJoinCodesRepository

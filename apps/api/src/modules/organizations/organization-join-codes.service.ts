@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import type { CreateJoinCode, RevokeJoinCode } from '@refs-tools/contracts/organization-access'
+import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { DomainError } from '../../application/errors.js'
 import { appendAudit } from '../audit/audit.service.js'
 import { memberAccess, memberAudit, memberVersion } from './organization-members.access.js'
@@ -22,14 +23,14 @@ async function codeAudit(r: AccessRepositories, actor: string, organizationId: s
 export class OrganizationJoinCodesService {
   constructor(private readonly d: AccessDependencies) {}
 
-  async list(actor: string, id: string) {
+  async list(actor: string, id: string, query: PageQuery = {}) {
     const now = this.d.now()
     return this.d.transaction.run(async r => {
       await memberAccess(r, this.d, actor, id, now, 'manage')
-      const items = await r.joinCodes.list(id, now)
+      const result = await r.joinCodes.list(id, query, now)
       await appendAudit(r.audit, { actorUserId: actor, action: 'join_code.queried', resourceType: 'organization', resourceId: id,
         scopeType: 'organization', scopeId: id, organizationId: id, before: null, after: null, reason: null }, now)
-      return { items }
+      return result
     })
   }
 

@@ -40,7 +40,7 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 - **申请加入 / 撤回**：沿用 `membership-requests`；申请人可撤回自己的 pending 申请，记为 `left` 保留历史，之后可重新申请。
 - **成员码**：创建时一次性返回明文（`rj_` + 43 位 base64url），库内只存 SHA-256 与末 4 位；有效 1–30 天、可用 1–100 次，每组织同时有效最多 10 个。兑换在组织行锁内以单条条件 `UPDATE` 消费；已是正式成员幂等返回且不消耗次数；未知、撤销、过期、用尽统一返回 `JOIN_CODE_INVALID`（422）。成员码只授予成员关系，永不授予角色，重新入会不恢复旧角色。
 - **角色**：仅组织负责人可授予/撤销 `organizer`、`certifier`；`owner` 不可经此接口授予或撤销；目标必须是有效正式成员。平台管理员不具备此能力。撤销绑定必须属于路径中的组织，否则 404。
-- **候选人检索**：需要组织成员管理权限；关键词至少 2 字符；含 `@` 只精确匹配完整邮箱，否则昵称子串匹配；仅返回有效且邮箱已验证账号的昵称、ID 尾号与关系，最多 10 条，不返回邮箱；每次检索写审计但不记录关键词。
+- **候选人检索**：需要组织成员管理权限；关键词至少 2 字符；含 `@` 只精确匹配完整邮箱，否则昵称子串匹配；仅返回有效且邮箱已验证账号的昵称、ID 尾号与关系，不返回邮箱；每次检索写审计但不记录关键词。分页只接受 `page`，每页固定 10 条（`pageSize` 不由客户端指定），避免分页放大账号枚举面。
 - **理由与二次确认**：移除、驳回、批准、撤销邀请、退出/撤回都经理由对话框，理由 ≤ 500 字符且不含链接或凭据（与服务端审计白名单一致）。成员码撤销只需版本号。
 - **无需理由的二次确认**：成员码撤销、角色撤销、拒绝邀请不要求理由（服务端也不需要），但都必须先经 `NPopconfirm` 二次确认（按钮为「取消 / 确认撤销」「取消 / 确认拒绝」），并写清后果；取消不发出任何请求。
 
@@ -48,15 +48,15 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 
 | 方法与路径 | 说明 |
 | --- | --- |
-| `GET /me/organizations` | 本人组织，含角色与能力 |
+| `GET /me/organizations` | 本人组织，含角色与能力，分页（默认 `pageSize=100`） |
 | `GET /organization-directory` | 公开目录，分页 |
 | `POST /me/organization-applications` | 自助创建申请，201 |
 | `POST /organization-join-codes/redeem` | `{token}`，兑换成员码 |
-| `GET/POST /organizations/:id/join-codes` | 列表（无明文）/ 创建（一次性明文） |
+| `GET/POST /organizations/:id/join-codes` | 列表（无明文，分页，默认 `pageSize=50`）/ 创建（一次性明文） |
 | `POST /organizations/:id/join-codes/:codeId/revoke` | `{expectedVersion}` |
-| `GET/POST /organizations/:id/roles` | 列表 + `canGrant` / 授予 |
+| `GET/POST /organizations/:id/roles` | 列表（分页，默认 `pageSize=100`）+ `canGrant` / 授予 |
 | `POST /organizations/:id/roles/:bindingId/revoke` | 撤销 |
-| `GET /organizations/:id/member-candidates?keyword=` | 候选人检索 |
+| `GET /organizations/:id/member-candidates?keyword=&page=` | 候选人检索，每页固定 10 条 |
 
 沿用 FS-0016 的成员、邀请、本人收件箱、接受/拒绝、申请与退出接口。迁移 `0009` 新增 `organization_join_codes` 与两个索引。
 
@@ -79,7 +79,7 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 - 没有邮件/站内通知：邀请、审核结果都需用户回到「我的组织」查看，界面文案已如实说明。
 - 所有权移交、解散、平台创建邀请码仍属后续 Task 7；成员认证/岗位模块尚未实现，成员离开后的资格暂停联动同样未交付。
 - 候选人检索无独立限流，仅靠管理权限、2 字符下限、10 条上限和审计约束；若出现滥用需另行增加限流（见 ADR 0032）。
-- 「我的组织」最多返回 100 个，收件箱只展示第一页（20 条）中仍待回应的邀请。
+- 「我的组织」默认只读取第一页（`pageSize=100`）；分页参数已预留，界面尚未提供「加载更多」，组织数超过 100 时需后续接入。收件箱只展示第一页（20 条）中仍待回应的邀请。
 
 ## 8. 验收记录
 
@@ -123,3 +123,13 @@ FS-0016 只交付管理端与基础 API，用户端没有任何组织入口。�
 - 已验证：新增 9 项单测（分组映射、计数、关键词与状态叠加、渐进显示与步长、切换后回到第一页、阈值、排序、刷新后数据变化）通过，`apps/referee-web` 全部 35 文件 225 项测试通过；`vue-tsc` 通过；`vite build` 与 `test:styles` 通过（CSS 50,793 bytes，较改动前的 46,320 bytes 增加 4,473 bytes，来自新组件工具类）。
 - 浏览器（本机开发服务器，Chrome 远程调试，页面内 `fetch` 替身注入 30 个组织：18 个已加入、4 个加入申请待审核、1 个待审核新建、1 个被驳回、1 个已冻结、5 个其他已加入）：1626px 下计数为全部 30 / 申请中 5 / 已加入 24 / 已结束 1，首屏 8 行与「还有 22 个未显示」一致；点「已加入」得「匹配 24 个」与「还有 16 个未显示」；关键词「宁波」叠加已加入得 8 项；不存在的关键词显示空态与重置，重置后回到 30 项；连续展开后行数按 8→16→24→30 递增且末次仅「再显示 6 个」。320px 与 640px 均无页面级横向溢出，640px 检索框 300px 与结果计数同行，320px 检索框整行、胶囊换行为两行；`main` 内可交互目标无低于 44px 者。
 - **未覆盖或替代**：组织数据来自页面内 `fetch` 替身，未连真实 API 与数据库（真实接口契约未变，仍由既有集成测试覆盖）；验收标签页在后台，`v-reveal` 的入场动画帧未跑完（截图可见行透明度中途值），未以可见标签页复核入场效果；未测 375/480/768/960/1100px 中间断点、Light/Dark 主题与真机；键盘遍历（Tab 顺序、方向键）未逐项实测。
+
+## 12. 列表分页预留修订
+
+- 变更：`GET /me/organizations`、`GET /organizations/:id/join-codes`、`GET /organizations/:id/roles`、`GET /organizations/:id/member-candidates` 原先分别用硬编码 `LIMIT 100` / `LIMIT 50` / 不限 / `LIMIT 10` 返回集合，现统一改为分页契约：响应体为 `{ items, total, page, pageSize }`（`canGrant` 仍与 `items` 同级），`page`/`pageSize` 缺省值依次为 `1`/`100`、`1`/`50`、`1`/`100`、`1`/固定 `10`。默认值与既有上限一致，现有前端调用无需改动即可继续工作。
+- 契约与实现：`PageQuerySchema`、`PageMetaProperties`、`pagedDataSchema`、`pagedResponseSchema` 与 `Paged<T>` 集中在 `packages/contracts/pagination`；既有的成员、邀请、目录、管理端用户与组织列表同步改用同一套 helper，行为与响应结构不变。Repository 在同一事务内先计数再分页查询，排序键保持 `created_at DESC, id DESC`（角色为 `owner → organizer → certifier`），避免翻页重复或漏行。
+- 前端：`apps/referee-web/src/api/organizations.api.ts` 的 `mine`、`joinCodes`、`roles` 接受可选 `PageQuery`，`candidates` 接受可选 `page`；当前页面仍按默认值一次取第一页，筛选与「再显示」仍为本地行为，未接入服务端翻页。
+- 已验证：`pnpm test` 98 文件、555 项通过（新增 `packages/contracts/test/pagination.test.ts` 2 项契约边界用例，以及「我的组织透传分页」「角色列表透传分页与 canGrant」两项单测；HTTP 边界新增分页信封与非法 `page`/`pageSize` 断言）；`pnpm typecheck` 四个包通过；`packages/contracts` 与 `apps/api` 构建通过。
+- 真实 PostgreSQL（`TEST_DATABASE_URL` 指向 5433 的 test-db，`NODE_OPTIONS=--max-old-space-size=256`）：`pnpm test:db` 15 文件、70 项通过。新增 1 项组织分页用例 `organization-access.integration.test.ts > 列表查询都按分页返回并带总数，越界页为空且翻页不重不漏`，覆盖「我的组织」总数与越界空页、角色列表 `owner → organizer` 顺序与总数、成员码总数与空页、候选人固定每页 10 条（14 条数据分两页且无重复）。
+- 该用例发现并已修复一处真实缺陷：候选人检索的取页 SQL 复用了计数 SQL 的占位符编号，导致 `$3`（关键词）在取页语句中未被引用，PostgreSQL 报 `could not determine data type of parameter $3`。现由 `match(actorParam, keywordParam)` 按两条 SQL 各自的位置生成条件，查询恢复正确。夹具级单测无法发现此类问题，故真实数据库验证是必需的。
+- **未覆盖**：未做浏览器验收（本轮只改接口形状与默认值，既有页面行为不变）；未验证组织或成员数超过一页时的「加载更多」交互，因为界面尚未提供该入口。

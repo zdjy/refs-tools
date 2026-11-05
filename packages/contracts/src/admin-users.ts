@@ -1,5 +1,6 @@
 import { Type, type Static } from '@sinclair/typebox'
 import { RoleSchema } from './authorization.js'
+import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 
 export const AdminUserStatusSchema = Type.Union([Type.Literal('active'), Type.Literal('disabled')])
 export const AdminUserSchema = Type.Object({
@@ -10,8 +11,7 @@ export const AdminUserSchema = Type.Object({
 export const AdminUserParamsSchema = Type.Object({ id: Type.String({ format: 'uuid' }) }, { additionalProperties: false })
 export const AdminUserQuerySchema = Type.Object({
   keyword: Type.Optional(Type.String({ maxLength: 100 })), status: Type.Optional(AdminUserStatusSchema),
-  page: Type.Optional(Type.String({ pattern: '^[1-9][0-9]{0,5}$' })),
-  pageSize: Type.Optional(Type.String({ pattern: '^(?:10|20|50|100)$' })),
+  ...PageQuerySchema.properties,
 }, { additionalProperties: false })
 export const CreateAdminUserSchema = Type.Object({
   email: Type.String({ format: 'email', maxLength: 254 }), displayName: Type.String({ minLength: 1, maxLength: 80 }),
@@ -23,9 +23,7 @@ export const UpdateAdminUserSchema = Type.Object({
 }, { additionalProperties: false })
 export const DeleteAdminUserSchema = Type.Object({ version: Type.Integer({ minimum: 1 }) }, { additionalProperties: false })
 export const AdminUserResponseSchema = Type.Object({ data: AdminUserSchema })
-export const AdminUserListResponseSchema = Type.Object({ data: Type.Object({
-  items: Type.Array(AdminUserSchema), total: Type.Integer({ minimum: 0 }), page: Type.Integer(), pageSize: Type.Integer(),
-}) })
+export const AdminUserListResponseSchema = pagedResponseSchema(AdminUserSchema)
 export type AdminUser = Static<typeof AdminUserSchema>
 export type AdminUserQuery = Static<typeof AdminUserQuerySchema>
 export type AdminUserList = Static<typeof AdminUserListResponseSchema>['data']

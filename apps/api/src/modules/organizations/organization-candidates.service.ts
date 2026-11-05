@@ -17,10 +17,10 @@ export class OrganizationCandidatesService {
     const now = this.d.now()
     return this.d.transaction.run(async r => {
       await memberAccess(r, this.d, actor, id, now, 'manage')
-      const items = await r.candidates.search(id, actor, keyword, now)
+      const result = await r.candidates.search(id, actor, keyword, Number(query.page ?? '1'), now)
       await appendAudit(r.audit, { actorUserId: actor, action: 'candidate.queried', resourceType: 'organization', resourceId: id,
         scopeType: 'organization', scopeId: id, organizationId: id, before: null, after: null, reason: null }, now)
-      return { items }
+      return result
     })
   }
 }

@@ -2,7 +2,8 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { apiResponse } from '@refs-tools/contracts'
 import type { CandidateQuery, CreateJoinCode, GrantRole, JoinCodeParams, RedeemJoinCode, RevokeJoinCode, RoleParams } from '@refs-tools/contracts/organization-access'
 import type { MemberOrganizationParams } from '@refs-tools/contracts/organization-members'
-import type { DirectoryQuery, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type { DirectoryQuery, MyOrganizationQuery, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { requireSameOrigin, sessionToken } from '../auth/auth.http.js'
 import type { SessionService } from '../auth/session.service.js'
 import type { OrganizationCandidatesService } from './organization-candidates.service.js'
@@ -16,6 +17,8 @@ export type AccessRouteDependencies = {
   candidates: OrganizationCandidatesService; sessions: Pick<SessionService, 'requireVerifiedSession'>; publicOrigin: string
 }
 type Org = { Params: MemberOrganizationParams }
+/** 列表接口一律接受分页查询串，默认值由 Repository 解析；详情/写接口不接分页。 */
+type OrgPage = Org & { Querystring: PageQuery }
 
 /** 用户视角的组织接口：主体只来自 Cookie 会话，成员码明文绝不进入日志或缓存。 */
 export function organizationAccessRoutes(d: AccessRouteDependencies): FastifyPluginAsync {
@@ -25,21 +28,22 @@ export function organizationAccessRoutes(d: AccessRouteDependencies): FastifyPlu
       reply.header('cache-control', 'no-store').header('vary', 'Cookie')
       requireSameOrigin(request, d.publicOrigin)
     })
-    app.get('/me/organizations', { schema: schemas.mineSchema }, async request => apiResponse(await d.self.mine(await actor(request))))
+    app.get<{ Querystring: MyOrganizationQuery }>('/me/organizations', { schema: schemas.mineSchema },
+      async request => apiResponse(await d.self.mine(await actor(request), request.query)))
     app.get<{ Querystring: DirectoryQuery }>('/organization-directory', { schema: schemas.directorySchema },
       async request => apiResponse(await d.self.directory(await actor(request), request.query)))
     app.post<{ Body: OrganizationApplication }>('/me/organization-applications', { schema: schemas.applySchema, bodyLimit: 4096 },
       async (request, reply) => reply.code(201).send(apiResponse(await d.self.apply(await actor(request), request.body))))
     app.post<{ Body: RedeemJoinCode }>('/organization-join-codes/redeem', { schema: schemas.redeemSchema, bodyLimit: 1024 },
       async request => apiResponse(await d.joinCodes.redeem(await actor(request), request.body.token)))
-    app.get<Org>('/organizations/:id/join-codes', { schema: schemas.joinCodeListSchema },
-      async request => apiResponse(await d.joinCodes.list(await actor(request), request.params.id)))
+    app.get<OrgPage>('/organizations/:id/join-codes', { schema: schemas.joinCodeListSchema },
+      async request => apiResponse(await d.joinCodes.list(await actor(request), request.params.id, request.query)))
     app.post<Org & { Body: CreateJoinCode }>('/organizations/:id/join-codes', { schema: schemas.joinCodeCreateSchema, bodyLimit: 1024 },
       async (request, reply) => reply.code(201).send(apiResponse(await d.joinCodes.create(await actor(request), request.params.id, request.body))))
     app.post<{ Params: JoinCodeParams; Body: RevokeJoinCode }>('/organizations/:id/join-codes/:codeId/revoke', { schema: schemas.joinCodeRevokeSchema, bodyLimit: 1024 },
       async request => apiResponse(await d.joinCodes.revoke(await actor(request), request.params.id, request.params.codeId, request.body)))
-    app.get<Org>('/organizations/:id/roles', { schema: schemas.roleListSchema },
-      async request => apiResponse(await d.roles.list(await actor(request), request.params.id)))
+    app.get<OrgPage>('/organizations/:id/roles', { schema: schemas.roleListSchema },
+      async request => apiResponse(await d.roles.list(await actor(request), request.params.id, request.query)))
     app.post<Org & { Body: GrantRole }>('/organizations/:id/roles', { schema: schemas.roleGrantSchema, bodyLimit: 1024 },
       async (request, reply) => reply.code(201).send(apiResponse(await d.roles.grant(await actor(request), request.params.id, request.body))))
     app.post<{ Params: RoleParams }>('/organizations/:id/roles/:bindingId/revoke', { schema: schemas.roleRevokeSchema, bodyLimit: 256 },

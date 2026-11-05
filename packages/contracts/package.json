@@ -9,6 +9,11 @@
       "development": "./src/organization-members.ts",
       "import": "./dist/organization-members.js"
     },
+    "./pagination": {
+      "types": "./src/pagination.ts",
+      "development": "./src/pagination.ts",
+      "import": "./dist/pagination.js"
+    },
     "./organization-self": {
       "types": "./src/organization-self.ts",
       "development": "./src/organization-self.ts",

@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg'
 import type { JoinCode } from '@refs-tools/contracts/organization-access'
+import type { PageQuery, Paged } from '@refs-tools/contracts/pagination'
 import { joinCodeStatus } from '@refs-tools/domain'
 import type { NewJoinCode, OrganizationJoinCodesRepository } from './organization-access.types.js'
 
@@ -13,10 +14,13 @@ const mapCode = (row: CodeRow, now: Date): JoinCode => ({ id: row.id, hint: row.
 export class PgOrganizationJoinCodesRepository implements OrganizationJoinCodesRepository {
   constructor(private readonly connection: Pick<PoolClient, 'query'>) {}
 
-  async list(organizationId: string, now: Date): Promise<JoinCode[]> {
+  async list(organizationId: string, query: PageQuery, now: Date): Promise<Paged<JoinCode>> {
+    const page = Number(query.page ?? '1'), pageSize = Number(query.pageSize ?? '50')
+    const count = await this.connection.query<{ total: string }>(
+      'SELECT count(*) AS total FROM organization_join_codes WHERE organization_id=$1', [organizationId])
     const rows = await this.connection.query<CodeRow>(`SELECT ${columns} FROM organization_join_codes WHERE organization_id=$1
-      ORDER BY created_at DESC,id DESC LIMIT 50`, [organizationId])
-    return rows.rows.map(row => mapCode(row, now))
+      ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`, [organizationId, pageSize, (page - 1) * pageSize])
+    return { items: rows.rows.map(row => mapCode(row, now)), total: Number(count.rows[0]!.total), page, pageSize }
   }
 
   async countActive(organizationId: string, now: Date): Promise<number> {

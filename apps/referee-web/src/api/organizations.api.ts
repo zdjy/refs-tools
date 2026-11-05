@@ -1,10 +1,11 @@
 import type {
-  Candidate, CreateJoinCode, GrantRole, JoinCode, OrganizationRole,
+  CandidateList, CreateJoinCode, GrantRole, JoinCode, JoinCodeList, OrganizationRole, OrganizationRoleList,
 } from '@refs-tools/contracts/organization-access'
 import type {
   InvitationList, MemberChange, MemberPageQuery, Membership, MembershipDecision, MembershipList, OrganizationInvitation,
 } from '@refs-tools/contracts/organization-members'
 import type { DirectoryList, DirectoryQuery, MyOrganization, MyOrganizationList, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { HttpError } from './http/errors'
 import { createPlatformClient, type PlatformClient } from './http/platform-client'
 
@@ -28,12 +29,12 @@ function query(params: Record<string, string | number | undefined>): string {
   const text = search.toString()
   return text ? `?${text}` : ''
 }
-const page = (value: MemberPageQuery) => query({ page: value.page, pageSize: value.pageSize })
+const page = (value: PageQuery) => query({ page: value.page, pageSize: value.pageSize })
 
 export function createOrganizationsApi(client: PlatformClient) {
   const call = <T>(task: Promise<T>) => task.catch((error) => { throw toOrganizationsError(error) })
   return {
-    mine: () => call(client.get<MyOrganizationList>('/me/organizations')),
+    mine: (value: PageQuery = {}) => call(client.get<MyOrganizationList>(`/me/organizations${page(value)}`)),
     directory: (value: DirectoryQuery) => call(client.get<DirectoryList>(`/organization-directory${query({ ...value })}`)),
     apply: (body: OrganizationApplication) => call(client.post<MyOrganization>('/me/organization-applications', body)),
     inbox: (value: MemberPageQuery = {}) => call(client.get<InvitationList>(`/me/organization-invitations${page(value)}`)),
@@ -53,14 +54,16 @@ export function createOrganizationsApi(client: PlatformClient) {
       call(client.post<OrganizationInvitation>(`/organizations/${id(orgId)}/invitations`, { userId, validDays })),
     revokeInvitation: (orgId: string, recordId: string, body: MemberChange) =>
       call(client.post<OrganizationInvitation>(`/organizations/${id(orgId)}/invitations/${id(recordId)}/revoke`, body)),
-    candidates: (orgId: string, keyword: string) =>
-      call(client.get<{ items: Candidate[] }>(`/organizations/${id(orgId)}/member-candidates${query({ keyword })}`)),
-    joinCodes: (orgId: string) => call(client.get<{ items: JoinCode[] }>(`/organizations/${id(orgId)}/join-codes`)),
+    candidates: (orgId: string, keyword: string, value: Pick<PageQuery, 'page'> = {}) =>
+      call(client.get<CandidateList>(`/organizations/${id(orgId)}/member-candidates${query({ keyword, page: value.page })}`)),
+    joinCodes: (orgId: string, value: PageQuery = {}) =>
+      call(client.get<JoinCodeList>(`/organizations/${id(orgId)}/join-codes${page(value)}`)),
     createJoinCode: (orgId: string, body: CreateJoinCode) =>
       call(client.post<{ code: JoinCode; token: string }>(`/organizations/${id(orgId)}/join-codes`, body)),
     revokeJoinCode: (orgId: string, codeId: string, expectedVersion: number) =>
       call(client.post<JoinCode>(`/organizations/${id(orgId)}/join-codes/${id(codeId)}/revoke`, { expectedVersion })),
-    roles: (orgId: string) => call(client.get<{ items: OrganizationRole[]; canGrant: boolean }>(`/organizations/${id(orgId)}/roles`)),
+    roles: (orgId: string, value: PageQuery = {}) =>
+      call(client.get<OrganizationRoleList>(`/organizations/${id(orgId)}/roles${page(value)}`)),
     grantRole: (orgId: string, body: GrantRole) => call(client.post<OrganizationRole>(`/organizations/${id(orgId)}/roles`, body)),
     revokeRole: (orgId: string, bindingId: string) =>
       call(client.post<{ revoked: true }>(`/organizations/${id(orgId)}/roles/${id(bindingId)}/revoke`, {})),

@@ -1,5 +1,6 @@
 import { Type, type Static } from '@sinclair/typebox'
 import { MembershipSchema } from './organization-members.js'
+import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 
 const Uuid = Type.String({ format: 'uuid' })
 const Time = Type.String({ format: 'date-time' })
@@ -30,21 +31,25 @@ export const OrganizationRoleSchema = Type.Object({
 export const GrantRoleSchema = Type.Object({ userId: Uuid, role: GrantableRoleSchema }, { additionalProperties: false })
 export const RoleParamsSchema = Type.Object({ id: Uuid, bindingId: Uuid }, { additionalProperties: false })
 
-export const CandidateQuerySchema = Type.Object({ keyword: Type.String({ minLength: 2, maxLength: 100 }) }, { additionalProperties: false })
+/** 候选人检索只按 `page` 翻页，页大小固定为 10，收敛账号枚举面。 */
+export const CANDIDATE_PAGE_SIZE = 10
+export const CandidateQuerySchema = Type.Object({
+  keyword: Type.String({ minLength: 2, maxLength: 100 }), page: PageQuerySchema.properties.page,
+}, { additionalProperties: false })
 /** 候选人只含昵称与 ID 尾号，不返回邮箱；精确邮箱匹配也只回显昵称，避免成为邮箱探测接口。 */
 export const CandidateSchema = Type.Object({
   userId: Uuid, displayName: Type.String(), tag: Type.String({ minLength: 4, maxLength: 4 }),
   relation: Type.Union([Type.Literal('none'), Type.Literal('invited'), Type.Literal('pending'), Type.Literal('active')]),
 }, { additionalProperties: false })
 
-export const JoinCodeListResponseSchema = Type.Object({ data: Type.Object({ items: Type.Array(JoinCodeSchema) }) })
+export const JoinCodeListResponseSchema = pagedResponseSchema(JoinCodeSchema)
 export const JoinCodeCreatedResponseSchema = Type.Object({ data: Type.Object({ code: JoinCodeSchema, token: Type.String() }) })
 export const JoinCodeResponseSchema = Type.Object({ data: JoinCodeSchema })
 export const RedeemResponseSchema = Type.Object({ data: MembershipSchema })
-export const RoleListResponseSchema = Type.Object({ data: Type.Object({ items: Type.Array(OrganizationRoleSchema), canGrant: Type.Boolean() }) })
+export const RoleListResponseSchema = pagedResponseSchema(OrganizationRoleSchema, { canGrant: Type.Boolean() })
 export const RoleResponseSchema = Type.Object({ data: OrganizationRoleSchema })
 export const RoleRevokedResponseSchema = Type.Object({ data: Type.Object({ revoked: Type.Literal(true) }) })
-export const CandidateListResponseSchema = Type.Object({ data: Type.Object({ items: Type.Array(CandidateSchema) }) })
+export const CandidateListResponseSchema = pagedResponseSchema(CandidateSchema)
 export type JoinCode = Static<typeof JoinCodeSchema>
 export type CreateJoinCode = Static<typeof CreateJoinCodeSchema>
 export type RedeemJoinCode = Static<typeof RedeemJoinCodeSchema>
@@ -55,3 +60,6 @@ export type GrantRole = Static<typeof GrantRoleSchema>
 export type RoleParams = Static<typeof RoleParamsSchema>
 export type CandidateQuery = Static<typeof CandidateQuerySchema>
 export type Candidate = Static<typeof CandidateSchema>
+export type JoinCodeList = Static<typeof JoinCodeListResponseSchema>['data']
+export type OrganizationRoleList = Static<typeof RoleListResponseSchema>['data']
+export type CandidateList = Static<typeof CandidateListResponseSchema>['data']

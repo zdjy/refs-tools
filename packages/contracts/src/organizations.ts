@@ -1,4 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
+import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 
 export const OrganizationStatusSchema = Type.Union([
   Type.Literal('pending_review'), Type.Literal('active'), Type.Literal('frozen'),
@@ -18,8 +19,7 @@ export const OrganizationDetailSchema = Type.Object({
 export const OrganizationParamsSchema = Type.Object({ id: Type.String({ format: 'uuid' }) }, { additionalProperties: false })
 export const OrganizationQuerySchema = Type.Object({
   keyword: Type.Optional(Type.String({ maxLength: 100 })), status: Type.Optional(OrganizationStatusSchema),
-  page: Type.Optional(Type.String({ pattern: '^[1-9][0-9]{0,5}$' })),
-  pageSize: Type.Optional(Type.String({ pattern: '^(?:10|20|50|100)$' })),
+  ...PageQuerySchema.properties,
 }, { additionalProperties: false })
 export const CreateOrganizationSchema = Type.Object({
   name: Type.String({ minLength: 1, maxLength: 120 }), region: Type.String({ minLength: 1, maxLength: 100 }),
@@ -37,9 +37,7 @@ export const OrganizationDecisionSchema = Type.Object({
   expectedVersion: Type.Integer({ minimum: 1 }), reason: Type.String({ minLength: 1, maxLength: 500 }),
 }, { additionalProperties: false })
 export const OrganizationResponseSchema = Type.Object({ data: OrganizationDetailSchema })
-export const OrganizationListResponseSchema = Type.Object({ data: Type.Object({
-  items: Type.Array(OrganizationSchema), total: Type.Integer({ minimum: 0 }), page: Type.Integer(), pageSize: Type.Integer(),
-}) })
+export const OrganizationListResponseSchema = pagedResponseSchema(OrganizationSchema)
 export type Organization = Static<typeof OrganizationSchema>
 export type OrganizationDetail = Static<typeof OrganizationDetailSchema>
 export type OrganizationQuery = Static<typeof OrganizationQuerySchema>

@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg'
 import type { DirectoryItem, DirectoryList, DirectoryQuery } from '@refs-tools/contracts/organization-self'
+import type { PageQuery, Paged } from '@refs-tools/contracts/pagination'
 import type {
   ApplicantProfile, MineRow, NewOrganizationApplication, OrganizationSelfRepository,
 } from './organization-access.types.js'
@@ -22,14 +23,18 @@ function mapMine(row: MineSqlRow): MineRow {
 export class PgOrganizationSelfRepository implements OrganizationSelfRepository {
   constructor(private readonly connection: Pick<PoolClient, 'query'>) {}
 
-  async mine(userId: string): Promise<MineRow[]> {
+  async mine(userId: string, query: PageQuery): Promise<Paged<MineRow>> {
+    const page = Number(query.page ?? '1'), pageSize = Number(query.pageSize ?? '100')
     // 并集：本人当前 pending/active 成员关系，加上本人作为负责人但尚无成员关系的待审核/被驳回申请。
+    const from = `FROM organizations o LEFT JOIN organization_memberships m
+      ON m.organization_id=o.id AND m.user_id=$1 AND m.status IN ('pending','active')`
+    const where = `WHERE m.id IS NOT NULL OR (o.owner_user_id=$1 AND o.status IN ('pending_review','rejected'))`
+    const count = await this.connection.query<{ total: string }>(`SELECT count(*) AS total ${from} ${where}`, [userId])
     const rows = await this.connection.query<MineSqlRow>(`SELECT o.id,o.name,o.region,o.purpose,o.status,o.owner_user_id,o.created_at,
         o.governance_reason,m.id AS membership_id,m.status AS membership_status,m.version AS membership_version
-      FROM organizations o LEFT JOIN organization_memberships m ON m.organization_id=o.id AND m.user_id=$1 AND m.status IN ('pending','active')
-      WHERE m.id IS NOT NULL OR (o.owner_user_id=$1 AND o.status IN ('pending_review','rejected'))
-      ORDER BY o.created_at DESC,o.id DESC LIMIT 100`, [userId])
-    return rows.rows.map(mapMine)
+      ${from} ${where}
+      ORDER BY o.created_at DESC,o.id DESC LIMIT $2 OFFSET $3`, [userId, pageSize, (page - 1) * pageSize])
+    return { items: rows.rows.map(mapMine), total: Number(count.rows[0]!.total), page, pageSize }
   }
 
   async directory(userId: string, query: DirectoryQuery): Promise<DirectoryList> {

@@ -50,6 +50,7 @@ export type OrganizationAuditParams = Static<typeof OrganizationAuditParamsSchem
 export const AuditQuerySchema = Type.Object({
   scopeType: Type.Optional(ScopeTypeSchema), scopeId: Type.Optional(Uuid),
   resourceType: Type.Optional(AuditResourceTypeSchema), resourceId: Type.Optional(Uuid),
+  // 审计是不可变的事件流：用 cursor + limit 做键集分页，不用 page/offset 深翻页。
   cursor: Type.Optional(Uuid),
   // 全局禁用隐式类型转换；URL 查询中的数字由 Service 明确解析。
   limit: Type.Optional(Type.String({ pattern: '^(?:[1-9]|[1-9][0-9]|100)$' })),

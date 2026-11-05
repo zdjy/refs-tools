@@ -1,4 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
+import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 
 const Uuid = Type.String({ format: 'uuid' })
 const Time = Type.String({ format: 'date-time' })
@@ -12,10 +13,8 @@ export const OrganizationInvitationSchema = Type.Object({
   status: Type.Union((['pending', 'accepted', 'declined', 'revoked', 'expired'] as const).map(value => Type.Literal(value))),
   version: Type.Integer({ minimum: 1 }), createdAt: Time, expiresAt: Time,
 }, { additionalProperties: false })
-export const MemberPageQuerySchema = Type.Object({
-  page: Type.Optional(Type.String({ pattern: '^[1-9][0-9]{0,5}$' })),
-  pageSize: Type.Optional(Type.String({ pattern: '^(?:10|20|50|100)$' })),
-}, { additionalProperties: false })
+/** 成员/邀请列表分页；沿用通用页大小枚举，默认由 Repository 解析为 20。 */
+export const MemberPageQuerySchema = PageQuerySchema
 export const MemberOrganizationParamsSchema = Type.Object({ id: Uuid }, { additionalProperties: false })
 export const MemberRecordParamsSchema = Type.Object({ id: Uuid, recordId: Uuid }, { additionalProperties: false })
 export const CreateInvitationSchema = Type.Object({ userId: Uuid,
@@ -29,12 +28,8 @@ export const MembershipDecisionSchema = Type.Object({ ...MemberChangeSchema.prop
 }, { additionalProperties: false })
 export const MembershipResponseSchema = Type.Object({ data: MembershipSchema })
 export const InvitationResponseSchema = Type.Object({ data: OrganizationInvitationSchema })
-export const MembershipListResponseSchema = Type.Object({ data: Type.Object({
-  items: Type.Array(MembershipSchema), total: Type.Integer(), page: Type.Integer(), pageSize: Type.Integer(), canManage: Type.Boolean(),
-}) })
-export const InvitationListResponseSchema = Type.Object({ data: Type.Object({
-  items: Type.Array(OrganizationInvitationSchema), total: Type.Integer(), page: Type.Integer(), pageSize: Type.Integer(), canManage: Type.Boolean(),
-}) })
+export const MembershipListResponseSchema = pagedResponseSchema(MembershipSchema, { canManage: Type.Boolean() })
+export const InvitationListResponseSchema = pagedResponseSchema(OrganizationInvitationSchema, { canManage: Type.Boolean() })
 export type Membership = Static<typeof MembershipSchema>
 export type OrganizationInvitation = Static<typeof OrganizationInvitationSchema>
 export type MemberPageQuery = Static<typeof MemberPageQuerySchema>

@@ -1,6 +1,7 @@
 import { Type, type Static } from '@sinclair/typebox'
 import { RoleSchema } from './authorization.js'
 import { OrganizationStatusSchema } from './organizations.js'
+import { PageQuerySchema, pagedResponseSchema } from './pagination.js'
 
 const Uuid = Type.String({ format: 'uuid' })
 const Time = Type.String({ format: 'date-time' })
@@ -23,7 +24,8 @@ export const MyOrganizationSchema = Type.Object({
 
 export const DirectoryQuerySchema = Type.Object({
   keyword: Type.Optional(Type.String({ maxLength: 100 })),
-  page: Type.Optional(Type.String({ pattern: '^[1-9][0-9]{0,5}$' })),
+  page: PageQuerySchema.properties.page,
+  // 公开目录的页大小上限低于通用分页（50 而非 100），收敛匿名扫描面。
   pageSize: Type.Optional(Type.String({ pattern: '^(?:10|20|50)$' })),
 }, { additionalProperties: false })
 /** 目录只公开 active 组织的名称、地区、简介和人数，不含负责人、联系方式或成员名单。 */
@@ -42,12 +44,13 @@ export const OrganizationApplicationSchema = Type.Object({
   purpose: Type.String({ minLength: 1, maxLength: 1000 }),
 }, { additionalProperties: false })
 
+/** 本人组织列表；默认页大小 100，保留更大数量时可继续翻页。 */
+export const MyOrganizationQuerySchema = PageQuerySchema
 export const MyOrganizationResponseSchema = Type.Object({ data: MyOrganizationSchema })
-export const MyOrganizationListResponseSchema = Type.Object({ data: Type.Object({ items: Type.Array(MyOrganizationSchema) }) })
-export const DirectoryResponseSchema = Type.Object({ data: Type.Object({
-  items: Type.Array(DirectoryItemSchema), total: Type.Integer({ minimum: 0 }), page: Type.Integer(), pageSize: Type.Integer(),
-}) })
+export const MyOrganizationListResponseSchema = pagedResponseSchema(MyOrganizationSchema)
+export const DirectoryResponseSchema = pagedResponseSchema(DirectoryItemSchema)
 export type MyOrganization = Static<typeof MyOrganizationSchema>
+export type MyOrganizationQuery = Static<typeof MyOrganizationQuerySchema>
 export type DirectoryQuery = Static<typeof DirectoryQuerySchema>
 export type DirectoryItem = Static<typeof DirectoryItemSchema>
 export type DirectoryList = Static<typeof DirectoryResponseSchema>['data']

@@ -144,6 +144,8 @@ Composable / Store / 状态工厂 → <feature>.api.ts（上下文网关，防�
 
 * **契约类型来自 `packages/contracts`**：请求与响应的载荷类型从 contracts 导入；`{ data }` 信封只在传输客户端解包，网关返回已解包的 DTO。
 
+* **列表接口必须透传分页**：列表方法接受 `PageQuery` 并把 `page`/`pageSize` 编码进查询串，返回 contracts 的 `Paged` 信封（`items`/`total`/`page`/`pageSize`）；不得假设服务端一次返回全量。需要本地筛选或分批显示时，在规格中写明数据上限与不翻页的理由。
+
 ### (3) 使用 alova 的已知陷阱
 
 * `Method` 是惰性 thenable：只有 `await` 或 `send()` 后才发出请求。需要取消时必须先 `send()` 再绑定 `abort()`，否则取消是空操作。

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { ScopedRoleBinding } from '@refs-tools/contracts/authorization'
 import type { GrantRole } from '@refs-tools/contracts/organization-access'
+import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { DomainError } from '../../application/errors.js'
 import { appendAudit } from '../audit/audit.service.js'
 import { auditBinding } from '../authorization/role-bindings.service.js'
@@ -12,14 +13,14 @@ import type { AccessDependencies } from './organization-access.types.js'
 export class OrganizationRolesService {
   constructor(private readonly d: AccessDependencies) {}
 
-  async list(actor: string, id: string) {
+  async list(actor: string, id: string, query: PageQuery = {}) {
     const now = this.d.now()
     return this.d.transaction.run(async r => {
       const { canGrant } = await memberAccess(r, this.d, actor, id, now, 'read')
-      const items = await r.roles.list(id, now)
+      const result = await r.roles.list(id, query, now)
       await appendAudit(r.audit, { actorUserId: actor, action: 'membership.queried', resourceType: 'organization', resourceId: id,
         scopeType: 'organization', scopeId: id, organizationId: id, before: null, after: null, reason: null }, now)
-      return { items, canGrant }
+      return { ...result, canGrant }
     })
   }
 
@@ -37,7 +38,7 @@ export class OrganizationRolesService {
         scopeId: id, grantedBy: actor, startsAt: now.toISOString(), expiresAt: null, revokedAt: null }
       if (!await r.authorization.insertBinding(binding)) throw new DomainError('ROLE_ALREADY_BOUND', '该成员已拥有此角色', 409)
       await auditBinding(r.audit, actor, binding, id, false, now)
-      return (await r.roles.list(id, now)).find(item => item.id === binding.id)!
+      return (await r.roles.find(id, binding.id, now))!
     })
   }
 

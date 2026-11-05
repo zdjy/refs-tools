@@ -28,7 +28,10 @@ describe('用户视角组织 HTTP 边界', () => {
   it('合法请求使用会话主体；创建成员码返回 201 并仅此一次带明文', async () => {
     const f = await fixture()
     try {
-      expect((await f.app.inject({ url: '/api/v1/me/organizations', headers: f.headers })).statusCode).toBe(200)
+      const mine = await f.app.inject({ url: '/api/v1/me/organizations', headers: f.headers })
+      expect(mine.statusCode).toBe(200)
+      // 列表一律带分页信封；默认值属于服务端，客户端不传也必须有 total/page/pageSize。
+      expect(mine.json().data).toMatchObject({ total: 0, page: 1, pageSize: 100 })
       const created = await f.app.inject({ method: 'POST', url: `/api/v1/organizations/${f.id}/join-codes`, headers: f.headers, payload: { validDays: 7, maxUses: 1 } })
       expect(created.statusCode).toBe(201); expect(created.json().data.token).toMatch(/^rj_/)
       const listed = await f.app.inject({ url: `/api/v1/organizations/${f.id}/join-codes`, headers: f.headers })
@@ -49,6 +52,9 @@ describe('用户视角组织 HTTP 边界', () => {
       expect((await f.app.inject({ method: 'POST', url: `/api/v1/organizations/${f.id}/roles`, headers: f.headers, payload: { userId: f.user, role: 'owner' } })).statusCode).toBe(400)
       expect((await f.app.inject({ url: `/api/v1/organizations/${f.id}/member-candidates?keyword=a`, headers: f.headers })).statusCode).toBe(400)
       expect((await f.app.inject({ url: '/api/v1/organization-directory?pageSize=500', headers: f.headers })).statusCode).toBe(400)
+      // 分页参数越界与非法 page 同样在 HTTP 边界被拒绝，不触达业务。
+      expect((await f.app.inject({ url: '/api/v1/me/organizations?page=0', headers: f.headers })).statusCode).toBe(400)
+      expect((await f.app.inject({ url: `/api/v1/organizations/${f.id}/join-codes?pageSize=1000`, headers: f.headers })).statusCode).toBe(400)
       expect(f.r.joinCodes.consume).not.toHaveBeenCalled(); expect(f.r.joinCodes.create).not.toHaveBeenCalled()
     } finally { await f.app.close() }
   })

@@ -7,6 +7,7 @@ const nullableDate = Type.Union([date, Type.Null()])
 export const AdminMediaQuerySchema = Type.Object({
   keyword: Type.Optional(Type.String({ maxLength: 200 })), ownerUserId: Type.Optional(uuid),
   purpose: Type.Optional(MediaPurposeSchema), status: Type.Optional(MediaStatusSchema),
+  // 固定页大小的变体：只保留 page，页大小恒为 20；分页上限 10000 防止深翻页扫描。
   page: Type.Optional(Type.String({ pattern: '^(?:[1-9][0-9]{0,3}|10000)$' })),
 }, { additionalProperties: false })
 export const AdminMediaSchema = Type.Object({

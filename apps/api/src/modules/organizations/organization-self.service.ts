@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { Role } from '@refs-tools/contracts/authorization'
 import type { DirectoryQuery, MyOrganization, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { isRoleBindingActive } from '@refs-tools/domain'
 import type { ScopedRoleBinding } from '@refs-tools/contracts/authorization'
 import { DomainError } from '../../application/errors.js'
@@ -33,12 +34,12 @@ function project(row: MineRow, actor: string, bindings: readonly ScopedRoleBindi
 export class OrganizationSelfService {
   constructor(private readonly d: AccessDependencies) {}
 
-  async mine(actor: string) {
+  async mine(actor: string, query: PageQuery = {}) {
     const now = this.d.now()
     return this.d.transaction.run(async r => {
       if (!await r.identities.requireActiveActor(actor)) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
-      const [rows, bindings] = await Promise.all([r.self.mine(actor), r.authorization.findBindings(actor)])
-      return { items: rows.map(row => project(row, actor, bindings, this.d, now)) }
+      const [result, bindings] = await Promise.all([r.self.mine(actor, query), r.authorization.findBindings(actor)])
+      return { ...result, items: result.items.map(row => project(row, actor, bindings, this.d, now)) }
     })
   }
 

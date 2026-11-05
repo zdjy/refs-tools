@@ -28,6 +28,13 @@ describe('组织角色授予与撤销', () => {
     expect((await f.roles.list(admin, f.id)).canGrant).toBe(false)
     expect(f.r.authorization.insertBinding).not.toHaveBeenCalled()
   })
+  it('角色列表透传分页参数，并仍附带 canGrant', async () => {
+    const f = accessFixture()
+    const result = await f.roles.list(f.actor, f.id, { page: '2', pageSize: '10' })
+    expect(f.r.roles.list).toHaveBeenCalledWith(f.id, { page: '2', pageSize: '10' }, f.now)
+    expect(result).toMatchObject({ items: [], total: 0, page: 1, pageSize: 100 })
+    expect(result).toHaveProperty('canGrant')
+  })
   it('已持有的角色不能重复授予', async () => {
     const f = accessFixture(); vi.mocked(f.r.authorization.insertBinding).mockResolvedValue(false)
     await expect(f.roles.grant(f.actor, f.id, { userId: f.user, role: 'organizer' })).rejects.toMatchObject({ code: 'ROLE_ALREADY_BOUND', statusCode: 409 })
@@ -59,7 +66,7 @@ describe('邀请候选人检索', () => {
     await expect(f.candidates.search(f.actor, f.id, { keyword: ' a ' })).rejects.toMatchObject({ code: 'KEYWORD_TOO_SHORT' })
     expect(f.r.candidates.search).not.toHaveBeenCalled()
     await f.candidates.search(f.actor, f.id, { keyword: ' Alice@Example.com ' })
-    expect(f.r.candidates.search).toHaveBeenCalledWith(f.id, f.actor, 'alice@example.com', f.now)
+    expect(f.r.candidates.search).toHaveBeenCalledWith(f.id, f.actor, 'alice@example.com', 1, f.now)
     expect(JSON.stringify(vi.mocked(f.r.audit.append).mock.calls)).not.toContain('alice')
   })
   it('无成员管理权限时不能检索', async () => {

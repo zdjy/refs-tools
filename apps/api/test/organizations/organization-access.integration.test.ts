@@ -126,6 +126,39 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('用户视角组织 PostgreSQ
     const again = await members.request(seed.ids.outsider, seed.ids.orgA)
     expect(again.id).not.toBe(pending.id); expect(again.status).toBe('pending')
   })
+  it('列表查询都按分页返回并带总数，越界页为空且翻页不重不漏', async () => {
+    await completeProfile(seed.ids.outsider)
+    for (const name of ['甲协会', '乙协会', '丙协会']) await self.apply(seed.ids.outsider, { ...input, name })
+    const firstPage = await self.mine(seed.ids.outsider, { page: '1', pageSize: '10' })
+    expect(firstPage).toMatchObject({ total: 3, page: 1, pageSize: 10 })
+    expect(firstPage.items).toHaveLength(3)
+    const beyond = await self.mine(seed.ids.outsider, { page: '2', pageSize: '10' })
+    expect(beyond).toMatchObject({ total: 3, page: 2, items: [] })
+
+    await roles.grant(seed.ids.owner, seed.ids.orgA, { userId: seed.ids.actor, role: 'organizer' })
+    const rolePage = await roles.list(seed.ids.owner, seed.ids.orgA, { page: '1', pageSize: '10' })
+    expect(rolePage).toMatchObject({ total: 2, page: 1, pageSize: 10 })
+    expect(rolePage.items.map(item => item.role)).toEqual(['owner', 'organizer'])
+    expect(await roles.list(seed.ids.owner, seed.ids.orgA, { page: '2', pageSize: '10' })).toMatchObject({ total: 2, items: [] })
+
+    await codes.create(seed.ids.owner, seed.ids.orgA, { validDays: 1, maxUses: 1 })
+    await codes.create(seed.ids.owner, seed.ids.orgA, { validDays: 1, maxUses: 1 })
+    expect(await codes.list(seed.ids.owner, seed.ids.orgA, { page: '1', pageSize: '10' })).toMatchObject({ total: 2, pageSize: 10 })
+    expect(await codes.list(seed.ids.owner, seed.ids.orgA, { page: '2', pageSize: '10' })).toMatchObject({ total: 2, items: [] })
+
+    // 候选人页大小固定为 10：3 个既有账号 + 新增 11 个 = 14 条，第二页 4 条且两页无重复。
+    for (const index of Array.from({ length: 11 }, (_, i) => i)) {
+      const id = randomUUID()
+      await db.pool.query("INSERT INTO users(id,email,display_name,email_verified_at) VALUES($1,$2,$3,now())", [id, `${id}@example.com`, `裁判候选${index}`])
+    }
+    const candidatePage = await candidates.search(seed.ids.owner, seed.ids.orgA, { keyword: '裁判', page: '1' })
+    expect(candidatePage).toMatchObject({ total: 14, page: 1, pageSize: 10 })
+    expect(candidatePage.items).toHaveLength(10)
+    const candidateRest = await candidates.search(seed.ids.owner, seed.ids.orgA, { keyword: '裁判', page: '2' })
+    expect(candidateRest.items).toHaveLength(4)
+    const ids = new Set([...candidatePage.items, ...candidateRest.items].map(item => item.userId))
+    expect(ids.size).toBe(14)
+  })
   it('候选人检索只返回有效已验证账号的昵称与尾号，不泄露邮箱，邮箱只精确匹配', async () => {
     const hidden = randomUUID()
     await db.pool.query("INSERT INTO users(id,email,display_name) VALUES($1,'unverified@example.com','裁判未验证')", [hidden])
