@@ -9,7 +9,7 @@ import { communityEntries, communityGuides } from '../community.presentation'
 </script>
 
 <template>
-  <!-- 侧栏平铺：小标题下一条墨色细线，条目间用浅色细线分隔，不套卡片；场边工具已提到页面顶部。 -->
+  <!-- 侧栏平铺：小标题下一条墨色细线，条目间用浅色细线分隔，不套卡片。 -->
   <aside class="grid min-w-0 content-start gap-8 compact:grid-cols-2 tablet:grid-cols-1" aria-label="工具与社区资料">
     <section aria-labelledby="guides-title">
       <h2 id="guides-title" class="mt-0 mb-0 border-0 border-b border-solid border-ink px-1 pb-2 text-[13px] font-semibold text-body">案头导读</h2>

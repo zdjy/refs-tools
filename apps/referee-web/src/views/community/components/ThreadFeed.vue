@@ -1,23 +1,28 @@
 <script setup lang="ts">
 import { Info, Search, SearchX } from '@lucide/vue'
+import { computed } from 'vue'
 import { boardTabs } from '../community.presentation'
 import { useThreadFeed } from '../useThreadFeed'
+import ForumBoardPicker from './ForumBoardPicker.vue'
 import ForumBoards from './ForumBoards.vue'
 import ThreadCard from './ThreadCard.vue'
 
 const { board, query, threads, expanded, toggle, reset } = useThreadFeed()
+// 手机端只有三条横线入口，当前版块名由结果计数行承担，避免版块背景不可见。
+const boardTitle = computed(() => boardTabs.find((tab) => tab.id === board.value)?.title ?? '全部讨论')
 </script>
 
 <template>
   <section class="min-w-0" aria-labelledby="forum-title">
-    <h2 id="forum-title" class="sr-only">{{ boardTabs.find((tab) => tab.id === board)?.title }}</h2>
+    <h2 id="forum-title" class="sr-only">{{ boardTitle }}</h2>
     <ForumBoards :board="board" @select="board = $event" />
-    <!-- 工具行：左侧是结果计数，右侧是搜索栏；窄屏上下堆叠，搜索栏占满一行。 -->
+    <!-- 工具行：左侧是结果计数，右侧是搜索栏；窄屏上下堆叠，版块入口与搜索栏同处一行。 -->
     <div class="flex flex-col gap-3 pt-4 pb-3 compact:flex-row compact:items-center compact:justify-between">
-      <p class="m-0 text-[13px] text-body" role="status" aria-live="polite" aria-atomic="true">{{ query.trim() ? '搜索结果' : '本版讨论' }} · <span class="font-mono">{{ threads.length }}</span> 则示例</p>
-      <div class="compact:w-[280px]">
+      <p class="m-0 text-[13px] text-body" role="status" aria-live="polite" aria-atomic="true">{{ query.trim() ? '搜索结果' : boardTitle }} · <span class="font-mono">{{ threads.length }}</span> 则示例</p>
+      <div class="flex min-w-0 items-center gap-2 compact:w-[280px]">
+        <ForumBoardPicker :board="board" @select="board = $event" />
         <label for="thread-search" class="sr-only">搜索讨论示例</label>
-        <div class="flex items-center gap-2 rounded-[10px] border border-solid border-line bg-soft px-3 transition-shadow duration-200 focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/30">
+        <div class="flex min-w-0 grow items-center gap-2 rounded-[10px] border border-solid border-line bg-soft px-3 transition-shadow duration-200 focus-within:border-accent/40 focus-within:ring-2 focus-within:ring-accent/30">
           <Search class="size-4 shrink-0 text-body" aria-hidden="true" />
           <input id="thread-search" v-model="query" type="search" maxlength="100" placeholder="搜索话题、关键词" aria-controls="thread-list" class="min-h-11 w-full min-w-0 border-0 bg-transparent text-base text-ink outline-none placeholder:text-muted" />
         </div>
