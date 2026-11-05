@@ -17,7 +17,7 @@ const dayOptions = [1, 3, 7, 14, 30].map(value => ({ label: `${value} 天内有�
 </script>
 
 <template>
-  <section aria-labelledby="invite-title" class="grid gap-4 rounded-xl border border-solid border-line bg-soft p-4 compact:p-5">
+  <section aria-labelledby="invite-title" class="grid gap-4 border-0 border-l border-solid border-line pl-4 compact:p-5">
     <h3 id="invite-title" class="m-0 flex items-center gap-2 text-base text-ink"><UserPlus class="size-4" :stroke-width="1.75" aria-hidden="true" />邀请成员</h3>
     <form class="grid gap-2 compact:grid-cols-[minmax(0,1fr)_auto]" role="search" @submit.prevent="$emit('search')">
       <label for="candidate-keyword" class="sr-only">按昵称或完整邮箱检索用户</label>
@@ -26,7 +26,7 @@ const dayOptions = [1, 3, 7, 14, 30].map(value => ({ label: `${value} 天内有�
     </form>
     <n-alert v-if="searchError" type="error" :show-icon="false" role="alert">{{ searchError }}</n-alert>
     <ul v-if="candidates.length" class="m-0 grid list-none gap-2 p-0">
-      <li v-for="candidate in candidates" :key="candidate.userId" class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-solid border-line bg-surface p-3">
+      <li v-for="candidate in candidates" :key="candidate.userId" class="flex flex-wrap items-center justify-between gap-3 border-0 border-b border-solid border-line pb-3">
         <span class="grid min-w-0 gap-0.5">
           <span class="text-sm font-semibold text-ink wrap-anywhere">{{ candidate.displayName }}</span>
           <span class="text-xs text-body">尾号 {{ candidate.tag }}</span>

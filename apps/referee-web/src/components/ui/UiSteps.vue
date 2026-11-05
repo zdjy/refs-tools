@@ -10,12 +10,12 @@ defineProps<{ items: readonly { title: string; hint: string }[]; current: number
 const circleClass = (state: 'done' | 'active' | 'pending') => {
   if (state === 'active') return 'border-ink bg-ink text-surface'
   if (state === 'done') return 'border-line bg-soft text-ink'
-  return 'border-line bg-surface text-muted'
+  return 'border-line bg-surface text-body'
 }
 const titleClass = (state: 'done' | 'active' | 'pending') => {
   if (state === 'active') return 'text-ink font-semibold'
   if (state === 'done') return 'text-ink'
-  return 'text-muted'
+  return 'text-body'
 }
 </script>
 

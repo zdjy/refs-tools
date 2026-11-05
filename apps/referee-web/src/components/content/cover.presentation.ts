@@ -9,7 +9,7 @@ export const coverPartClass: Record<CoverPartKind, string> = {
   line: 'fill-none stroke-ink',
   dash: 'fill-none stroke-ink',
   fill: 'fill-ink',
-  accent: 'fill-red',
+  accent: 'fill-accent',
   pale: 'fill-surface',
 }
 

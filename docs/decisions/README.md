@@ -6,6 +6,7 @@
 
 ## 决策索引
 
+- [ADR 0033：裁判端 UI 基线切换为「场边」（参考 Apple iOS）](./0033-courtside-ui-baseline.md) — 配色取自 macos_fiba.md 的暖沙金，版式参考 iOS（分组列表、大标题、弹性动效），无渐变；桌面左侧导航栏；不打包字体。
 - [ADR 0032：裁判端组织入口、成员码、组织角色与候选人检索](./0032-referee-organization-access.md) — 能力由服务端按同一授权矩阵计算；成员码只存哈希并在行锁内条件消费；角色仅 owner 可授予；候选人检索限制枚举面并审计。
 - [ADR 0031：离线应用外壳 Service Worker](./0031-offline-app-shell-service-worker.md) — 只预缓存同源静态外壳，不拦截 /api、/admin 与非 GET；导航网络优先加缓存兜底，更新由用户确认，预缓存有体积上限，自写模板不引入 workbox。
 

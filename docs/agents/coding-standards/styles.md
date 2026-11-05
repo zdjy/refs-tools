@@ -1,6 +1,6 @@
 # 样式规约：Tailwind CSS
 
-本文件属于[全栈架构与编码规约](../coding-standards.md)，是样式工程约束的唯一维护来源。选型与迁移取舍见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)，视觉基线引用[共享 UI 规范](../../ui/macos_fiba.md)。
+本文件属于[全栈架构与编码规约](../coding-standards.md)，是样式工程约束的唯一维护来源。选型与迁移取舍见 [ADR 0013](../../decisions/0013-tailwindcss-styling.md)，视觉基线引用[场边 UI 基线](../../ui/courtside.md)。
 
 ## 1. 技术基线与职责
 
@@ -42,8 +42,8 @@ apps/referee-web/
 ## 3. Token 与响应式配置
 
 * `ui-tokens.ts` 为颜色、字体、阴影和焦点值的唯一来源，应用入口先注入 CSS 变量再挂载。`tailwind.css` 用 `@theme inline` 映射，不复制色值；Naive UI 仍由 `ui-theme.ts` 消费相同 token。
-* 使用语义工具类：`bg-canvas`、`bg-surface`、`bg-soft`、`text-ink`、`text-body`、`border-line`、`text-red`、`hover:text-red-hover`、`shadow-card`、`shadow-raised`、`shadow-lift`、`shadow-selected`、`font-sans`。透明色、`bg-canvas/90` 一类对语义色的透明度修饰符、`currentColor` 可以使用；禁止框架默认品牌色、硬编码颜色任意值和页面内 token 重定义。
-* 默认颜色、断点、圆角和阴影命名空间已重置。圆角限定 `rounded-xl`（12px，卡片、面板、输入框、导航项）、`rounded-2xl`（16px，应用窗口级主容器与特征横幅）和 `rounded-full`（按钮、标签），不使用 24px 圆角；阴影按「微层 `shadow-card` → 浮雕 `shadow-raised` → 悬停 `shadow-lift` → 激活导航 `shadow-selected`」分级，其他阴影先补充共享 token。主过渡为 200ms `ease-out`（`@theme` 已设为默认值），边框不得大于 1px。Naive UI 组件通过公开主题接口维护相同取值。
+* 使用语义工具类：`bg-canvas`、`bg-surface`、`bg-soft`、`bg-sand`、`text-ink`、`text-body`、`border-line`、`bg-accent`、`text-accent-hover`、`hover:text-accent-hover`、`bg-gold`、`bg-green`、`shadow-card`、`shadow-raised`、`shadow-lift`、`shadow-selected`、`shadow-tile`、`font-sans`、`font-mono`。透明色、`bg-canvas/90` 一类对语义色的透明度修饰符、`currentColor` 可以使用；禁止框架默认品牌色、硬编码颜色任意值、色板外的颜色、渐变（`bg-gradient-*`、`from-*`、`to-*`）和页面内 token 重定义。`text-muted` 只用于占位符与图标，真实文字用 `text-body`。
+* 默认颜色、断点、圆角和阴影命名空间已重置。圆角限定 `rounded-xl`（12px，输入框、下级面板、导航项）、`rounded-2xl`（16px，分组容器、弹窗与应用级主容器）和 `rounded-full`（按钮、筛选胶囊、标签），不使用 24px 圆角；阴影按「分组容器 `shadow-card` → 悬停 `shadow-lift` → 弹层 `shadow-raised`」使用，其他阴影先补充共享 token。`backdrop-blur` 只用于固定在边缘的导航与弹层，不用于内容区。主过渡为 200ms `ease-out`（`@theme` 已设为默认值），位移与弹出可用 `--ease-ios` / `--ease-spring`，边框不得大于 1px。Naive UI 组件通过公开主题接口维护相同取值。
 * 断点统一为下表，使用无前缀类表达 320px 起的移动基础布局，再按 `xs → sm → compact → md → tablet → lg → xl → 2xl` 增强。不使用 Tailwind 默认断点含义、任意断点或 `max-*` 变体引入另一套布局策略；新增断点需在相关规格说明理由并集中配置。各布局按内容所需空间选择切换档位，不在同一断点机械启用所有多栏布局；本次细分理由与验收见[响应式适配规格](../../specs/0005-responsive-layout.md)。
 
 | 变体 | 最小宽度 |
@@ -58,7 +58,7 @@ apps/referee-web/
 | `2xl:` | 1536px |
 
 * 间距与字号优先使用 Tailwind 标准尺度；确需 `min-h-[44px]`、`grid-cols-[minmax(0,1fr)]` 等非主题数值时可使用任意值，但不得用其绕过颜色、圆角、阴影与断点约束。
-* 共享 UI 规范中的十六进制工具类和阴影示例是视觉值参考，实际代码必须映射成现有语义 token；`bg-white` 对应 `bg-surface`。营销留白示例不能机械套用到场边密集操作页。
+* UI 基线中的颜色与阴影取值是视觉参考，实际代码必须映射成现有语义 token；`bg-white` 对应 `bg-surface`。数字、比分与编码使用 `font-mono`。营销留白示例不能机械套用到场边密集操作页。
 
 ```html
 <section class="grid grid-cols-1 gap-4 rounded-2xl border border-solid border-line bg-surface p-4 text-ink shadow-card md:grid-cols-2 md:p-6">

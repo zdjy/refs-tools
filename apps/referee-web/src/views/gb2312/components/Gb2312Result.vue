@@ -9,7 +9,7 @@ const emit = defineEmits<{ copy: [label: string, value: string | undefined] }>()
 </script>
 
 <template>
-  <div class="mt-4 rounded-xl border border-solid border-line bg-soft p-4 compact:p-5" :data-tone="resultTone(result)">
+  <div class="mt-4 border-0 border-l border-solid border-line pl-4 compact:p-5" :data-tone="resultTone(result)">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h3 class="m-0 text-xl font-bold text-ink"><span class="sr-only">查询结果：</span>{{ result.character ?? '暂无结果' }}</h3>
       <span class="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-body">{{ statusLabels[result.status] }}</span>

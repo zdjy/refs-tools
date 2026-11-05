@@ -32,7 +32,7 @@ async function submit() {
     <InvitePeople v-model:keyword="inv.keyword.value" v-model:valid-days="inv.validDays.value" :candidates="inv.candidates.value" :searched="searched"
       :searching="inv.search.loading.value" :search-error="inv.search.error.value" :busy="inv.invite.busy.value" :error="inv.invite.error.value"
       @search="search" @invite="inv.sendInvitation" />
-    <p v-if="inv.stale.value" role="status" class="m-0 rounded-xl border border-solid border-line bg-soft px-4 py-3 text-[13px] leading-relaxed">
+    <p v-if="inv.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
       {{ inv.stale.value }}<n-button text type="primary" class="ml-2" @click="inv.load()">重新读取</n-button>
     </p>
     <UiLoadingRegion v-if="inv.list.loading.value && !inv.list.data.value" :loading="true" label="读取邀请" :lines="3" @retry="inv.load()" />

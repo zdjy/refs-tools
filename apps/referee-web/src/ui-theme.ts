@@ -28,7 +28,7 @@ export const refereeTheme: GlobalThemeOverrides = {
   common: {
     primaryColor: t.ink, primaryColorHover: t.black, primaryColorPressed: t.black, primaryColorSuppl: t.ink,
     infoColor: t.body, infoColorHover: t.ink, infoColorPressed: t.ink, infoColorSuppl: t.body,
-    successColor: t.green, warningColor: t.red, errorColor: t.red,
+    successColor: t.green, warningColor: t.warning, errorColor: t.danger,
     bodyColor: t.canvas, cardColor: t.surface, modalColor: t.surface, popoverColor: t.surface,
     textColorBase: t.ink, textColor1: t.ink, textColor2: t.body, textColor3: t.body,
     borderColor: t.line, dividerColor: t.line, borderRadius: '12px', borderRadiusSmall: '12px',
@@ -39,7 +39,7 @@ export const refereeTheme: GlobalThemeOverrides = {
     heightTiny: '44px', heightSmall: '44px', heightMedium: '44px', heightLarge: '48px',
     fontWeight: '500', paddingMedium: '0 18px', paddingLarge: '0 20px',
     colorSecondary: t.soft, colorSecondaryHover: t.line, colorSecondaryPressed: t.sand,
-    textColor: t.ink, textColorHover: t.red, textColorPressed: t.redHover, textColorTertiary: t.body,
+    textColor: t.ink, textColorHover: t.accent, textColorPressed: t.accentHover, textColorTertiary: t.body,
   },
   Card: {
     borderRadius: '12px', paddingMedium: '20px', paddingLarge: '24px',
@@ -48,11 +48,11 @@ export const refereeTheme: GlobalThemeOverrides = {
   Alert: {
     borderRadius: '12px', padding: '12px 16px',
     colorInfo: t.soft, borderInfo: `1px solid ${t.line}`, contentTextColorInfo: t.body,
-    colorError: t.soft, borderError: `1px solid ${t.red}`, contentTextColorError: t.redHover,
+    colorError: t.soft, borderError: `1px solid ${t.danger}`, contentTextColorError: t.dangerHover,
   },
   Drawer: { color: t.canvas, boxShadow: t.raised },
-  // 路由进度条使用球场红实色，错误态沿用同一色，不用渐变（共享 UI 基线）。
-  LoadingBar: { colorLoading: t.red, colorError: t.redHover, height: '3px' },
+  // 路由进度条使用强调色实色，错误态使用其悬停色，不用渐变（docs/ui/courtside.md）。
+  LoadingBar: { colorLoading: t.accent, colorError: t.danger, height: '3px' },
   Input: inputTheme,
   InputNumber: inputTheme,
 }

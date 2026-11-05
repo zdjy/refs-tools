@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
-import ModuleCard from '../../components/navigation/ModuleCard.vue'
+import ModuleList from '../../components/navigation/ModuleList.vue'
+import UiGroupHeading from '../../components/ui/UiGroupHeading.vue'
 import UiPageBanner from '../../components/ui/UiPageBanner.vue'
 import { modules, relatedModules, type ModuleId } from '../../navigation/modules'
 import { moduleStatus } from '../../navigation/navigation.presentation'
@@ -18,13 +19,13 @@ const related = computed(() => relatedModules(props.moduleId))
         <RouterLink to="/" class="inline-flex min-h-11 min-w-11 items-center rounded-full bg-ink px-6 py-3 text-sm font-medium text-surface no-underline transition-all duration-200 hover:bg-black active:scale-95">返回社区</RouterLink>
       </template>
     </UiPageBanner>
-    <section class="mt-8 rounded-xl border border-solid border-line bg-surface p-5 shadow-card compact:p-6" aria-labelledby="module-scope">
-      <h2 id="module-scope" class="mt-0 mb-2 text-lg text-ink">后续功能范围</h2>
+    <section class="mt-8 border-0 border-l border-solid border-ink py-1 pl-4" aria-labelledby="module-scope">
+      <h2 id="module-scope" class="mt-0 mb-2 text-[17px] font-semibold text-ink">后续功能范围</h2>
       <p class="m-0 text-sm leading-relaxed text-body">{{ module.description }}。</p>
     </section>
     <section class="mt-8" aria-labelledby="related-entries">
-      <h2 id="related-entries" class="mt-0 mb-4 text-xl text-ink">相关入口</h2>
-      <div class="grid grid-cols-[minmax(0,1fr)] gap-4 compact:grid-cols-2 xl:grid-cols-3"><ModuleCard v-for="id in related" :key="id" :module="modules[id]" /></div>
+      <UiGroupHeading title="相关入口" title-id="related-entries" :count="related.length" />
+      <ModuleList :ids="related" />
     </section>
   </NavigationShell>
 </template>

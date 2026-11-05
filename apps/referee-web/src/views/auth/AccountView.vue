@@ -7,7 +7,6 @@ import { useAuthStore } from '../../stores/auth'
 import AuthShell from './components/AuthShell.vue'
 import PasswordSettings from '../../features/account/PasswordSettings.vue'
 import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
-import './auth.css'
 const auth = useAuthStore()
 const message = useMessage()
 async function logout() {
@@ -20,7 +19,7 @@ onMounted(() => { void auth.restore() })
 
 <template>
   <AuthShell account>
-    <div class="mx-auto max-w-[480px] rounded-2xl border border-solid border-line bg-surface px-5 py-6 shadow-raised xs:px-6 xs:py-7 sm:px-8 sm:py-9 md:w-full lg:p-10">
+    <div class="rounded-xl border border-solid border-line bg-surface px-5 py-6 xs:px-6 xs:py-7 sm:px-8 sm:py-8">
       <UiLoadingRegion v-if="status === 'unknown' || status === 'loading'" :loading="true" label="确认登录状态" :lines="3" @retry="auth.restore(true)" />
       <template v-else-if="status === 'error'">
         <h2 class="text-ink mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">暂时无法确认登录状态</h2>

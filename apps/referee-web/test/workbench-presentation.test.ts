@@ -15,7 +15,7 @@ describe('工作台表现层投影', () => {
     const variables = new Map<string, string>()
     applyUiTokens({ style: { setProperty: (key, value) => { variables.set(key, value ?? '') } } })
     expect(variables.get('--canvas')).toBe(uiTokens.canvas)
-    expect(variables.get('--red-hover')).toBe(uiTokens.redHover)
+    expect(variables.get('--accent-hover')).toBe(uiTokens.accentHover)
     expect(variables.size).toBe(Object.keys(uiTokens).length)
   })
 })

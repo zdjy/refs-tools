@@ -10,11 +10,11 @@ const outside = resolve(app, `tailwind-outside-${process.pid}.html`)
 const breakpoints = [['xs', 375], ['sm', 480], ['compact', 640], ['md', 768], ['tablet', 960], ['lg', 1100], ['xl', 1280], ['2xl', 1536]]
 const classes = [
   'bg-canvas', 'bg-sand', 'bg-facet', 'bg-surface', 'bg-soft',
-  'text-ink', 'text-body', 'text-muted', 'border-line', 'text-red', 'text-green', 'text-black',
+  'text-ink', 'text-body', 'text-muted', 'border-line', 'text-accent', 'text-danger', 'text-green', 'text-black',
   'font-sans', 'font-mono', 'shadow-card', 'shadow-raised', 'shadow-lift', 'shadow-selected', 'rounded-xl', 'rounded-2xl', 'rounded-full',
   ...breakpoints.map(([name]) => `${name}:gap-6`),
-  'md:grid-cols-3', 'md:first:col-auto', 'tablet:grid', 'xl:col-start-2', '2xl:grid-cols-5',
-  'hover:text-red-hover', 'focus-visible:ring-red/30', 'motion-reduce:transition-none', 'min-h-[44px]',
+  'md:grid-cols-3', 'md:first:col-auto', 'tablet:grid', 'xl:col-start-2', 'xl:grid-cols-3', '2xl:grid-cols-5',
+  'hover:shadow-lift', 'hover:text-accent-hover', 'focus-visible:ring-accent/30', 'motion-reduce:transition-none', 'min-h-[44px]',
   'bg-blue-500', 'rounded-lg', 'rounded-3xl', 'shadow-2xl', '3xl:block', 'font-serif',
 ]
 
@@ -27,7 +27,7 @@ try {
   const css = outputs.filter((item) => item.type === 'asset' && item.fileName.endsWith('.css'))
     .map((item) => String(item.source)).join('\n')
 
-  for (const token of ['canvas', 'sand', 'facet', 'surface', 'soft', 'ink', 'body', 'muted', 'line', 'red', 'green', 'black', 'font', 'shadow', 'raised', 'lift', 'selected', 'red-hover']) {
+  for (const token of ['canvas', 'sand', 'facet', 'surface', 'soft', 'ink', 'body', 'muted', 'line', 'accent', 'accent-hover', 'danger', 'danger-hover', 'gold', 'green', 'black', 'font', 'mono', 'shadow', 'raised', 'lift', 'selected']) {
     assert(css.includes(`var(--${token})`), `缺少 token 映射：${token}`)
   }
   for (const selector of [
@@ -35,24 +35,20 @@ try {
     String.raw`.compact\:grid-cols-2`, String.raw`.md\:grid-cols-3`, String.raw`.md\:first\:col-auto`,
     String.raw`.tablet\:grid`, String.raw`.tablet\:hidden`, String.raw`.tablet\:flex`,
     String.raw`.xl\:grid-cols-3`, String.raw`.xl\:col-start-2`, String.raw`.\32 xl\:grid-cols-5`,
-    String.raw`.hover\:text-red-hover:hover`, String.raw`.focus-visible\:ring-red\/30:focus-visible`,
+    String.raw`.hover\:text-accent-hover:hover`, String.raw`.focus-visible\:ring-accent\/30:focus-visible`,
     String.raw`.motion-reduce\:transition-none`, String.raw`.min-h-\[44px\]`, '.font-sans', '.font-mono',
     '.shadow-card', '.shadow-raised', '.shadow-lift', '.shadow-selected', '.rounded-xl', '.rounded-2xl', '.rounded-full',
-    String.raw`.lg\:sticky`, String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
+    String.raw`.tablet\:sticky`, String.raw`.group-open\:rotate-180`,
     String.raw`.group-hover\:scale-105`, '.scroll-mt-6', '.sr-only',
     String.raw`.compact\:grid-cols-3`,
-    // 论坛首页：功能侧栏、桌面版块栏、移动抽屉与搜索焦点；阅读页保留独立目录栏。
+    // 论坛首页：功能侧栏与搜索焦点；阅读页保留独立目录栏。
     String.raw`.tablet\:grid-cols-\[minmax\(0\,1fr\)_280px\]`,
-    String.raw`.lg\:grid-cols-\[176px_minmax\(0\,1fr\)\]`,
-    String.raw`.focus-within\:ring-red\/30:focus-within`,
-    String.raw`.lg\:hidden`, String.raw`.lg\:block`,
-    String.raw`.pt-\[max\(16px\,env\(safe-area-inset-top\)\)\]`,
-    String.raw`.xl\:grid-cols-\[minmax\(0\,1fr\)_300px\]`,
+    String.raw`.focus-within\:ring-accent\/30:focus-within`,
     String.raw`.tablet\:grid-cols-\[minmax\(0\,1fr\)_260px\]`,
     String.raw`.scale-x-\(--progress\)`,
     String.raw`.compact\:grid-cols-4`,
-    // macOS 毛玻璃：顶栏/侧栏模糊、半透明画布与悬停浮升阴影。
-    '.backdrop-blur-xl', '.backdrop-blur-md', String.raw`.bg-canvas\/90`, String.raw`.hover\:shadow-lift:hover`,
+    // 场边记分表外壳：224px 左侧导航栏、细线分隔与悬停浮升阴影。
+    String.raw`.tablet\:grid-cols-\[224px_minmax\(0\,1fr\)\]`, String.raw`.tablet\:h-screen`, String.raw`.hover\:shadow-lift:hover`,
   ]) {
     assert(css.includes(selector), `缺少工具类：${selector}`)
   }

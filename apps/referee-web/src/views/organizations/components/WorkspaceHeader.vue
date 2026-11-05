@@ -9,12 +9,12 @@ import { organizationStatusText, roleLabels } from '../organizations.presentatio
  * 非运行状态把原因写在标题下方，用户一眼就知道为什么部分功能不可用。
  */
 defineProps<{ organization: MyOrganization }>()
-const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted', rejected: 'bg-red', dissolved: 'bg-muted' } as const
+const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted', rejected: 'bg-danger', dissolved: 'bg-muted' } as const
 </script>
 
 <template>
-  <header class="grid gap-4 rounded-2xl border border-solid border-line bg-sand p-5 compact:p-8">
-    <RouterLink to="/organizations" class="inline-flex min-h-11 w-fit items-center gap-2 text-sm text-ink no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red">
+  <header class="grid gap-4 border-0 border-l border-solid border-ink pl-4 compact:p-8">
+    <RouterLink to="/organizations" class="inline-flex min-h-11 w-fit items-center gap-2 text-sm text-ink no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
       <ArrowLeft class="size-4" :stroke-width="1.75" aria-hidden="true" />我的组织
     </RouterLink>
     <h1 class="m-0 text-[32px] leading-[1.1] font-bold tracking-[-0.03em] text-ink wrap-anywhere focus:outline-hidden compact:text-5xl tablet:text-6xl">{{ organization.name }}</h1>

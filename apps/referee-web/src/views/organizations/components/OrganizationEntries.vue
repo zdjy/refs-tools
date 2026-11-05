@@ -15,9 +15,9 @@ const entries = [
 
 <template>
   <nav aria-label="加入或创建组织">
-    <ul class="m-0 grid list-none gap-0 overflow-hidden rounded-2xl border border-solid border-line bg-surface p-0 shadow-card">
+    <ul class="m-0 grid list-none gap-0 border-0 border-y border-solid border-line p-0">
       <li v-for="entry in entries" :key="entry.to" class="border-0 border-b border-solid border-line last:border-b-0">
-        <RouterLink :to="entry.to" class="group flex min-h-16 items-center gap-4 p-4 text-ink no-underline transition-colors duration-200 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red compact:p-5">
+        <RouterLink :to="entry.to" class="group flex min-h-16 items-center gap-4 p-4 text-ink no-underline transition-colors duration-200 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent compact:p-5">
           <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-soft"><component :is="entry.icon" class="size-5" :stroke-width="1.5" aria-hidden="true" /></span>
           <span class="grid min-w-0 flex-1 gap-0.5">
             <span class="text-base font-semibold">{{ entry.title }}</span>

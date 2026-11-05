@@ -11,8 +11,8 @@ const emit = defineEmits<{
 
 <template>
   <!-- 低频与破坏性操作收进折叠面板，避免与记分按钮并排误触；用原生 details 保留键盘与读屏语义。 -->
-  <details class="group my-3 rounded-xl border border-solid border-line bg-surface">
-    <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-4 text-[14px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+  <details class="group my-3 border-0 border-y border-solid border-line">
+    <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-1 text-[14px] font-medium text-ink [&::-webkit-details-marker]:hidden">
       更多操作
       <ChevronDown class="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
     </summary>

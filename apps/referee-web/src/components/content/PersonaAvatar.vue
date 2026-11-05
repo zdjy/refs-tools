@@ -13,6 +13,6 @@ defineProps<{ shape: SamplePersona['shape'] }>()
     <g v-else-if="shape === 'dots'" class="fill-ink"><circle cx="15" cy="22" r="3.5" /><circle cx="29" cy="22" r="3.5" /></g>
     <path v-else-if="shape === 'bar'" d="M12 18h20v8H12Z" class="fill-ink" />
     <path v-else d="M12 32v-6h7v-6h7v-6h6v18Z" class="fill-ink" />
-    <circle cx="33" cy="11" r="3" class="fill-red" />
+    <circle cx="33" cy="11" r="3" class="fill-accent" />
   </svg>
 </template>

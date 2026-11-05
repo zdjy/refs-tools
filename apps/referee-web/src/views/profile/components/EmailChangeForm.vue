@@ -52,10 +52,10 @@ const progress = computed(() => `${index.value + 1} / ${steps.value.length}`)
 
     <form ref="form" novalidate class="grid gap-4" :aria-busy="busy" @submit.prevent="advance">
       <div v-if="auth.error" ref="summary" tabindex="-1" role="alert"
-        class="rounded-xl border border-solid border-red bg-soft px-4 py-3 text-[13px] leading-[1.7] text-red-hover">{{ auth.error }}</div>
+        class="rounded-xl border border-solid border-danger bg-soft px-4 py-3 text-[13px] leading-[1.7] text-danger">{{ auth.error }}</div>
 
       <div v-if="step.id === 'old'" class="grid gap-2">
-        <label class="text-[14px] font-semibold" for="email-old-code">当前邮箱验证码 <span class="text-red-hover" aria-hidden="true">*</span></label>
+        <label class="text-[14px] font-semibold" for="email-old-code">当前邮箱验证码 <span class="text-danger" aria-hidden="true">*</span></label>
         <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <n-input v-model:value="fields.oldCode" placeholder="6 位数字" :maxlength="6" :disabled="busy"
             v-bind="invalid('oldCode') ? { status: 'error' as const } : {}"
@@ -64,33 +64,33 @@ const progress = computed(() => `${index.value + 1} / ${steps.value.length}`)
             {{ oldChallenge.remaining.value ? `${oldChallenge.remaining.value} 秒后重发` : '获取验证码' }}
           </n-button>
         </div>
-        <p id="email-old-code-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('oldCode') ? 'text-red-hover' : 'text-body'">
+        <p id="email-old-code-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('oldCode') ? 'text-danger' : 'text-body'">
           {{ hint('oldCode', oldChallenge.error.value || oldChallenge.notice.value || '验证码将发送到当前邮箱，用于确认你仍能接收原邮箱邮件。') }}
         </p>
       </div>
 
       <div v-else-if="step.id === 'password'" class="grid gap-2">
-        <label class="text-[14px] font-semibold" for="email-password">当前登录密码 <span class="text-red-hover" aria-hidden="true">*</span></label>
+        <label class="text-[14px] font-semibold" for="email-password">当前登录密码 <span class="text-danger" aria-hidden="true">*</span></label>
         <n-input v-model:value="fields.password" type="password" placeholder="输入当前密码" :maxlength="128" :disabled="busy"
           v-bind="invalid('password') ? { status: 'error' as const } : {}"
           :input-props="inputProps('password', 'email-password', 'email-password-hint', 'current-password')" />
-        <p id="email-password-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('password') ? 'text-red-hover' : 'text-body'">
+        <p id="email-password-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('password') ? 'text-danger' : 'text-body'">
           {{ hint('password', requiresPassword ? '邮箱与密码同时验证通过才允许切换，避免会话被他人接管后直接换绑。' : '') }}
         </p>
       </div>
 
       <template v-else>
         <div class="grid gap-2">
-          <label class="text-[14px] font-semibold" for="email-new">新邮箱地址 <span class="text-red-hover" aria-hidden="true">*</span></label>
+          <label class="text-[14px] font-semibold" for="email-new">新邮箱地址 <span class="text-danger" aria-hidden="true">*</span></label>
           <n-input v-model:value="fields.newEmail" placeholder="new@example.com" :maxlength="254" :disabled="busy"
             v-bind="invalid('newEmail') ? { status: 'error' as const } : {}"
             :input-props="inputProps('newEmail', 'email-new', 'email-new-hint', 'email', { inputmode: 'email' })" />
-          <p id="email-new-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('newEmail') ? 'text-red-hover' : 'text-body'">
+          <p id="email-new-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('newEmail') ? 'text-danger' : 'text-body'">
             {{ hint('newEmail', '新邮箱将成为唯一登录邮箱，且必须未被其他账号使用。') }}
           </p>
         </div>
         <div class="grid gap-2">
-          <label class="text-[14px] font-semibold" for="email-new-code">新邮箱验证码 <span class="text-red-hover" aria-hidden="true">*</span></label>
+          <label class="text-[14px] font-semibold" for="email-new-code">新邮箱验证码 <span class="text-danger" aria-hidden="true">*</span></label>
           <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
             <n-input v-model:value="fields.newCode" placeholder="6 位数字" :maxlength="6" :disabled="busy"
               v-bind="invalid('newCode') ? { status: 'error' as const } : {}"
@@ -99,7 +99,7 @@ const progress = computed(() => `${index.value + 1} / ${steps.value.length}`)
               {{ newChallenge.remaining.value ? `${newChallenge.remaining.value} 秒后重发` : '发送到新邮箱' }}
             </n-button>
           </div>
-          <p id="email-new-code-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('newCode') ? 'text-red-hover' : 'text-body'">
+          <p id="email-new-code-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('newCode') ? 'text-danger' : 'text-body'">
             {{ hint('newCode', newChallenge.error.value || newChallenge.notice.value || '验证码将发送到新邮箱，用于确认该地址归你所有。') }}
           </p>
         </div>

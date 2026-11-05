@@ -29,14 +29,14 @@ useUiFeedback(action.done)
           <div><n-button type="primary" @click="load()">重新读取</n-button></div>
         </div>
         <template v-else>
-          <p v-if="stale" role="status" class="m-0 rounded-xl border border-solid border-line bg-soft px-4 py-3 text-[13px] leading-relaxed">
+          <p v-if="stale" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
             {{ stale }}<n-button text type="primary" class="ml-2" @click="load()">重新读取</n-button>
           </p>
           <InvitationInbox :items="invitations" :busy="action.busy.value" :error="action.error.value" @respond="respond" />
           <section aria-labelledby="roster-title" class="grid gap-3">
             <h2 id="roster-title" class="m-0 text-xl text-ink">已加入与申请中</h2>
             <OrganizationRoster v-if="items.length" :items="items" />
-            <p v-else class="m-0 rounded-2xl border border-solid border-line bg-surface p-6 text-sm leading-relaxed text-body shadow-card">
+            <p v-else class="m-0 border-0 border-t border-solid border-ink pt-6 text-sm leading-relaxed text-body">
               你还没有加入任何组织。从下面选择一种方式开始。
             </p>
           </section>

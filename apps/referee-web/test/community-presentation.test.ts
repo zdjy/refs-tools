@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'vue-router'
 import { createAppRouter } from '../src/router'
 import { modules } from '../src/navigation/modules'
 import { boards, personas, sampleThreads } from '../src/content/threads.sample'
-import { boardTabs, communityEntries, communityGuides, threadsByBoard } from '../src/views/community/community.presentation'
+import { boardCounts, boardTabs, communityEntries, communityGuides, threadsByBoard } from '../src/views/community/community.presentation'
 import { readingMinutes, threadForArticle } from '../src/views/reading/reading.presentation'
 
 describe('论坛首页的展示与交互', () => {
@@ -92,5 +92,19 @@ describe('阅读页展示投影', () => {
   it('阅读时长至少 1 分钟，按中文字数估算', () => {
     for (const item of editorialArticles) expect(readingMinutes(item)).toBeGreaterThanOrEqual(1)
     expect(readingMinutes({ sections: [{ id: 'a', title: 'a', paragraphs: ['字'.repeat(1500)] }] } as never)).toBe(3)
+  })
+})
+
+describe('版块讨论计数', () => {
+  it('全部版块的计数等于内置讨论总数，各版块计数之和与之相等', () => {
+    const counts = boardCounts()
+    expect(counts.all).toBe(sampleThreads.length)
+    const sum = boards.reduce((total, board) => total + counts[board.id], 0)
+    expect(sum).toBe(sampleThreads.length)
+  })
+
+  it('每个版块的计数与按版块筛选的结果一致', () => {
+    const counts = boardCounts()
+    for (const board of boards) expect(counts[board.id]).toBe(threadsByBoard(board.id).length)
   })
 })

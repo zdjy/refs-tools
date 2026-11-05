@@ -47,7 +47,7 @@ async function leave() {
         <n-alert type="error" :show-icon="false" role="alert">{{ ws.mine.error.value }}</n-alert>
         <div class="flex gap-2"><n-button type="primary" @click="ws.load()">重新读取</n-button><RouterLink to="/organizations" :class="linkButton.secondary">返回我的组织</RouterLink></div>
       </div>
-      <section v-else-if="ws.notFound.value" class="grid max-w-[560px] gap-3 rounded-2xl border border-solid border-line bg-surface p-6 shadow-card">
+      <section v-else-if="ws.notFound.value" class="grid max-w-[560px] gap-3 border-0 border-t border-solid border-ink pt-6">
         <h1 class="m-0 text-xl text-ink">没有找到这个组织</h1>
         <p class="m-0 text-sm leading-relaxed text-body">你可能不是它的成员，或成员关系已经结束。</p>
         <div><RouterLink to="/organizations" :class="linkButton.primary">返回我的组织</RouterLink></div>
@@ -57,11 +57,11 @@ async function leave() {
         <div ref="tablist" role="tablist" aria-label="组织工作区" class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" @keydown="onKeydown">
           <button v-for="item in ws.tabs.value" :id="`ws-tab-${item.id}`" :key="item.id" type="button" role="tab" :data-tab="item.id"
             :aria-selected="ws.tab.value === item.id" :aria-controls="`ws-panel-${item.id}`" :tabindex="ws.tab.value === item.id ? 0 : -1"
-            class="inline-flex min-h-11 shrink-0 items-center rounded-full border-0 px-5 text-sm whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red active:scale-[.98]"
+            class="inline-flex min-h-11 shrink-0 items-center rounded-full border-0 px-5 text-sm whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[.98]"
             :class="ws.tab.value === item.id ? 'bg-ink font-semibold text-surface' : 'bg-soft text-body hover:bg-sand hover:text-ink'" @click="ws.tab.value = item.id">{{ item.label }}</button>
         </div>
         <div :id="`ws-panel-${ws.tab.value}`" role="tabpanel" :aria-labelledby="`ws-tab-${ws.tab.value}`" tabindex="0"
-          class="min-w-0 rounded-2xl border border-solid border-line bg-surface p-5 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red compact:p-6">
+          class="min-w-0 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent compact:p-6">
           <OverviewPanel v-if="ws.tab.value === 'overview'" :organization="ws.organization.value" @leave="confirm.open(true)" />
           <MembersPanel v-else-if="ws.tab.value === 'members'" :key="`m-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
           <InvitationsPanel v-else-if="ws.tab.value === 'invitations'" :key="`i-${id}`" :organization-id="id" />

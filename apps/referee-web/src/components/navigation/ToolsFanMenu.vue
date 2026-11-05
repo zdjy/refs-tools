@@ -11,7 +11,7 @@ const menu = ref<HTMLElement | null>(null)
 /** 逐项角度写入 CSS 变量，由 scoped 的静态 transform 消费，不拼接动态工具类名。 */
 const tools = toolsFanTools.map((tool, index) => ({
   ...tool,
-  style: `--fan-angle:${fanAngle(index, toolsFanTools.length)}deg`,
+  style: `--fan-angle:${fanAngle(index, toolsFanTools.length)}deg;--fan-delay:${index * 45}ms`,
 }))
 
 // 展开后焦点进入第一项，键盘用户不必再 Tab 穿过底栏其余栏目。
@@ -22,7 +22,7 @@ onMounted(() => menu.value?.querySelector('a')?.focus())
   <!-- 桌面断点隐藏：断点变化时 useToolsFan 也会收起，这里再由样式兜底，避免残留浮层。 -->
   <div class="fixed inset-0 z-20 tablet:hidden">
     <!-- 遮罩只承接鼠标收起；键盘路径为 Escape 与触发按钮的 aria-expanded。 -->
-    <div aria-hidden="true" class="absolute inset-0 bg-ink/35" @click="emit('close')"></div>
+    <div aria-hidden="true" class="absolute inset-0 bg-ink/30 backdrop-blur-sm" @click="emit('close')"></div>
     <nav
       :id="TOOLS_FAN_ID"
       ref="menu"
@@ -31,11 +31,11 @@ onMounted(() => menu.value?.querySelector('a')?.focus())
     >
       <div v-for="tool in tools" :key="tool.id" class="fan-item absolute bottom-0 left-0 -ml-9 w-18 origin-bottom" :style="tool.style">
         <RouterLink :to="tool.path" class="fan-link group flex w-full flex-col items-center gap-1 rounded-xl text-ink no-underline" @click="emit('close')">
-          <span class="grid size-14 place-items-center rounded-full border border-solid border-line bg-surface text-ink shadow-raised transition-all duration-200 ease-out group-hover:bg-sand group-hover:text-red group-active:scale-95">
+          <span class="grid size-14 place-items-center rounded-full border border-solid border-line bg-surface text-ink shadow-raised transition-all duration-200 ease-out group-hover:-translate-y-0.5 group-hover:text-accent-hover group-active:scale-90">
             <NavigationIcon :name="tool.id" class="size-5" />
           </span>
           <!-- 标签加纯白底：扇面悬浮在正文之上，直接叠排会降低对比度。 -->
-          <span class="rounded-full bg-surface px-2 py-0.5 text-xs leading-tight text-ink shadow-card">{{ tool.label }}</span>
+          <span class="rounded-full border border-solid border-line bg-surface px-2 py-0.5 text-xs leading-tight text-ink">{{ tool.label }}</span>
         </RouterLink>
       </div>
       <!-- 「全部工具」落在弧面下方，沙金胶囊与圆形工具按钮区分层级。 -->
@@ -54,9 +54,10 @@ onMounted(() => menu.value?.querySelector('a')?.focus())
    工具类无法表达这条几何关系，故保留为单组件例外。 */
 .fan-menu { --fan-radius: 144px; }
 .fan-item { transform: rotate(var(--fan-angle)) translateY(calc(-1 * var(--fan-radius))) rotate(calc(-1 * var(--fan-angle))); }
-.fan-link { animation: fan-link-in 200ms ease-out backwards; }
+/* 逐项错开 45ms 弹出并带轻微过冲，延迟由 --fan-delay 提供；减弱动态效果时由全局规则归零。 */
+.fan-link { animation: fan-link-in 320ms var(--ease-spring) backwards; animation-delay: var(--fan-delay, 0ms); }
 @keyframes fan-link-in {
-  from { opacity: 0; transform: scale(0.9); }
+  from { opacity: 0; transform: translateY(24px) scale(0.6); }
   to { opacity: 1; transform: scale(1); }
 }
 </style>

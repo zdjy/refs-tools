@@ -30,7 +30,7 @@ async function submit() {
 <template>
   <section aria-labelledby="members-title" class="grid gap-4">
     <h2 id="members-title" class="m-0 text-lg text-ink">成员与入会申请</h2>
-    <p v-if="members.stale.value" role="status" class="m-0 rounded-xl border border-solid border-line bg-soft px-4 py-3 text-[13px] leading-relaxed">
+    <p v-if="members.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
       {{ members.stale.value }}<n-button text type="primary" class="ml-2" @click="members.load()">重新读取</n-button>
     </p>
     <n-alert v-if="members.action.error.value && !confirm.visible.value" type="error" :show-icon="false" role="alert">{{ members.action.error.value }}</n-alert>

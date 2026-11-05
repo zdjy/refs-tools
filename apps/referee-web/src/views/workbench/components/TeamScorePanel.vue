@@ -17,7 +17,7 @@ watch(() => props.team.name, (value) => { name.value = value })
 
 <template>
   <!-- 手机上两队并排，卡片内边距随断点收窄，保证 +1/+2/+3 三个 44px 目标在 375px 宽的半栏内不溢出。 -->
-  <section class="min-w-0 rounded-xl border border-solid border-line bg-surface p-2 shadow-card xs:p-3 compact:p-5 xl:first:col-start-1 xl:first:row-start-1 xl:[&:nth-child(2)]:col-start-3 xl:[&:nth-child(2)]:row-start-1" :aria-label="`${sideLabel}记分`">
+  <section class="min-w-0 border-0 border-t border-solid border-ink pt-2 xs:p-3 compact:p-5 xl:first:col-start-1 xl:first:row-start-1 xl:[&:nth-child(2)]:col-start-3 xl:[&:nth-child(2)]:row-start-1" :aria-label="`${sideLabel}记分`">
     <p v-if="team.name !== sideLabel" class="m-0 text-[13px] text-body">{{ sideLabel }}</p>
     <h3 class="mx-0 mt-0.5 mb-0 text-[16px] leading-tight wrap-anywhere text-ink compact:text-[20px]">{{ team.name }}</h3>
     <div class="px-0 py-1 text-[48px] leading-[1.2] font-bold tracking-[-.02em] text-ink tabular-nums compact:text-[64px]" :aria-label="`${team.name}比分 ${team.score}`">{{ team.score }}</div>
@@ -30,7 +30,7 @@ watch(() => props.team.name, (value) => { name.value = value })
         <n-button secondary :theme-overrides="refereeControlThemes.compactButton" :disabled="fouls === 0" :aria-label="`${team.name}减少犯规`" @click="emit('foul', side, -1)"><Minus class="size-5" aria-hidden="true" /></n-button>
         <n-button secondary :theme-overrides="refereeControlThemes.compactButton" :aria-label="`${team.name}记录犯规`" @click="emit('foul', side, 1)"><Plus class="size-5" aria-hidden="true" /></n-button>
       </div>
-      <p v-if="fouls >= limit" class="mt-2 mb-0 text-[14px] leading-[1.5] text-red-hover" role="status">已达犯规提示阈值，请核对适用罚则。</p>
+      <p v-if="fouls >= limit" class="mt-2 mb-0 text-[14px] leading-[1.5] text-danger" role="status">已达犯规提示阈值，请核对适用罚则。</p>
     </div>
     <div class="mt-3 grid gap-2 text-body">
       <p class="m-0 text-[14px]">剩余暂停 <strong class="ml-1 text-[20px] text-ink tabular-nums">{{ team.timeoutsLeft }}</strong></p>

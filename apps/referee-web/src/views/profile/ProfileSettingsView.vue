@@ -81,15 +81,15 @@ async function submitProfile() {
           <button v-for="tab in profileTabs" :key="tab.id" :id="`tab-${tab.id}`" type="button" role="tab"
             :data-tab="tab.id" :aria-selected="active === tab.id" :aria-controls="`panel-${tab.id}`"
             :tabindex="active === tab.id ? 0 : -1"
-            class="inline-flex min-h-11 shrink-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[13px] whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red active:scale-[.98] xs:text-[14px] sm:px-3 tablet:flex-none tablet:justify-start"
+            class="inline-flex min-h-11 shrink-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[13px] whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[.98] xs:text-[14px] sm:px-3 tablet:flex-none tablet:justify-start"
             :class="tabClass(tab.id)" @click="select(tab.id)">
-            <span v-if="active === tab.id" class="hidden size-1.5 shrink-0 rounded-full bg-red xs:block" aria-hidden="true"></span>
+            <span v-if="active === tab.id" class="hidden size-1.5 shrink-0 rounded-full bg-accent xs:block" aria-hidden="true"></span>
             {{ tab.label }}
           </button>
         </div>
 
         <section v-if="active === 'profile'" id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" tabindex="0"
-          class="grid min-w-0 gap-5 rounded-2xl border border-solid border-line bg-surface p-5 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red sm:p-6">
+          class="grid min-w-0 gap-5 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:p-6">
           <div class="grid gap-1">
             <h2 class="text-ink m-0 text-[18px]">个人资料</h2>
             <p class="m-0 text-[13px] leading-[1.8] text-body">昵称、头像、实名与联系方式。只有昵称与头像会展示给其他人。</p>
@@ -101,7 +101,7 @@ async function submitProfile() {
           </template>
           <template v-else-if="profile">
             <n-alert v-if="saveError" type="error" :show-icon="false">{{ saveError }}</n-alert>
-            <p v-if="saved" role="status" class="m-0 rounded-xl border border-solid border-line bg-soft px-4 py-3 text-[13px] leading-[1.7]">{{ saved }}</p>
+            <p v-if="saved" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-[1.7]">{{ saved }}</p>
             <ProfileAvatar :url="avatarUrl" :name="fields.nickname" :state="avatar" :busy="saving"
               @select="selectAvatar" @retry="retryAvatarUpload" @remove="clearAvatar" />
             <div ref="formArea" tabindex="-1" class="grid gap-5 border-0 border-t border-solid border-line pt-5">
@@ -112,18 +112,18 @@ async function submitProfile() {
         </section>
 
         <section v-else-if="active === 'email'" id="panel-email" role="tabpanel" aria-labelledby="tab-email" tabindex="0"
-          class="grid min-w-0 gap-5 rounded-2xl border border-solid border-line bg-surface p-5 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red sm:p-6">
+          class="grid min-w-0 gap-5 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:p-6">
           <EmailChangeForm />
         </section>
 
         <section v-else id="panel-password" role="tabpanel" aria-labelledby="tab-password" tabindex="0"
-          class="grid min-w-0 gap-5 rounded-2xl border border-solid border-line bg-surface p-5 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red sm:p-6">
+          class="grid min-w-0 gap-5 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:p-6">
           <PasswordSettings embedded />
         </section>
       </div>
 
       <p class="m-0 text-[13px] leading-[1.8] text-body">
-        想查看本次登录有效至何时？前往<RouterLink class="text-ink underline underline-offset-2 hover:text-red-hover" to="/account">账号与会话概览</RouterLink>。
+        想查看本次登录有效至何时？前往<RouterLink class="text-ink underline underline-offset-2 hover:text-accent-hover" to="/account">账号与会话概览</RouterLink>。
       </p>
     </div>
   </NavigationShell>

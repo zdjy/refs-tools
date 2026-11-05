@@ -1,25 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowUpRight } from '@lucide/vue'
+import { ChevronRight } from '@lucide/vue'
 import type { NavigationModule } from '../../navigation/modules'
-import { moduleStatus } from '../../navigation/navigation.presentation'
+import { moduleStatus, moduleTileClass } from '../../navigation/navigation.presentation'
 import NavigationIcon from './NavigationIcon.vue'
-const props = defineProps<{ module: NavigationModule }>()
-// 建设中的模块用平铺底、无抬升，与可用模块拉开层级；状态文字始终保留，不单靠视觉差异传达。
+const props = defineProps<{ module: NavigationModule; order?: number }>()
+// 平铺列表中的一行：行与行之间用缩进分隔线，不再带卡片底色。
+// 可用性由状态文字和色点表达（绿点可用、灰点建设中），图标块始终保持实色。
 const ready = computed(() => props.module.availability !== 'planned')
 </script>
 
 <template>
-  <RouterLink :to="module.path" class="group flex min-w-0 flex-col rounded-xl border border-solid p-5 text-ink no-underline transition-all duration-200 ease-out active:scale-[.98] compact:p-6" :class="ready ? 'border-line bg-surface shadow-card hover:-translate-y-0.5 hover:shadow-lift' : 'border-line bg-soft hover:bg-sand'">
-    <div class="flex items-start justify-between gap-3">
-      <span class="grid size-12 place-items-center rounded-xl" :class="ready ? 'bg-sand text-ink' : 'bg-surface text-body'"><NavigationIcon :name="module.id" class="size-6" /></span>
-      <ArrowUpRight class="size-5 text-body transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-red" :stroke-width="1.5" aria-hidden="true" />
-    </div>
-    <h3 class="text-ink mt-5 mb-2 text-lg font-bold tracking-tight">{{ module.title }}</h3>
-    <p class="m-0 grow text-sm leading-relaxed wrap-anywhere text-body">{{ module.description }}</p>
-    <p class="mt-5 mb-0 flex items-center gap-2 text-xs font-medium text-ink">
-      <span class="size-2 rounded-full" :class="ready ? 'bg-green' : 'bg-muted'" aria-hidden="true"></span>{{ moduleStatus(module) }}
-    </p>
+  <RouterLink :to="module.path" class="group flex min-h-[72px] min-w-0 items-center gap-4 px-1 py-3 text-ink no-underline transition-colors duration-200 ease-out hover:bg-surface/70 active:bg-surface">
+    <span class="grid size-9 shrink-0 place-items-center rounded-lg transition-transform duration-300 ease-(--ease-spring) group-hover:scale-105" :class="moduleTileClass(module)"><NavigationIcon :name="module.id" class="size-5" /></span>
+    <span class="min-w-0 grow">
+      <span class="flex items-baseline gap-2 text-[17px] leading-snug font-semibold"><span v-if="order" class="font-mono text-[13px] font-medium text-body" aria-hidden="true">{{ String(order).padStart(2, '0') }}</span>{{ module.title }}</span>
+      <span class="mt-0.5 block text-sm leading-[1.5] wrap-anywhere text-body">{{ module.description }}</span>
+      <span class="mt-1.5 flex items-center gap-2 text-[13px] font-medium text-body">
+        <span class="size-2 rounded-full" :class="ready ? 'bg-green' : 'bg-muted'" aria-hidden="true"></span>{{ moduleStatus(module) }}
+      </span>
+    </span>
+    <ChevronRight class="size-5 shrink-0 text-facet transition-transform duration-300 ease-(--ease-spring) group-hover:translate-x-1 group-hover:text-body" :stroke-width="2" aria-hidden="true" />
   </RouterLink>
 </template>

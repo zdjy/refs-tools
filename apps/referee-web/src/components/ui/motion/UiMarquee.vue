@@ -31,12 +31,12 @@ function toggle() {
       <div ref="track" class="flex w-max" :class="reduced ? 'w-full flex-wrap gap-y-2' : ''">
         <ul class="m-0 flex list-none items-center p-0" :class="reduced ? 'flex-wrap gap-y-2' : ''">
           <li v-for="item in items" :key="item" class="flex items-center whitespace-nowrap text-2xl font-bold tracking-tight text-ink compact:text-4xl">
-            {{ item }}<span aria-hidden="true" class="mx-6 inline-block size-2.5 shrink-0 bg-red compact:mx-10"></span>
+            {{ item }}<span aria-hidden="true" class="mx-6 inline-block size-2.5 shrink-0 bg-accent compact:mx-10"></span>
           </li>
         </ul>
         <ul v-if="!reduced" class="m-0 flex list-none items-center p-0" aria-hidden="true">
           <li v-for="item in items" :key="item" class="flex items-center whitespace-nowrap text-2xl font-bold tracking-tight text-ink compact:text-4xl">
-            {{ item }}<span class="mx-6 inline-block size-2.5 shrink-0 bg-red compact:mx-10"></span>
+            {{ item }}<span class="mx-6 inline-block size-2.5 shrink-0 bg-accent compact:mx-10"></span>
           </li>
         </ul>
       </div>

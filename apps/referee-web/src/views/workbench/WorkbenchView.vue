@@ -6,7 +6,6 @@ import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { NAlert, NButton, NPopconfirm } from 'naive-ui'
-import UiCourtLines from '../../components/ui/UiCourtLines.vue'
 import { useWorkbenchStore } from '../../stores/workbench'
 import { useScorerConsole } from './useScorerConsole'
 import TeamScorePanel from './components/TeamScorePanel.vue'
@@ -43,7 +42,7 @@ onMounted(initialize)
       <BrandLink label="裁判工具箱首页" />
       <div class="flex items-center gap-2 text-[13px] text-body">
         <span class="hidden sm:inline">本地工作台</span>
-        <RouterLink class="inline-flex min-h-11 min-w-11 items-center justify-center px-2 py-0 text-[13px] text-body no-underline hover:text-red" to="/account">账号</RouterLink>
+        <RouterLink class="inline-flex min-h-11 min-w-11 items-center justify-center px-2 py-0 text-[13px] text-body no-underline hover:text-accent-hover" to="/account">账号</RouterLink>
       </div>
     </header>
     <section id="main" class="mx-auto grid min-h-[calc(100vh-64px)] max-w-[1280px] grid-cols-[minmax(0,1fr)] tablet:grid-cols-[208px_minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)] 2xl:max-w-[1440px]" tabindex="-1">
@@ -56,7 +55,7 @@ onMounted(initialize)
             <n-button secondary @click="retryStorage">{{ restoreFailed ? '重试读取' : '重试保存' }}</n-button>
           </div>
         </n-alert>
-        <div v-if="sessionNotice" class="mb-3 rounded-xl border border-solid border-line bg-soft p-4 text-sm text-body" role="status">
+        <div v-if="sessionNotice" class="mb-3 border-0 border-l border-solid border-line pl-4 text-sm text-body" role="status">
           {{ sessionNotice }}
           <div class="mt-2"><n-button quaternary @click="sessionNotice = ''">关闭提示</n-button></div>
         </div>
@@ -77,8 +76,8 @@ onMounted(initialize)
           <WorkbenchMoreActions
             :muted="muted" :shortcuts-enabled="shortcutsEnabled" @export-session="exportSession" @reset-match="resetMatch" @remove-session="removeSession(activeSession.id)"
             @toggle-mute="toggleMute" @whistle="sound('whistle')" @buzzer="sound('buzzer')" @toggle-shortcuts="shortcutsEnabled = !shortcutsEnabled" />
-          <p v-if="feedback" class="rounded-xl bg-sand p-3 text-[13px] text-body" role="status">{{ feedback }}</p>
-          <div v-if="activeSession.scorer.timeoutTeam" class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sand p-4" role="status">
+          <p v-if="feedback" class="border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] text-body" role="status">{{ feedback }}</p>
+          <div v-if="activeSession.scorer.timeoutTeam" class="mb-3 flex flex-wrap items-center justify-between gap-3 border-0 border-l border-solid border-ink py-1 pl-4" role="status">
             <strong>{{ activeSession.scorer.teams[activeSession.scorer.timeoutTeam].name }} 暂停中</strong>
             <n-button secondary @click="endTimeout">结束球队暂停</n-button>
           </div>
@@ -94,7 +93,7 @@ onMounted(initialize)
               @toggle="toggleClock" @reset="resetClock" @edit="editClock" />
           </section>
           </section>
-          <div class="mt-3 flex min-h-[62px] items-center gap-3.5 rounded-xl bg-sand px-3.5 py-2 text-[13px] text-body">
+          <div class="mt-3 flex min-h-[62px] items-center gap-3.5 border-0 border-l border-solid border-ink py-2 pl-3.5 text-[13px] text-body">
             <span>节次</span><strong class="text-[18px] text-ink">{{ String(activeSession.period).padStart(2, '0') }} <small class="text-[13px] font-medium text-body">/ {{ activeSession.rules.periodCount }}</small></strong>
             <div class="ml-auto"><n-popconfirm positive-text="确认换节" negative-text="取消" @positive-click="switchPeriod">
               <template #trigger><n-button secondary>{{ activeSession.period >= activeSession.rules.periodCount ? '进入加时' : '下一节' }}</n-button></template>
@@ -112,9 +111,8 @@ onMounted(initialize)
           <WorkbenchEventLog :events="activeSession.events" @clear="clearEventLog" />
           <TeamBoxScore v-model:show="boxScoreVisible" :session="activeSession" @csv="exportCsv('stats')" @json="exportSession" />
         </template>
-        <div v-else class="relative grid min-h-[320px] items-center overflow-hidden rounded-2xl border border-solid border-line bg-sand px-5 py-10 compact:px-10">
-          <UiCourtLines class="pointer-events-none absolute -right-6 -bottom-12 hidden h-64 w-auto text-body/25 compact:block" />
-          <div class="relative grid max-w-[360px] justify-items-start gap-2">
+        <div v-else class="grid min-h-[320px] items-center border-0 border-l border-solid border-ink py-10 pl-5 compact:pl-10">
+          <div class="grid max-w-[360px] justify-items-start gap-2">
             <h2 class="m-0 text-xl font-bold text-ink">{{ restoreFailed ? '本地记录暂时无法读取' : '还没有比赛' }}</h2>
             <p class="m-0 text-sm leading-relaxed text-body">{{ restoreFailed ? '请先导出原始数据，再重试读取。' : '新建一场比赛后即可记分、计时并记录犯规，数据只保存在这台设备。' }}</p>
             <n-button class="mt-3" type="primary" :disabled="restoreFailed" @click="createDialogVisible = true">新建比赛</n-button>

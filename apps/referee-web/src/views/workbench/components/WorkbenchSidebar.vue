@@ -26,7 +26,7 @@ const emit = defineEmits<{ create: []; select: [id: string]; clear: [] }>()
         </n-button>
       </li>
     </ul>
-    <div class="mt-3 rounded-xl bg-sand p-3.5 tablet:mt-auto">
+    <div class="mt-3 border-0 border-l border-solid border-ink py-0.5 pl-3.5 tablet:mt-auto">
       <p class="mt-0 mr-0 mb-1.5 ml-0 text-[13px] font-bold">共享设备提示</p>
       <p class="m-0 text-[13px] leading-[1.6] text-body">赛后请导出需要保留的记录，并清除此设备中的比赛数据。</p>
       <n-popconfirm positive-text="清空" negative-text="取消" @positive-click="emit('clear')">

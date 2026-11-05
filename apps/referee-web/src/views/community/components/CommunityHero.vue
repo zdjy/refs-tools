@@ -3,11 +3,12 @@ import { ArrowUpRight } from '@lucide/vue'
 </script>
 
 <template>
-  <header class="mb-6">
+  <!-- 标题与「社区说明」同一行，说明文字在下方整行展开，手机首屏少占一行按钮的高度。 -->
+  <header class="mb-5 pb-1">
     <div class="flex items-center justify-between gap-3">
-      <h1 class="m-0 text-3xl font-bold tracking-tight text-ink focus:outline-hidden compact:text-4xl">裁判社区</h1>
-      <a href="#community-guide" class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-solid border-line bg-surface px-4 text-xs font-medium text-ink no-underline transition-all hover:bg-soft active:scale-95 compact:px-5 compact:text-sm">社区说明<ArrowUpRight class="size-4" aria-hidden="true" /></a>
+      <h1 class="m-0 text-[32px] leading-[1.15] font-bold tracking-[-0.025em] text-ink focus:outline-hidden compact:text-[40px]">裁判社区</h1>
+      <a href="#community-guide" class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-solid border-line bg-surface/70 px-4 text-sm font-medium text-accent-hover no-underline transition-all duration-200 ease-(--ease-ios) hover:-translate-y-0.5 hover:bg-surface active:scale-95">社区说明<ArrowUpRight class="size-4" :stroke-width="1.5" aria-hidden="true" /></a>
     </div>
-    <p class="mt-3 mb-5 text-sm leading-relaxed text-body">篮球裁判的交流与协作空间。从一个回合聊起，把场上的经验留在这里。</p>
+    <p class="mt-2 mb-0 max-w-[38em] text-base leading-[1.7] text-body">篮球裁判的交流与协作空间。从一个回合聊起，把场上的经验留在这里。</p>
   </header>
 </template>

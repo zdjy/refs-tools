@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import BrandLink from '../components/navigation/BrandLink.vue'
-import UiCourtLines from '../components/ui/UiCourtLines.vue'
 </script>
 
 <template>
@@ -9,10 +8,9 @@ import UiCourtLines from '../components/ui/UiCourtLines.vue'
     <header class="flex min-h-16 items-center justify-between gap-2 border-0 border-b border-solid border-line bg-canvas/90 px-4 py-2 backdrop-blur-md md:px-8">
       <BrandLink />
     </header>
-    <section class="relative mx-auto my-10 max-w-[42rem] overflow-hidden rounded-2xl border border-solid border-line bg-sand p-6 compact:my-16 compact:p-10" aria-labelledby="not-found-title">
-      <UiCourtLines class="pointer-events-none absolute -right-6 -bottom-10 hidden h-48 w-auto text-body/25 compact:block" />
-      <div class="relative">
-        <p class="m-0 font-mono text-5xl font-bold tracking-tight text-red-hover tabular-nums compact:text-6xl" aria-hidden="true">404</p>
+    <section class="mx-auto my-10 max-w-[42rem] border-0 border-l border-solid border-ink pl-6 compact:my-16 compact:pl-10" aria-labelledby="not-found-title">
+      <div>
+        <p class="m-0 font-mono text-5xl font-bold tracking-tight text-accent-hover tabular-nums compact:text-6xl" aria-hidden="true">404</p>
         <h1 id="not-found-title" class="mx-0 mt-3 mb-2 text-3xl font-bold tracking-tight text-ink focus:outline-hidden">页面不存在</h1>
         <p class="m-0 text-base leading-relaxed text-body">该地址没有对应的页面，可能链接有误或内容已移动。</p>
         <div class="mt-6 flex flex-wrap gap-3">

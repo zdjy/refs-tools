@@ -23,7 +23,7 @@ web
 
 ## Capabilities and Constraints
 - 移动优先、可安装、离线外壳；私有数据不进入持久缓存，写操作不自动重试，离线时不提交并保留输入。
-- 视觉基线固定为 `docs/ui/macos_fiba.md`（暖沙金 FIBA 配色）；图标统一 Lucide，界面禁止表情符号。
+- 视觉基线固定为 `docs/ui/courtside.md`（场边：色板取自 macos_fiba.md 的暖沙金，版式与动效参考 Apple iOS，ADR 0033）；图标统一 Lucide，界面禁止表情符号。
 - 管理端与用户端分离；本模块是用户端。
 
 ## Brand Commitments

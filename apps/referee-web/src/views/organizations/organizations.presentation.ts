@@ -77,6 +77,6 @@ export function organizationsLoadErrorMessage(error: unknown): string {
 
 /** 链接按钮样式：与 Naive 胶囊按钮同形，用于 <a> 导航，也可用于原生 <button>（未启用 Preflight，故显式声明边框）。类名保持完整静态字符串以便 Tailwind 扫描。 */
 export const linkButton = {
-  primary: 'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-ink px-5 text-sm font-medium text-surface no-underline transition-all duration-200 hover:bg-black active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red',
-  secondary: 'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-solid border-line bg-soft px-5 text-sm font-medium text-ink no-underline transition-all duration-200 hover:bg-line active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red',
+  primary: 'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-ink px-5 text-sm font-medium text-surface no-underline transition-all duration-200 hover:bg-black active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+  secondary: 'inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-solid border-line bg-soft px-5 text-sm font-medium text-ink no-underline transition-all duration-200 hover:bg-line active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
 } as const

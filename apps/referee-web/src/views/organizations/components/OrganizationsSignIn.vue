@@ -11,7 +11,7 @@ defineEmits<{ retry: [] }>()
 
 <template>
   <UiLoadingRegion v-if="status === 'unknown' || status === 'loading'" :loading="true" label="确认登录状态" :lines="3" @retry="$emit('retry')" />
-  <section v-else class="grid max-w-[520px] gap-4 rounded-2xl border border-solid border-line bg-surface p-6 shadow-card">
+  <section v-else class="grid max-w-[520px] gap-4 border-0 border-t border-solid border-ink pt-6">
     <h2 class="m-0 text-xl text-ink">{{ status === 'error' ? '暂时无法确认登录状态' : '登录后管理你的组织' }}</h2>
     <p class="m-0 text-sm leading-relaxed text-body">
       {{ status === 'error' ? '网络可能不稳定，请重试连接。' : '创建或加入组织、回应邀请、管理成员都需要先登录并验证邮箱。' }}

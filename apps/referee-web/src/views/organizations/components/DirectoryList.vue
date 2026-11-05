@@ -15,7 +15,7 @@ defineEmits<{ join: [item: DirectoryItem] }>()
 </script>
 
 <template>
-  <ul class="m-0 grid list-none gap-0 overflow-hidden rounded-2xl border border-solid border-line bg-surface p-0 shadow-card">
+  <ul class="m-0 grid list-none gap-0 border-0 border-y border-solid border-line p-0">
     <li v-for="(item, index) in items" :key="item.id" v-reveal="{ delay: index * 0.04, y: 12 }"
       class="grid gap-3 border-0 border-b border-solid border-line p-4 last:border-b-0 compact:grid-cols-[minmax(0,1fr)_auto] compact:items-center compact:p-5">
       <div class="grid min-w-0 gap-1.5">

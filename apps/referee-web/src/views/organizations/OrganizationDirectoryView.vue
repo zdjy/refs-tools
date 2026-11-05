@@ -21,7 +21,7 @@ useUiFeedback(dir.redeem.done)
 <template>
   <NavigationShell>
     <div class="mx-auto grid max-w-[900px] gap-6">
-      <RouterLink to="/organizations" class="inline-flex min-h-11 w-fit items-center gap-2 text-sm text-body no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red">
+      <RouterLink to="/organizations" class="inline-flex min-h-11 w-fit items-center gap-2 text-sm text-body no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <ArrowLeft class="size-4" :stroke-width="1.75" aria-hidden="true" />我的组织
       </RouterLink>
       <header class="grid gap-2">
@@ -48,7 +48,7 @@ useUiFeedback(dir.redeem.done)
           </div>
           <template v-else-if="dir.directory.data.value">
             <DirectoryList v-if="dir.items.value.length" :items="dir.items.value" :busy="dir.join.busy.value" @join="dir.requestJoin" />
-            <p v-else class="m-0 rounded-2xl border border-solid border-line bg-surface p-6 text-sm leading-relaxed text-body shadow-card">
+            <p v-else class="m-0 border-0 border-t border-solid border-ink pt-6 text-sm leading-relaxed text-body">
               {{ dir.keyword.value.trim() ? '没有找到匹配的组织，换个关键词试试。' : '目录里暂时还没有已开通的组织。你可以申请创建第一个。' }}
             </p>
             <nav v-if="dir.pageCount.value > 1" aria-label="目录分页" class="flex items-center justify-between gap-3">

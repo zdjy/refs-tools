@@ -14,3 +14,10 @@ export function threadsByBoard(board: BoardId | 'all', query = '') {
     return terms.every((term) => text.includes(term))
   })
 }
+
+/** 各版块的内置讨论数量（含「全部」），供版块抽屉显示；数字来自数据本身，不手写。 */
+export function boardCounts(): Record<BoardId | 'all', number> {
+  const counts: Record<BoardId | 'all', number> = { all: sampleThreads.length, 'case-review': 0, 'field-notes': 0, 'table-work': 0, 'rookie-notes': 0 }
+  for (const thread of sampleThreads) counts[thread.board] += 1
+  return counts
+}

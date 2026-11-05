@@ -115,10 +115,10 @@ macOS Vibrancy 的核心在于**克制与景深**，而 FIBA 机构版的核心�
 
 ## 交互与动效
 
-- **过渡时间**：严格保持短促克制，主过渡统一为 `transition-all duration-200 ease-out`。
+- **过渡时间**：常规交互过渡统一为 `transition-all duration-200 ease-out`；位移、弹出、展开与装饰动效不受此限，可使用更长时长与弹性曲线。
 - **触感回弹（Haptic Touch）**：所有可点按元素具备轻微物理按压反馈：`active:scale-[0.98]` 或 `active:scale-95`。
 - **卡片悬停**：卡片悬停仅提升投影并微幅抬升，严禁夸张漂浮；内部缩略图限制在 `group-hover:scale-105 transition-transform duration-500`。
-- **动效禁令**：动效不得引发布局位移（Layout Shift），严禁无意义的跳跃、摇摆或闪烁。
+- **动效原则**：动效禁令已废除，可使用装饰性与氛围动效。仍需遵守：不得引发布局位移（Layout Shift）；持续运行的动效必须能被用户关闭；优先只动画 `transform` 与 `opacity`。
 
 ---
 
@@ -127,7 +127,7 @@ macOS Vibrancy 的核心在于**克制与景深**，而 FIBA 机构版的核心�
 - **对比度标准**：正文使用 `#635E57`、标题使用 `#111111`，在 `#FAF8F5`、`#F5F2EB` 与纯白背景上均满足 WCAG AA 以上的对比度要求。
 - **焦点环管理**：严禁移除原生焦点样式而不做补偿，所有交互元素必须提供 `focus:ring-2 focus:ring-[#D83A1E]/30` 键盘焦点引导。
 - **移动端与触控**：交互点击区域保持不小于 44px $\times$ 44px。
-- **减弱动态**：全面支持 `@media (prefers-reduced-motion: reduce)`，关闭过渡与形变效果。
+- **减弱动态**：全面支持 `@media (prefers-reduced-motion: reduce)`，关闭过渡与形变效果；这是可访问性要求，不属于被废除的禁令。
 
 ---
 
@@ -137,7 +137,6 @@ macOS Vibrancy 的核心在于**克制与景深**，而 FIBA 机构版的核心�
 - ❌ **严禁冷灰或冷蓝黑系背景**（彻底移除 `#1c1c1e`、`#2c2c2e`、`#3a3a3c`、`#0a84ff` 等旧暗色 macOS 色值）。
 - ❌ **严禁厚重阴影与发光**（禁止 `shadow-2xl`，禁止霓虹发光）。
 - ❌ **严禁非规范边框**（边框厚度禁止大于 1px，严禁使用粗线 `border-2`, `border-4`）。
-- ❌ **严禁装饰性跳动动画**（禁止使用 `animate-bounce`, `animate-pulse`, `animate-spin` 进行页面级装饰）。
 - ❌ **严禁低对比度排印**（严禁在 `#EBE4D8` 暖沙金底色上使用淡灰字或纯白无描边字）。
 
 ---

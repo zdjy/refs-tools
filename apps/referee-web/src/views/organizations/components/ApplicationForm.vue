@@ -28,7 +28,7 @@ const rows = [
         :maxlength="applicationLimits[row.key]" :autosize="{ minRows: row.textarea ? 3 : 1, maxRows: row.textarea ? 8 : 1 }" :disabled="busy"
         :status="fieldError[row.key] ? 'error' : 'success'"
         :input-props="{ 'aria-required': true, 'aria-invalid': !!fieldError[row.key], 'aria-describedby': fieldError[row.key] ? `app-${row.key}-error` : undefined, autocomplete: 'off' }" />
-      <p v-if="fieldError[row.key]" :id="`app-${row.key}-error`" role="alert" class="m-0 text-[13px] text-red-hover">{{ fieldError[row.key] }}</p>
+      <p v-if="fieldError[row.key]" :id="`app-${row.key}-error`" role="alert" class="m-0 text-[13px] text-danger">{{ fieldError[row.key] }}</p>
     </div>
     <p class="m-0 text-[13px] leading-relaxed text-body">实名与联系方式只用于平台审核，不会在目录或成员名单中公开。</p>
     <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>

@@ -23,9 +23,14 @@
   --radius-2xl: 16px;
   --shadow-*: initial;
   --font-serif: initial;
-  /* 主过渡统一为 200ms ease-out，见 macOS 毛玻璃规范「交互与动效」。 */
+  /* 主过渡统一为 200ms ease-out，见 docs/ui/courtside.md「交互与可访问性」。 */
   --default-transition-duration: 200ms;
   --default-transition-timing-function: ease-out;
+  /* 缓动曲线由 ui-tokens.ts 注入为 --ease-ios / --ease-spring，此处只定义消费它的关键帧。 */
+  --animate-rise: rise 460ms var(--ease-ios) backwards;
+  --animate-pop: pop 260ms var(--ease-spring) backwards;
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
 }
 
 /* inline 使工具类直接消费运行时注入的 token，不重复维护色值。 */
@@ -39,13 +44,19 @@
   --color-body: var(--body);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-red: var(--red);
-  --color-red-hover: var(--red-hover);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-warning: var(--warning);
   --color-green: var(--green);
+  --color-gold: var(--gold);
   --color-black: var(--black);
   --font-sans: var(--font);
+  --font-mono: var(--mono);
   --shadow-card: var(--shadow);
   --shadow-raised: var(--raised);
   --shadow-lift: var(--lift);
   --shadow-selected: var(--selected);
+  --shadow-tile: var(--tile);
 }

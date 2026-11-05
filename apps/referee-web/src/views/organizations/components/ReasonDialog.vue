@@ -28,7 +28,7 @@ const invalid = computed(() => !!props.problem)
         <label for="reason-input" class="text-sm font-medium text-ink">操作理由（会记入审计）</label>
         <n-input id="reason-input" v-model:value="reason" type="textarea" :maxlength="REASON_MAX" show-count :autosize="{ minRows: 3, maxRows: 6 }"
           :status="invalid ? 'error' : 'success'" placeholder="例如：核实身份后批准" :input-props="{ 'aria-invalid': invalid, 'aria-describedby': invalid ? 'reason-problem' : undefined }" />
-        <p v-if="problem" id="reason-problem" role="alert" class="m-0 text-[13px] text-red-hover">{{ problem }}</p>
+        <p v-if="problem" id="reason-problem" role="alert" class="m-0 text-[13px] text-danger">{{ problem }}</p>
       </div>
       <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>
       <UiSubmitHint :busy="busy" />

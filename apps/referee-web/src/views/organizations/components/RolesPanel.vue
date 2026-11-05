@@ -41,7 +41,7 @@ async function submit() {
   <section aria-labelledby="roles-title" class="grid gap-5">
     <h2 id="roles-title" class="m-0 text-lg text-ink">组织角色</h2>
     <p class="m-0 max-w-[64ch] text-sm leading-relaxed text-body">组织者可管理成员与邀请；认证员可审核本组织的认证申请。成员离开组织时其角色会立即撤销。</p>
-    <p v-if="roles.stale.value" role="status" class="m-0 rounded-xl border border-solid border-line bg-soft px-4 py-3 text-[13px] leading-relaxed">
+    <p v-if="roles.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
       {{ roles.stale.value }}<n-button text type="primary" class="ml-2" @click="roles.load()">重新读取</n-button>
     </p>
     <UiLoadingRegion v-if="roles.list.loading.value && !roles.list.data.value" :loading="true" label="读取角色" :lines="3" @retry="roles.load()" />
@@ -56,7 +56,7 @@ async function submit() {
           <n-button v-if="removable(item)" secondary :disabled="roles.revoke.busy.value" :aria-label="`撤销${item.displayName}的${roleLabels[item.role]}角色`" @click="roles.revokeRole(item)">撤销角色</n-button>
         </li>
       </ul>
-      <form v-if="roles.canGrant.value" class="grid gap-3 rounded-xl border border-solid border-line bg-soft p-4 compact:grid-cols-[minmax(0,1fr)_160px_auto] compact:items-end" @submit.prevent="submit">
+      <form v-if="roles.canGrant.value" class="grid gap-3 border-0 border-l border-solid border-line pl-4 compact:grid-cols-[minmax(0,1fr)_160px_auto] compact:items-end" @submit.prevent="submit">
         <div class="grid gap-2"><label for="role-member" class="text-sm font-medium text-ink">选择成员</label>
           <n-select id="role-member" v-model:value="target" :options="memberOptions" filterable placeholder="从正式成员中选择" :disabled="roles.grant.busy.value" /></div>
         <div class="grid gap-2"><label for="role-kind" class="text-sm font-medium text-ink">角色</label>

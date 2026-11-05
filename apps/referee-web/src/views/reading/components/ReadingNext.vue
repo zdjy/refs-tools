@@ -10,7 +10,7 @@ defineProps<{ next: EditorialArticle; related: readonly EditorialArticle[] }>()
 <template>
   <section class="mt-12" aria-labelledby="next-title">
     <h2 id="next-title" class="mt-0 mb-5 text-lg font-bold text-ink">接着读</h2>
-    <RouterLink :to="next.path" class="group grid overflow-hidden rounded-2xl border border-solid border-line bg-surface text-ink no-underline shadow-card transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lift active:scale-[.99] compact:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+    <RouterLink :to="next.path" class="group grid overflow-hidden border-0 border-y border-solid border-line text-ink no-underline transition-colors duration-200 ease-out hover:bg-surface/60 active:scale-[.99] compact:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
       <div class="aspect-[16/9] overflow-hidden compact:aspect-auto"><ArticleCover :motif="next.motif" class="transition-transform duration-500 group-hover:scale-105" /></div>
       <div class="flex flex-col justify-center p-6 compact:p-10">
         <p class="m-0 text-2xl leading-snug font-bold tracking-tight compact:text-4xl">{{ next.title }}</p>
@@ -20,7 +20,7 @@ defineProps<{ next: EditorialArticle; related: readonly EditorialArticle[] }>()
     </RouterLink>
     <ul v-if="related.length" class="m-0 mt-5 grid list-none gap-3 p-0 compact:grid-cols-2">
       <li v-for="item in related" :key="item.id">
-        <RouterLink :to="item.path" class="flex min-h-20 items-center justify-between gap-4 rounded-xl border border-solid border-line bg-surface p-5 text-base leading-relaxed font-medium text-ink no-underline transition-all duration-200 ease-out hover:border-body hover:text-red-hover active:scale-[.98]">{{ item.title }}<ArrowRight class="size-5 shrink-0" aria-hidden="true" /></RouterLink>
+        <RouterLink :to="item.path" class="flex min-h-20 items-center justify-between gap-4 border-0 border-b border-solid border-line pb-5 text-base leading-relaxed font-medium text-ink no-underline transition-all duration-200 ease-out hover:border-body hover:text-accent-hover active:scale-[.98]">{{ item.title }}<ArrowRight class="size-5 shrink-0" aria-hidden="true" /></RouterLink>
       </li>
     </ul>
   </section>

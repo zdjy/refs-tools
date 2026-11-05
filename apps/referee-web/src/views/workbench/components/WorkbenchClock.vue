@@ -19,7 +19,7 @@ const display = computed(() => presentClock(props.clock, props.now))
   >
     <div class="p-4">
       <div class="flex items-center justify-between gap-2 text-[13px] text-body">
-        <span>{{ clock.label }}</span><span class="text-[13px]" :class="display.expired ? 'text-red-hover' : clock.status === 'running' ? 'text-green' : ''" role="status">{{ display.state }}</span>
+        <span>{{ clock.label }}</span><span class="text-[13px]" :class="display.expired ? 'text-danger' : clock.status === 'running' ? 'text-green' : ''" role="status">{{ display.state }}</span>
       </div>
       <div class="mx-0 my-3.5 text-[clamp(32px,7vw,42px)] leading-[1.1] font-[650] text-ink tabular-nums md:text-[34px] xl:text-[32px] 2xl:text-[38px]" role="timer" :aria-label="clock.label" aria-live="off">{{ display.value }}</div>
       <div class="flex items-center gap-2">

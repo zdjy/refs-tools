@@ -11,15 +11,15 @@ import { organizationStatusText, roleLabels } from '../organizations.presentatio
  * 并写清原因与下一步，而不是只给一个状态标签。
  */
 defineProps<{ items: readonly MyOrganization[] }>()
-const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted', rejected: 'bg-red', dissolved: 'bg-muted' } as const
+const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted', rejected: 'bg-danger', dissolved: 'bg-muted' } as const
 </script>
 
 <template>
-  <ul class="m-0 grid list-none gap-0 overflow-hidden rounded-2xl border border-solid border-line bg-surface p-0 shadow-card">
+  <ul class="m-0 grid list-none gap-0 border-0 border-y border-solid border-line p-0">
     <li v-for="(item, index) in items" :key="item.id" v-reveal="{ delay: index * 0.05, y: 14 }" class="border-0 border-b border-solid border-line last:border-b-0">
       <component :is="item.membership ? RouterLink : 'div'" v-bind="item.membership ? { to: `/organizations/${item.id}` } : {}"
         class="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 p-4 text-ink no-underline compact:p-5"
-        :class="item.membership ? 'transition-colors duration-200 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-red' : ''">
+        :class="item.membership ? 'transition-colors duration-200 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent' : ''">
         <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-sand text-xl font-bold text-ink compact:size-14 compact:text-2xl" aria-hidden="true">{{ item.name.slice(0, 1) }}</span>
         <span class="grid min-w-0 gap-1.5">
           <span class="text-lg leading-snug font-bold tracking-tight wrap-anywhere compact:text-xl">{{ item.name }}</span>
@@ -33,7 +33,7 @@ const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted'
         </span>
         <ChevronRight v-if="item.membership" class="size-5 shrink-0 text-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-ink motion-reduce:transition-none" :stroke-width="1.75" aria-hidden="true" />
         <RouterLink v-else-if="item.status === 'rejected'" to="/organizations/new"
-          class="inline-flex min-h-11 items-center gap-1 rounded-full border border-solid border-line bg-soft px-4 text-sm font-medium text-ink no-underline hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red">重新申请<ArrowUpRight class="size-4" :stroke-width="1.75" aria-hidden="true" /></RouterLink>
+          class="inline-flex min-h-11 items-center gap-1 rounded-full border border-solid border-line bg-soft px-4 text-sm font-medium text-ink no-underline hover:bg-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">重新申请<ArrowUpRight class="size-4" :stroke-width="1.75" aria-hidden="true" /></RouterLink>
       </component>
     </li>
   </ul>

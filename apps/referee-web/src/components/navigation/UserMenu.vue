@@ -7,7 +7,7 @@ import { useAuthStore } from '../../stores/auth'
 import { accountMenuLinks, type AccountMenuId } from '../../navigation/account-menu.presentation'
 import { ACCOUNT_MENU_ID, useAccountMenu } from './useAccountMenu'
 
-const props = defineProps<{ name: string; avatarUrl?: string }>()
+const props = withDefaults(defineProps<{ name: string; avatarUrl?: string; placement?: 'down' | 'up' }>(), { placement: 'down' })
 const auth = useAuthStore()
 const dialog = useDialog()
 const message = useMessage()
@@ -43,7 +43,7 @@ function confirmLogout(): void {
     <button
       ref="trigger"
       type="button"
-      class="flex min-h-11 max-w-full items-center gap-2 rounded-full border-0 bg-soft px-2 py-1 text-sm font-medium text-ink transition-all duration-200 ease-out hover:bg-sand focus-visible:ring-2 focus-visible:ring-red/30 focus-visible:outline-none active:scale-95"
+      class="flex min-h-11 w-full max-w-full items-center gap-2 rounded-xl border border-solid border-line bg-surface px-2 py-1 text-sm font-medium text-ink transition-colors duration-200 ease-out hover:bg-soft focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:outline-none active:scale-95"
       :aria-label="`${name}，账号菜单`"
       :aria-expanded="open"
       :aria-controls="open ? ACCOUNT_MENU_ID : undefined"
@@ -62,11 +62,11 @@ function confirmLogout(): void {
       ref="panel"
       role="menu"
       aria-label="账号菜单"
-      class="absolute top-[calc(100%+8px)] right-0 z-50 w-[264px] max-w-[calc(100vw-32px)] rounded-2xl border border-solid border-line bg-surface py-2 shadow-lift"
+      :class="['absolute z-50 animate-pop w-[264px] max-w-[calc(100vw-32px)] rounded-2xl bg-surface/90 py-2 shadow-raised backdrop-blur-2xl backdrop-saturate-150', placement === 'up' ? 'bottom-[calc(100%+8px)] left-0 origin-bottom-left' : 'top-[calc(100%+8px)] right-0 origin-top-right']"
     >
       <div class="mx-2 mb-2 border-0 border-b border-solid border-line px-2 pt-1 pb-3">
         <p class="m-0 text-sm font-semibold text-ink wrap-anywhere">{{ name }}</p>
-        <p class="mt-1 mb-0 text-xs text-muted">裁判账号</p>
+        <p class="mt-1 mb-0 text-xs text-body">裁判账号</p>
       </div>
       <RouterLink
         v-for="item in items"
@@ -74,7 +74,7 @@ function confirmLogout(): void {
         :to="item.path"
         role="menuitem"
         tabindex="-1"
-        class="mx-2 flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium text-body no-underline transition-colors duration-200 hover:bg-soft hover:text-ink focus-visible:bg-soft focus-visible:text-ink focus-visible:ring-2 focus-visible:ring-red/30 focus-visible:outline-none"
+        class="mx-2 flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-medium text-body no-underline transition-colors duration-200 hover:bg-soft hover:text-ink focus-visible:bg-soft focus-visible:text-ink focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:outline-none"
         @click="close()"
       >
         <component :is="item.icon" class="size-[18px] shrink-0" :stroke-width="1.5" aria-hidden="true" />
@@ -85,7 +85,7 @@ function confirmLogout(): void {
         type="button"
         role="menuitem"
         tabindex="-1"
-        class="mx-2 flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-2 text-left text-sm font-medium text-red transition-colors duration-200 hover:bg-soft hover:text-red-hover focus-visible:bg-soft focus-visible:ring-2 focus-visible:ring-red/30 focus-visible:outline-none"
+        class="mx-2 flex min-h-11 items-center gap-3 rounded-xl border-0 bg-transparent px-2 text-left text-sm font-medium text-danger transition-colors duration-200 hover:bg-soft hover:text-danger-hover focus-visible:bg-soft focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:outline-none"
         @click="confirmLogout"
       >
         <LogOut class="size-[18px] shrink-0" :stroke-width="1.5" aria-hidden="true" />

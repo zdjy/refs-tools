@@ -15,16 +15,16 @@ const emit = defineEmits<{ respond: [item: OrganizationInvitation, accept: boole
 </script>
 
 <template>
-  <section v-if="items.length" aria-labelledby="inbox-title" class="grid gap-3 rounded-2xl border border-solid border-line bg-sand p-4 compact:p-6">
+  <section v-if="items.length" aria-labelledby="inbox-title" class="grid gap-3 border-0 border-l border-solid border-ink pl-4 compact:p-6">
     <header class="flex items-center gap-3">
       <MailOpen class="size-5 text-ink" :stroke-width="1.75" aria-hidden="true" />
       <h2 id="inbox-title" class="m-0 text-lg text-ink">{{ items.length }} 个组织邀请你加入</h2>
     </header>
     <p class="m-0 text-[13px] leading-relaxed text-ink">接受后你会成为该组织的普通成员，不会自动获得任何管理权限。</p>
-    <p v-if="error" role="alert" class="m-0 rounded-xl border border-solid border-line bg-surface px-4 py-3 text-[13px] leading-relaxed text-ink">{{ error }}</p>
+    <p v-if="error" role="alert" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed text-ink">{{ error }}</p>
     <ul class="m-0 grid list-none gap-3 p-0">
       <li v-for="(item, index) in items" :key="item.id" v-reveal="{ delay: index * 0.06, y: 12 }"
-        class="grid gap-3 rounded-xl border border-solid border-line bg-surface p-4 compact:grid-cols-[minmax(0,1fr)_auto] compact:items-center">
+        class="grid gap-3 border-0 border-b border-solid border-line pb-4 compact:grid-cols-[minmax(0,1fr)_auto] compact:items-center">
         <div class="grid min-w-0 gap-1">
           <span class="text-base font-bold text-ink wrap-anywhere">{{ item.organizationName }}</span>
           <span class="text-[13px] text-body">{{ formatDate(item.expiresAt) }} 前有效</span>
