@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NButton, NCard, NEmpty, NPopconfirm } from 'naive-ui'
+import { NButton, NEmpty, NPopconfirm } from 'naive-ui'
 import { formatClock, type WorkbenchEvent } from '../../../domain/workbench'
 import { formatTime } from '../workbench.presentation'
 
@@ -8,7 +8,7 @@ const emit = defineEmits<{ clear: [] }>()
 </script>
 
 <template>
-  <n-card class="mt-3">
+  <section class="mt-6 border-0 border-t border-solid border-line pt-5">
     <div class="flex items-center justify-between gap-2">
       <h3 class="m-0 text-[16px] text-ink">操作日志</h3>
       <div class="flex items-center gap-2">
@@ -26,5 +26,5 @@ const emit = defineEmits<{ clear: [] }>()
       </li>
     </ol>
     <n-empty v-else class="px-0 pt-6 pb-2" description="暂无操作记录" :show-icon="false" />
-  </n-card>
+  </section>
 </template>

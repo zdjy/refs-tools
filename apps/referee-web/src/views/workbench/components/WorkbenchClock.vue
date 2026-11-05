@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { refereeControlThemes } from '../../../ui-theme'
 import { RotateCcw } from '@lucide/vue'
-import { NButton, NCard, NInputNumber, NPopconfirm } from 'naive-ui'
+import { NButton, NInputNumber, NPopconfirm } from 'naive-ui'
 import { remainingMs, type ClockKind, type ClockState } from '../../../domain/workbench'
 import { presentClock } from '../workbench.presentation'
 
@@ -13,11 +13,8 @@ const display = computed(() => presentClock(props.clock, props.now))
 </script>
 
 <template>
-  <n-card
-    class="min-w-0 sm:first:col-span-2 md:first:col-auto"
-    content-style="padding: 0;"
-  >
-    <div class="p-4">
+  <section class="min-w-0 border-0 border-t border-solid border-line sm:first:col-span-2 md:first:col-auto">
+    <div class="px-0 py-4">
       <div class="flex items-center justify-between gap-2 text-[13px] text-body">
         <span>{{ clock.label }}</span><span class="text-[13px]" :class="display.expired ? 'text-danger' : clock.status === 'running' ? 'text-green' : ''" role="status">{{ display.state }}</span>
       </div>
@@ -39,5 +36,5 @@ const display = computed(() => presentClock(props.clock, props.now))
         </form>
       </details>
     </div>
-  </n-card>
+  </section>
 </template>

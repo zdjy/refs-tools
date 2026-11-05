@@ -29,7 +29,9 @@
   /* 缓动曲线由 ui-tokens.ts 注入为 --ease-ios / --ease-spring，此处只定义消费它的关键帧。 */
   --animate-rise: rise 460ms var(--ease-ios) backwards;
   --animate-pop: pop 260ms var(--ease-spring) backwards;
+  --animate-breathe: breathe 1.4s ease-in-out infinite;
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
   @keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
 }
 

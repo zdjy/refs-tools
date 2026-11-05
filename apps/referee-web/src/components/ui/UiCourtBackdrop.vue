@@ -8,7 +8,7 @@ const { enabled } = useBackdropMotion()
   <!-- 背景装饰：半场线稿、投篮小球与裁判哨子。纯色描边，无渐变，不拦截指针，不进入无障碍树。
        性能：所有运动只改 transform / opacity（合成器线程），层用 contain 隔离，且避开毛玻璃侧栏。
        暂停时由 data-paused 冻结；系统开启「减弱动态效果」时运动元素直接不渲染。 -->
-  <div aria-hidden="true" class="backdrop pointer-events-none fixed inset-y-0 right-0 -z-10 overflow-hidden tablet:left-56" :data-paused="!enabled">
+  <div aria-hidden="true" class="backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden tablet:left-56" :data-paused="!enabled">
     <div class="court">
       <svg viewBox="0 0 240 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" focusable="false">
         <rect x="80" y="2" width="80" height="110" />
@@ -41,7 +41,7 @@ const { enabled } = useBackdropMotion()
 .court, .whistle { position: absolute; color: var(--facet); will-change: transform; }
 .court svg, .whistle svg { display: block; width: 100%; height: auto; }
 .court { top: -2%; right: -6%; width: min(46vw, 620px); opacity: .55; }
-.whistle { bottom: -3%; left: -2%; width: clamp(96px, 11vw, 150px); opacity: .55; transform-origin: 50% 3%; animation: whistle-swing 6s ease-in-out infinite alternate; }
+.whistle { bottom: -3%; left: -2%; width: clamp(96px, 11vw, 150px); opacity: .55; transform-origin: 50% 3%; animation: whistle-blow 6s ease-in-out infinite; }
 /* 篮筐在线稿坐标 (120, 26)/(240×200)：用百分比对齐，随整块缩放。 */
 .ripple, .wave { position: absolute; border: 1.5px solid var(--accent); border-radius: 9999px; opacity: 0; will-change: transform, opacity; }
 .ripple { left: 50%; top: 13%; width: 24px; height: 24px; margin: -12px 0 0 -12px; animation: ripple 9s ease-out infinite; }
@@ -54,7 +54,8 @@ const { enabled } = useBackdropMotion()
 @keyframes ball-x { 0% { transform: translate3d(-150px, 0, 0); opacity: 0; } 6% { opacity: .9; } 38% { transform: translate3d(0, 0, 0); opacity: .9; } 42%, 100% { transform: translate3d(0, 0, 0); opacity: 0; } }
 @keyframes ball-y { 0% { transform: translate3d(0, 360px, 0); animation-timing-function: cubic-bezier(.2, .7, .3, 1); } 22% { transform: translate3d(0, -24px, 0); animation-timing-function: cubic-bezier(.6, 0, .8, .4); } 38%, 100% { transform: translate3d(0, 0, 0); } }
 @keyframes ripple { 0%, 36% { transform: scale(.6); opacity: 0; } 38% { transform: scale(.6); opacity: .7; } 52%, 100% { transform: scale(2.4); opacity: 0; } }
-@keyframes whistle-swing { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+/* 只在吹响时晃动（与声波同步），其余时间静止：持续运动的动画会让合成器每帧都出帧，间歇运动实测耗时更低。 */
+@keyframes whistle-blow { 0%, 26%, 100% { transform: rotate(0); } 5% { transform: rotate(-8deg); } 11% { transform: rotate(7deg); } 17% { transform: rotate(-4deg); } 22% { transform: rotate(2deg); } }
 @keyframes wave { 0%, 10% { transform: scale(.5); opacity: 0; } 14% { transform: scale(.5); opacity: .65; } 40%, 100% { transform: scale(2.6); opacity: 0; } }
 .backdrop[data-paused='true'] * { animation-play-state: paused; }
 .backdrop[data-paused='true'] .ball-x, .backdrop[data-paused='true'] .ripple, .backdrop[data-paused='true'] .wave { visibility: hidden; }
