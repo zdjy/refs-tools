@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0031：离线应用外壳 Service Worker](./0031-offline-app-shell-service-worker.md) — 只预缓存同源静态外壳，不拦截 /api、/admin 与非 GET；导航网络优先加缓存兜底，更新由用户确认，预缓存有体积上限，自写模板不引入 workbox。
+
 - [ADR 0030：弱网判定、读请求自动重试与加载反馈](./0030-network-resilience-and-loading-feedback.md) — 以请求耗时分级加浏览器联网事件判定弱网，仅 GET 有限重试，写操作不自动重试、不做离线队列，按场景选择静态骨架 / 按钮 loading / 路由进度条 / 全局提示。
 - [ADR 0029：品牌资源归属与图标生成流水线](./0029-brand-assets-and-app-icons.md) — 母版留在 `logo/` 不进构建，图标由脚本从 UI 画布 token 生成，保持 PNG 与 maskable 安全区约束。
 

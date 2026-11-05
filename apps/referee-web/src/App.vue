@@ -3,6 +3,7 @@ import { NConfigProvider, NDialogProvider, NGlobalStyle, NLoadingBarProvider, NM
 import { RouterView } from 'vue-router'
 import UiNetworkBanner from './components/ui/UiNetworkBanner.vue'
 import UiRouteProgress from './components/ui/UiRouteProgress.vue'
+import UiUpdateNotice from './components/ui/UiUpdateNotice.vue'
 import { refereeTheme } from './ui-theme'
 </script>
 
@@ -17,6 +18,7 @@ import { refereeTheme } from './ui-theme'
         <n-loading-bar-provider :to="false" container-style="position: fixed; top: 0; left: 0; right: 0; z-index: 60;">
           <UiRouteProgress />
           <UiNetworkBanner />
+          <UiUpdateNotice />
           <RouterView />
         </n-loading-bar-provider>
       </n-message-provider>
