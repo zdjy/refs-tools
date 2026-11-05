@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { vi } from 'vitest'
 import type { Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members'
+import type { OrganizationDetail } from '@refs-tools/contracts/organizations'
 import type { MemberRepositories } from '../../src/modules/organizations/organization-members.types.js'
 import { OrganizationMembersService } from '../../src/modules/organizations/organization-members.service.js'
 import { OrganizationInvitationsService } from '../../src/modules/organizations/organization-invitations.service.js'
@@ -9,7 +10,7 @@ import { permissions } from '../helpers/permissions.js'
 /** 用真实授权策略和内存端口验证用例，数据库原子性另做集成验证。 */
 export function memberFixture() {
   const actor = randomUUID(), user = randomUUID(), id = randomUUID(), now = new Date('2026-11-02T12:00:00Z')
-  const organization = { id, name: '协会', ownerUserId: actor, status: 'active' as const, region: '', purpose: '', version: 1,
+  const organization: OrganizationDetail = { id, name: '协会', ownerUserId: actor, status: 'active', region: '', purpose: '', version: 1,
     createdAt: now.toISOString(), ownerLegalName: '', contact: '', reviewedBy: null, reviewedAt: null, governanceReason: null }
   const member: Membership = { id: randomUUID(), organizationId: id, userId: user, displayName: '成员', status: 'pending', version: 1, createdAt: now.toISOString() }
   const invitation: OrganizationInvitation = { id: randomUUID(), organizationId: id, organizationName: '协会', userId: user, displayName: '成员',

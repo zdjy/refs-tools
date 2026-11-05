@@ -22,10 +22,23 @@ describe('裁判端静态路由与导航合同', () => {
       expect(route.meta.title).toBeTruthy()
       expect(typeof route.matched.at(-1)?.components?.default).toBe('function')
     }
-    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'organizations', 'events', 'rules', 'profile', 'feedback'] as const) {
+    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'events', 'rules', 'profile', 'feedback'] as const) {
       expect(router.resolve(modules[id].path).matched[0]?.props.default).toEqual({ moduleId: id })
     }
     expect(router.resolve(modules.gb2312.path).matched[0]?.components?.default).toBeTypeOf('function')
+  })
+
+  it('组织路由：静态路径优先于动态 id，id 仅作为视图 props，且都属于组织导航分区', () => {
+    expect(router.resolve('/organizations').name).toBe('organizations')
+    expect(router.resolve('/organizations/discover').name).toBe('organization-discover')
+    expect(router.resolve('/organizations/new').name).toBe('organization-new')
+    const workspace = router.resolve('/organizations/3f2b1c9e-0000-4000-8000-000000000001')
+    expect(workspace.name).toBe('organization-workspace')
+    expect(workspace.params['organizationId']).toBe('3f2b1c9e-0000-4000-8000-000000000001')
+    for (const path of ['/organizations', '/organizations/discover', '/organizations/new', '/organizations/abc']) {
+      expect(router.resolve(path).meta.navigation).toBe('organizations')
+      expect(typeof router.resolve(path).matched.at(-1)?.components?.default).toBe('function')
+    }
   })
 
   it('模块分组恰有八项且顺序固定，所有导航目标存在', () => {

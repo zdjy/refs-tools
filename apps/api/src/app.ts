@@ -6,6 +6,7 @@ import { authRoutes, type AuthRouteDependencies } from './modules/auth/auth.rout
 import { auditRoutes, type AuditRouteDependencies } from './modules/audit/audit.routes.js'
 import { adminUsersRoutes, type AdminUsersRouteDependencies } from './modules/auth/admin-users.routes.js'
 import { organizationMembersRoutes, type MemberRouteDependencies } from './modules/organizations/organization-members.routes.js'
+import { organizationAccessRoutes, type AccessRouteDependencies } from './modules/organizations/organization-access.routes.js'
 import { profilesRoutes, type ProfilesRouteDependencies } from './modules/profiles/profiles.routes.js'
 import { organizationsRoutes, type OrganizationsRouteDependencies } from './modules/organizations/organizations.routes.js'
 import { adminMediaRoutes, type AdminMediaRouteDependencies } from './modules/media/admin-media.routes.js'
@@ -14,7 +15,7 @@ import { storageEventRoutes, type StorageEventDependencies } from './providers/o
 
 type AppOptions = FastifyServerOptions
 type AppDependencies = { adminMedia?: AdminMediaRouteDependencies; auth?: AuthRouteDependencies; audit?: AuditRouteDependencies; adminUsers?: AdminUsersRouteDependencies; media?: MediaRouteDependencies;
-  organizationMembers?: MemberRouteDependencies; organizations?: OrganizationsRouteDependencies; profiles?: ProfilesRouteDependencies;
+  organizationAccess?: AccessRouteDependencies; organizationMembers?: MemberRouteDependencies; organizations?: OrganizationsRouteDependencies; profiles?: ProfilesRouteDependencies;
   storageEvents?: StorageEventDependencies; close?: () => Promise<void> }
 
 class SafeLogController extends LogController {
@@ -71,6 +72,7 @@ export async function buildApp(options: AppOptions = {}, dependencies: AppDepend
   if (dependencies.adminUsers) await app.register(adminUsersRoutes(dependencies.adminUsers), { prefix: '/api/v1/admin' })
 
   if (dependencies.organizationMembers) await app.register(organizationMembersRoutes(dependencies.organizationMembers), { prefix: '/api/v1' })
+  if (dependencies.organizationAccess) await app.register(organizationAccessRoutes(dependencies.organizationAccess), { prefix: '/api/v1' })
   if (dependencies.profiles) await app.register(profilesRoutes(dependencies.profiles), { prefix: '/api/v1' })
   if (dependencies.organizations) await app.register(organizationsRoutes(dependencies.organizations), { prefix: '/api/v1/admin' })
   if (dependencies.adminMedia) await app.register(adminMediaRoutes(dependencies.adminMedia), { prefix: '/api/v1/admin' })

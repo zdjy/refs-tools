@@ -11,16 +11,18 @@ export async function memberAccess(r: MemberRepositories, d: MemberDependencies,
   if (!await r.identities.requireActiveActor(actor)) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
   if (mode === 'self') {
     if (organization.status !== 'active') throw new DomainError('ORGANIZATION_INACTIVE', '组织当前不接受成员变更', 409)
-    return { organization, canManage: false }
+    return { organization, canManage: false, canGrant: false }
   }
   const resource = await r.authorization.resolveScope({ type: 'organization', id })
   const context = { subjectUserId: actor, resource: resource!, bindings: await r.authorization.findBindings(actor),
     activeMember: await r.authorization.isActiveMember(actor, id), now: now.toISOString() }
   const canManage = !!resource && d.permissions.isPermitted('organization.members.manage', context)
+  // 角色授予仅限组织 owner；平台角色的范围不覆盖组织资源，因此平台管理员得到 false。
+  const canGrant = !!resource && d.permissions.isPermitted('role.manage', context)
   if (!canManage) await requirePermission(r.authorization, { subjectUserId: actor,
     permission: mode === 'read' ? 'platform.manage' : 'organization.members.manage',
     resource: mode === 'read' ? { type: 'platform', id: null } : { type: 'organization', id } }, now, d.permissions)
-  return { organization, canManage }
+  return { organization, canManage, canGrant }
 }
 
 /** 仅保存状态、版本与账号标识；与业务变更处于同一事务。 */

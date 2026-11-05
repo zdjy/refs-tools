@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import NavigationIcon from '../../../components/navigation/NavigationIcon.vue'
 import { editorialNotice } from '../../../content/editorial'
 import { modules } from '../../../navigation/modules'
+import { moduleStatus } from '../../../navigation/navigation.presentation'
 import { communityEntries, communityGuides } from '../community.presentation'
 </script>
 
@@ -30,10 +31,10 @@ import { communityEntries, communityGuides } from '../community.presentation'
       <h2 id="features-title" class="mt-0 mb-3 text-base font-bold text-ink">学习与履职</h2>
       <nav aria-label="其他功能入口" class="grid grid-cols-2 gap-2">
         <RouterLink v-for="id in communityEntries" :key="id" :to="modules[id].path" class="flex min-h-16 items-center gap-2 rounded-xl px-2 py-2 text-ink no-underline transition-all hover:bg-surface active:scale-[.98]">
-          <NavigationIcon :name="id" class="size-4 shrink-0 text-body" /><span class="min-w-0"><span class="block text-xs font-medium">{{ modules[id].title }}</span><span class="mt-1 block text-xs text-body">建设中</span></span>
+          <NavigationIcon :name="id" class="size-4 shrink-0 text-body" /><span class="min-w-0"><span class="block text-xs font-medium">{{ modules[id].title }}</span><span class="mt-1 block text-xs text-body">{{ moduleStatus(modules[id]) }}</span></span>
         </RouterLink>
       </nav>
-      <p class="mt-3 mb-0 text-xs leading-relaxed text-body">上述业务模块尚未开放，点击可查看建设说明。</p>
+      <p class="mt-3 mb-0 text-xs leading-relaxed text-body">标注「建设中」的模块尚未开放，点击可查看建设说明。</p>
     </section>
     <section id="community-guide" tabindex="-1" class="scroll-mt-24 rounded-2xl border border-solid border-line bg-surface p-5" aria-labelledby="community-guide-title">
       <h2 id="community-guide-title" class="mt-0 mb-3 text-base font-bold text-ink">关于这里</h2>

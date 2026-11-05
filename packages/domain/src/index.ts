@@ -9,6 +9,7 @@ export {
 } from './profile.js'
 export type { ProfileFields, ProfileValidationError } from './profile.js'
 export { membershipStatusAfter } from './membership-state.js'
+export { joinCodeStatus } from './join-code.js'
 export { organizationStatusAfter } from './organization-state.js'
 export { createGb2312Codec } from './gb2312.js'
 export type {

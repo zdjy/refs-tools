@@ -1,0 +1,42 @@
+import type { DirectoryList, DirectoryQuery, OrganizationApplication } from '@refs-tools/contracts/organization-self'
+import type { Candidate, JoinCode, OrganizationRole } from '@refs-tools/contracts/organization-access'
+import type { Organization } from '@refs-tools/contracts/organizations'
+import type { TransactionRunner } from '../../application/transaction.js'
+import type { PermissionEvaluator } from '../authorization/authorization.types.js'
+import type { MemberRepositories } from './organization-members.types.js'
+
+/** 「我的组织」的持久化投影；能力与角色由 Service 按实时授权计算，不在 SQL 中判断。 */
+export type MineRow = {
+  id: string; name: string; region: string; purpose: string; status: Organization['status']
+  ownerUserId: string; createdAt: string; governanceReason: string | null
+  membership: { id: string; status: 'pending' | 'active'; version: number } | null
+}
+export interface OrganizationSelfRepository {
+  mine(userId: string): Promise<MineRow[]>
+  directory(userId: string, query: DirectoryQuery): Promise<DirectoryList>
+  /** 事务级咨询锁，串行化同一申请人的并发申请，使数量上限不被「先查再写」绕过。 */
+  lockApplicant(userId: string): Promise<void>
+  countPending(userId: string): Promise<number>
+  apply(id: string, ownerUserId: string, input: OrganizationApplication, now: Date): Promise<void>
+}
+export type NewJoinCode = { id: string; organizationId: string; tokenHash: string; hint: string; maxUses: number; createdBy: string }
+export interface OrganizationJoinCodesRepository {
+  list(organizationId: string, now: Date): Promise<JoinCode[]>
+  countActive(organizationId: string, now: Date): Promise<number>
+  create(input: NewJoinCode, now: Date, expires: Date): Promise<void>
+  find(organizationId: string, id: string, now: Date): Promise<JoinCode | null>
+  /** 仅用哈希定位所属组织，不加锁；调用方须随后锁组织再消费。 */
+  organizationOf(tokenHash: string): Promise<string | null>
+  /** 单条条件 UPDATE：未撤销、未过期、有剩余次数才递增，返回递增后的投影。 */
+  consume(tokenHash: string, organizationId: string, now: Date): Promise<JoinCode | null>
+  revoke(id: string, version: number, now: Date): Promise<boolean>
+}
+export interface OrganizationRolesRepository { list(organizationId: string, now: Date): Promise<OrganizationRole[]> }
+export interface OrganizationCandidatesRepository {
+  search(organizationId: string, actorId: string, keyword: string, now: Date): Promise<Candidate[]>
+}
+export type AccessRepositories = MemberRepositories & {
+  self: OrganizationSelfRepository; joinCodes: OrganizationJoinCodesRepository
+  roles: OrganizationRolesRepository; candidates: OrganizationCandidatesRepository
+}
+export type AccessDependencies = { transaction: TransactionRunner<AccessRepositories>; permissions: PermissionEvaluator; now: () => Date }

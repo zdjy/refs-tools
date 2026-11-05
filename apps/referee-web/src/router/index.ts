@@ -32,7 +32,11 @@ export function createAppRouter(history: RouterHistory) {
       { path: modules.exams.path, name: 'exams', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'exams' }, meta: { title: modules.exams.title, navigation: 'learning' } },
       { path: modules.results.path, name: 'results', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'results' }, meta: { title: modules.results.title, navigation: 'learning' } },
       { path: modules.certifications.path, name: 'certifications', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'certifications' }, meta: { title: modules.certifications.title } },
-      { path: modules.organizations.path, name: 'organizations', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'organizations' }, meta: { title: modules.organizations.title, navigation: 'organizations' } },
+      // 组织路由全部是显式静态路径；静态的 discover / new 声明在动态 :organizationId 之前，且 id 参数只传给视图，授权由 API 裁决。
+      { path: modules.organizations.path, name: 'organizations', component: () => import('../views/organizations/OrganizationsView.vue'), meta: { title: modules.organizations.title, navigation: 'organizations' } },
+      { path: `${modules.organizations.path}/discover`, name: 'organization-discover', component: () => import('../views/organizations/OrganizationDirectoryView.vue'), meta: { title: '加入组织', navigation: 'organizations' } },
+      { path: `${modules.organizations.path}/new`, name: 'organization-new', component: () => import('../views/organizations/OrganizationApplyView.vue'), meta: { title: '申请创建组织', navigation: 'organizations' } },
+      { path: `${modules.organizations.path}/:organizationId`, name: 'organization-workspace', component: () => import('../views/organizations/OrganizationWorkspaceView.vue'), props: true, meta: { title: '组织', navigation: 'organizations' } },
       { path: modules.events.path, name: 'events', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'events' }, meta: { title: modules.events.title } },
       { path: modules.tools.path, name: 'tools', component: () => import('../views/tools/ToolsView.vue'), meta: { title: modules.tools.title, navigation: 'tools' } },
       { path: modules.gb2312.path, name: 'gb2312', component: () => import('../views/gb2312/Gb2312View.vue'), meta: { title: modules.gb2312.title, navigation: 'tools' } },

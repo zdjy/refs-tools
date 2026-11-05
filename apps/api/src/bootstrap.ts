@@ -7,6 +7,13 @@ import { AdminUsersService } from './modules/auth/admin-users.service.js'
 import { OrganizationMembersService } from './modules/organizations/organization-members.service.js'
 import { OrganizationInvitationsService } from './modules/organizations/organization-invitations.service.js'
 import { PgOrganizationMembersRepository } from './modules/organizations/organization-members.repository.js'
+import { OrganizationSelfService } from './modules/organizations/organization-self.service.js'
+import { OrganizationJoinCodesService } from './modules/organizations/organization-join-codes.service.js'
+import { OrganizationRolesService } from './modules/organizations/organization-roles.service.js'
+import { OrganizationCandidatesService } from './modules/organizations/organization-candidates.service.js'
+import { PgOrganizationSelfRepository } from './modules/organizations/organization-self.repository.js'
+import { PgOrganizationJoinCodesRepository } from './modules/organizations/organization-join-codes.repository.js'
+import { PgOrganizationRolesRepository, PgOrganizationCandidatesRepository } from './modules/organizations/organization-roles.repository.js'
 import { OrganizationsService } from './modules/organizations/organizations.service.js'
 import { PgOrganizationsRepository } from './modules/organizations/organizations.repository.js'
 import { ProfilesService } from './modules/profiles/profiles.service.js'
@@ -39,13 +46,19 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
   })
   try {
     const media = buildMediaService(env, pool, permissions)
+    // 成员与用户视角的组织用例共用同一事务装配：所有 Repository 绑定同一连接，成员码/角色/成员写入串行化于组织行锁。
     const memberDependencies = {
       transaction: createTransactionRunner(pool, client => ({
         members: new PgOrganizationMembersRepository(client), organizations: new PgOrganizationsRepository(client),
         identities: new PgAdminUsersRepository(client), authorization: new PgAuthorizationRepository(client), audit: new PgAuditRepository(client),
+        self: new PgOrganizationSelfRepository(client), joinCodes: new PgOrganizationJoinCodesRepository(client),
+        roles: new PgOrganizationRolesRepository(client), candidates: new PgOrganizationCandidatesRepository(client),
       })), permissions, now: () => new Date(),
     }
     return await buildApp({ logger: true }, {
+      organizationAccess: { sessions: service, publicOrigin, self: new OrganizationSelfService(memberDependencies),
+        joinCodes: new OrganizationJoinCodesService(memberDependencies), roles: new OrganizationRolesService(memberDependencies),
+        candidates: new OrganizationCandidatesService(memberDependencies) },
       organizationMembers: { sessions: service, publicOrigin, members: new OrganizationMembersService(memberDependencies),
         invitations: new OrganizationInvitationsService(memberDependencies) },
       auth: { service, publicOrigin },

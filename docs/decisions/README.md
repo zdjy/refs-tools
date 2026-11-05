@@ -6,6 +6,7 @@
 
 ## 决策索引
 
+- [ADR 0032：裁判端组织入口、成员码、组织角色与候选人检索](./0032-referee-organization-access.md) — 能力由服务端按同一授权矩阵计算；成员码只存哈希并在行锁内条件消费；角色仅 owner 可授予；候选人检索限制枚举面并审计。
 - [ADR 0031：离线应用外壳 Service Worker](./0031-offline-app-shell-service-worker.md) — 只预缓存同源静态外壳，不拦截 /api、/admin 与非 GET；导航网络优先加缓存兜底，更新由用户确认，预缓存有体积上限，自写模板不引入 workbox。
 
 - [ADR 0030：弱网判定、读请求自动重试与加载反馈](./0030-network-resilience-and-loading-feedback.md) — 以请求耗时分级加浏览器联网事件判定弱网，仅 GET 有限重试，写操作不自动重试、不做离线队列，按场景选择静态骨架 / 按钮 loading / 路由进度条 / 全局提示。

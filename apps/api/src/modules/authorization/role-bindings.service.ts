@@ -15,7 +15,7 @@ function validateGrant(input: NewRoleBinding, now: Date): void {
   }
 }
 
-async function auditBinding(audit: AuditRepository, actor: string, binding: ScopedRoleBinding,
+export async function auditBinding(audit: AuditRepository, actor: string, binding: ScopedRoleBinding,
   organizationId: string | null, revoked: boolean, now: Date): Promise<void> {
   const snapshot = { role: binding.role, subjectUserId: binding.subjectUserId, scopeType: binding.scopeType, scopeId: binding.scopeId }
   await appendAudit(audit, { actorUserId: actor, action: revoked ? 'role.revoked' : 'role.granted',

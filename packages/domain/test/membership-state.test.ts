@@ -6,9 +6,15 @@ describe('成员状态转换', () => {
     expect(membershipStatusAfter('pending', 'approve')).toBe('active')
     expect(membershipStatusAfter('pending', 'reject')).toBe('rejected')
     expect(membershipStatusAfter('pending', 'remove')).toBeNull()
+    expect(membershipStatusAfter('pending', 'leave')).toBe('left')
     expect(membershipStatusAfter('active', 'remove')).toBe('removed')
     expect(membershipStatusAfter('active', 'leave')).toBe('left')
     expect(membershipStatusAfter('active', 'reject')).toBeNull()
+  })
+  it('申请人撤回待审申请记为 left，之后不能再次审批', () => {
+    const withdrawn = membershipStatusAfter('pending', 'leave')
+    expect(withdrawn).toBe('left')
+    expect(membershipStatusAfter(withdrawn!, 'approve')).toBeNull()
   })
   it('历史终态不能再次审批或恢复', () => {
     for (const status of ['removed', 'left', 'rejected'] as const) {
