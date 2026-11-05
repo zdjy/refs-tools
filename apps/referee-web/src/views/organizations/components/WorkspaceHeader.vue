@@ -5,7 +5,9 @@ import type { MyOrganization } from '@refs-tools/contracts/organization-self'
 import { organizationStatusText, roleLabels } from '../organizations.presentation'
 
 /**
- * 工作区页头：组织名用超大字号作为页面的唯一视觉重心，状态与本人角色并排，
+ * 工作区页头：组织名用超大字号作为页面的唯一视觉重心。
+ * 手机上状态与所在地一组、本人角色单独一组，两组各自换行，
+ * 避免所在地与角色胶囊混排后被折成参差不齐的两行。
  * 非运行状态把原因写在标题下方，用户一眼就知道为什么部分功能不可用。
  */
 defineProps<{ organization: MyOrganization }>()
@@ -18,13 +20,17 @@ const dot = { pending_review: 'bg-muted', active: 'bg-green', frozen: 'bg-muted'
       <ArrowLeft class="size-4" :stroke-width="1.75" aria-hidden="true" />我的组织
     </RouterLink>
     <h1 class="m-0 text-[32px] leading-[1.1] font-bold tracking-[-0.03em] text-ink wrap-anywhere focus:outline-hidden compact:text-5xl tablet:text-6xl">{{ organization.name }}</h1>
-    <p class="m-0 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink">
-      <span class="inline-flex items-center gap-2 rounded-full border border-solid border-line bg-surface px-3 py-1 text-xs font-medium">
-        <span class="size-2 rounded-full" :class="dot[organization.status]" aria-hidden="true"></span>{{ organizationStatusText[organization.status].label }}
-      </span>
-      <span v-if="organization.region">{{ organization.region }}</span>
-      <span v-for="role in organization.roles" :key="role" class="rounded-full border border-solid border-line bg-surface px-3 py-1 text-xs font-medium">{{ roleLabels[role] }}</span>
-    </p>
+    <div class="grid gap-2.5">
+      <p class="m-0 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span class="inline-flex shrink-0 items-center gap-2 rounded-full border border-solid border-line bg-surface px-3 py-1 text-[13px] font-medium text-ink">
+          <span class="size-2 rounded-full" :class="dot[organization.status]" aria-hidden="true"></span>{{ organizationStatusText[organization.status].label }}
+        </span>
+        <span v-if="organization.region" class="min-w-0 text-[13px] leading-snug text-body wrap-anywhere">{{ organization.region }}</span>
+      </p>
+      <ul v-if="organization.roles.length" class="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="我的角色">
+        <li v-for="role in organization.roles" :key="role" class="rounded-full border border-solid border-line bg-surface px-3 py-1 text-[13px] font-medium text-ink">{{ roleLabels[role] }}</li>
+      </ul>
+    </div>
     <p v-if="organizationStatusText[organization.status].hint" role="status" class="m-0 max-w-[64ch] text-sm leading-relaxed text-ink">{{ organizationStatusText[organization.status].hint }}</p>
   </header>
 </template>
