@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { ChevronRight, KeyRound, Search, SquarePlus } from '@lucide/vue'
+import { ChevronRight, SquarePlus, UserPlus } from '@lucide/vue'
 
 /**
- * 三条通向其他页面的入口，用一块分隔列表而不是三张等大的图标卡，
- * 因为它们是同一个决定（我要去哪里找组织）的三种答案，不是三个独立的功能板块。
+ * 两条通向其他页面的入口，用一块分隔列表而不是两张等大的图标卡，
+ * 因为它们是同一个决定（加入已有组织还是自己新建）的两种答案，不是两个独立的功能板块。
+ * 成员码兑换与目录检索共用同一个加入页：用户通常只知道其中一种凭据，
+ * 拆成两个入口只会让他在点进去之前先做一次无意义的自我分类。
  */
 const entries = [
-  { to: '/organizations/discover#code', icon: KeyRound, title: '输入成员码加入', hint: '组织管理者发给你的成员码，兑换后立即成为成员。' },
-  { to: '/organizations/discover', icon: Search, title: '浏览组织目录', hint: '按名称或地区查找已开通的组织，提交加入申请后等待审核。' },
+  { to: '/organizations/discover', icon: UserPlus, title: '加入新组织', hint: '有成员码就直接兑换；没有就按名称或地区在目录里找，提交申请后等待审核。' },
   { to: '/organizations/new', icon: SquarePlus, title: '申请创建组织', hint: '提交资料给平台审核，通过后你将成为组织负责人。' },
 ] as const
 </script>
 
 <template>
-  <nav aria-label="加入或创建组织">
+  <nav aria-label="加入新组织或申请创建组织">
     <ul class="m-0 grid list-none gap-0 border-0 border-y border-solid border-line p-0">
       <li v-for="entry in entries" :key="entry.to" class="border-0 border-b border-solid border-line last:border-b-0">
         <RouterLink :to="entry.to" class="group flex min-h-16 items-center gap-4 p-4 text-ink no-underline transition-colors duration-200 hover:bg-canvas focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent compact:p-5">

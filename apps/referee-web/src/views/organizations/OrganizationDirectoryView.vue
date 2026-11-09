@@ -25,8 +25,8 @@ useUiFeedback(dir.redeem.done)
         <ArrowLeft class="size-4" :stroke-width="1.75" aria-hidden="true" />我的组织
       </RouterLink>
       <header class="grid gap-2">
-        <h1 class="m-0 text-[28px] leading-tight font-bold tracking-tight text-ink compact:text-[36px]">加入一个组织</h1>
-        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-body">有成员码就直接兑换；没有的话，在目录里找到组织并提交申请，由组织管理者审核。</p>
+        <h1 class="m-0 text-[28px] leading-tight font-bold tracking-tight text-ink compact:text-[36px]">加入新组织</h1>
+        <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-body">有成员码就直接兑换；没有的话，在目录里找到组织并提交加入申请，由组织管理者审核。</p>
       </header>
       <OrganizationsSignIn v-if="status !== 'authenticated'" :status="status" @retry="retry" />
       <template v-else>

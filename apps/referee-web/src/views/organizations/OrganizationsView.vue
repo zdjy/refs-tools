@@ -68,7 +68,7 @@ useUiFeedback(transfers.action.done)
             </div>
           </section>
           <section aria-labelledby="entries-title" class="grid gap-3">
-            <h2 id="entries-title" class="m-0 text-xl text-ink">加入或创建</h2>
+            <h2 id="entries-title" class="m-0 text-xl text-ink">加入新组织或申请创建</h2>
             <OrganizationEntries />
           </section>
         </template>
