@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import { NAlert, NButton, NInput } from 'naive-ui'
-import { ArrowRight, LogOut, Pencil } from '@lucide/vue'
+import { LogOut, Pencil } from '@lucide/vue'
 import type { MyOrganization, OrganizationProfileUpdated } from '@refs-tools/contracts/organization-self'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
 import { useUiFeedback } from '../../../components/ui/useUiFeedback'
@@ -17,8 +16,6 @@ const props = defineProps<{ organization: MyOrganization; refresh: () => Promise
 const emit = defineEmits<{ leave: []; saved: [OrganizationProfileUpdated] }>()
 const profile = useOrganizationProfile(computed(() => props.organization), value => emit('saved', value), () => props.refresh())
 useUiFeedback(profile.action.done)
-const certificationPath = computed(() => `/certifications?organizationId=${encodeURIComponent(props.organization.id)}`)
-const canSubmitCertification = computed(() => props.organization.status === 'active' && props.organization.membership?.status === 'active')
 </script>
 
 <template>
@@ -45,17 +42,6 @@ const canSubmitCertification = computed(() => props.organization.status === 'act
         <UiSubmitHint :busy="profile.action.busy.value" />
       </form>
       <p v-else class="m-0 max-w-[68ch] text-sm leading-relaxed text-body wrap-anywhere">{{ organization.purpose || '该组织尚未填写简介。' }}</p>
-    </section>
-    <section v-if="canSubmitCertification" aria-labelledby="my-certification-title" class="grid gap-3 border-0 border-t border-solid border-line pt-6">
-      <h2 id="my-certification-title" class="m-0 text-lg text-ink">我的认证</h2>
-      <p class="m-0 max-w-[64ch] text-sm leading-relaxed text-body">
-        普通成员也可以提交本组织的裁判认证。材料先保存为草稿，提交后由本组织认证员审核；通过后可继续申请平台认证。
-      </p>
-      <div>
-        <RouterLink :to="certificationPath" class="inline-flex min-h-11 items-center gap-2 rounded-full border-0 bg-ink px-5 text-sm font-medium text-surface no-underline transition-all duration-200 hover:bg-black active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-          申请或查看认证<ArrowRight class="size-4" :stroke-width="1.75" aria-hidden="true" />
-        </RouterLink>
-      </div>
     </section>
     <section aria-labelledby="mine-title" class="grid gap-3 border-0 border-t border-solid border-line pt-6">
       <h2 id="mine-title" class="m-0 text-lg text-ink">我的成员关系</h2>

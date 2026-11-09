@@ -3,7 +3,7 @@ import type { MyOrganization, OrganizationProfileUpdated } from '@refs-tools/con
 import { organizationsApi, type OrganizationsApi } from '../../api/organizations.api'
 import { useAction, useLoadable } from './organization-primitives'
 
-export type WorkspaceTab = 'overview' | 'members' | 'invitations' | 'codes' | 'roles' | 'certifications' | 'ownership'
+export type WorkspaceTab = 'overview' | 'my-certifications' | 'members' | 'invitations' | 'codes' | 'roles' | 'certifications' | 'ownership'
 
 /**
  * 单个组织的工作区：从「我的组织」中取出当前组织与本人成员关系，
@@ -20,6 +20,8 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
   const notFound = computed(() => mine.data.value !== null && !organization.value && !left.value)
   const tabs = computed<{ id: WorkspaceTab; label: string }[]>(() => {
     const base: { id: WorkspaceTab; label: string }[] = [{ id: 'overview', label: '概览' }]
+    // 正式成员都能提交自己的认证；入口独立成标签，避免藏在概览里。
+    if (organization.value?.membership?.status === 'active') base.push({ id: 'my-certifications', label: '我的认证' })
     // 认证审核不依赖成员管理能力：仅有 certifier 角色的成员也能进入，不能先被 canManage 截断。
     const certifier = organization.value?.roles.includes('certifier') ?? false
     const certification: { id: WorkspaceTab; label: string }[] = certifier

@@ -89,6 +89,11 @@ describe('工作区标签页', () => {
     expect(await tabsFor({ isOwner: false })).not.toContain('ownership')
     expect(await tabsFor({ isOwner: false, canManage: false })).toEqual(['overview'])
   })
+  it('正式成员的「我的认证」独立成标签，不藏在概览里', async () => {
+    const membership = { id: 'm1', status: 'active' as const, version: 1 }
+    expect(await tabsFor({ canManage: false, membership })).toEqual(['overview', 'my-certifications'])
+    expect(await tabsFor({ canManage: false, membership, roles: ['certifier'] })).toEqual(['overview', 'my-certifications', 'certifications'])
+  })
   it('认证员看到认证审核，负责人看到申诉复核，同一标签不会重复', async () => {
     expect(await tabsFor({ isOwner: false, roles: ['certifier'] })).toContain('certifications')
     // 认证员通常没有成员管理能力，入口不能因 canManage=false 被截断。

@@ -9,6 +9,7 @@ import CertificationReviewEntry from './components/CertificationReviewEntry.vue'
 import InvitationsPanel from './components/InvitationsPanel.vue'
 import JoinCodesPanel from './components/JoinCodesPanel.vue'
 import MembersPanel from './components/MembersPanel.vue'
+import MyCertificationEntry from './components/MyCertificationEntry.vue'
 import OwnershipPanel from './components/OwnershipPanel.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
 import OverviewPanel from './components/OverviewPanel.vue'
@@ -68,6 +69,7 @@ async function leave() {
           class="min-w-0 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent compact:p-6">
           <OverviewPanel v-if="ws.tab.value === 'overview'" :organization="ws.organization.value" :refresh="ws.load"
             @leave="confirm.open(true)" @saved="ws.applyPurpose" />
+          <MyCertificationEntry v-else-if="ws.tab.value === 'my-certifications'" :organization="ws.organization.value" />
           <MembersPanel v-else-if="ws.tab.value === 'members'" :key="`m-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
           <InvitationsPanel v-else-if="ws.tab.value === 'invitations'" :key="`i-${id}`" :organization-id="id" />
           <JoinCodesPanel v-else-if="ws.tab.value === 'codes'" :key="`c-${id}`" :organization-id="id" />
