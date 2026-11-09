@@ -10,7 +10,7 @@ import type { CertificationDraft } from '../useCertificationDraft'
  */
 const props = defineProps<{
   organizations: MyOrganization[]; takenOrganizationIds: string[]; platformTaken: boolean; platformEligible: boolean
-  editing: boolean; disabled: boolean; scopeProblem?: string | undefined; organizationProblem?: string | undefined; organizationId: string | null
+  fixed?: boolean; editing: boolean; disabled: boolean; scopeProblem?: string | undefined; organizationProblem?: string | undefined; organizationId: string | null
 }>()
 const fields = defineModel<CertificationDraft>('fields', { required: true })
 const emit = defineEmits<{ changeScope: [type: 'organization' | 'platform', organizationId: string | null] }>()
@@ -35,9 +35,9 @@ function choose(type: 'organization' | 'platform') {
 <template>
   <fieldset class="m-0 grid min-w-0 gap-3 border-0 p-0" :disabled="disabled">
     <legend class="mb-2 text-sm font-medium text-ink">认证范围</legend>
-    <div v-if="editing" class="grid gap-1 rounded-xl border border-solid border-line bg-soft p-4">
+    <div v-if="editing || fixed" class="grid gap-1 rounded-xl border border-solid border-line bg-soft p-4">
       <p class="m-0 text-sm font-semibold text-ink">{{ fields.scopeType === 'platform' ? '平台认证' : selectedOrganization?.name ?? '组织认证' }}</p>
-      <p class="m-0 text-[13px] leading-relaxed text-body">认证范围在创建时确定，补件不能更换范围；如需其他范围请先完成当前记录。</p>
+      <p class="m-0 text-[13px] leading-relaxed text-body">{{ fields.scopeType === 'platform' ? '由平台审核员独立审核，通过后可跨组织使用。' : '仅在本组织内使用，由本组织认证员审核。' }} 认证范围已确定，不能在表单中更换。</p>
     </div>
     <template v-else>
       <div class="grid grid-cols-2 gap-2" role="group" aria-label="选择认证范围">

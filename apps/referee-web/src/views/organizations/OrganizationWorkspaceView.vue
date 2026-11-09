@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { NAlert, NButton } from 'naive-ui'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
@@ -9,7 +9,7 @@ import CertificationReviewEntry from './components/CertificationReviewEntry.vue'
 import InvitationsPanel from './components/InvitationsPanel.vue'
 import JoinCodesPanel from './components/JoinCodesPanel.vue'
 import MembersPanel from './components/MembersPanel.vue'
-import MyCertificationEntry from './components/MyCertificationEntry.vue'
+import CertificationPanel from '../../features/certifications/CertificationPanel.vue'
 import OwnershipPanel from './components/OwnershipPanel.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
 import OverviewPanel from './components/OverviewPanel.vue'
@@ -19,20 +19,33 @@ import WorkspaceHeader from './components/WorkspaceHeader.vue'
 import { linkButton } from './organizations.presentation'
 import { useAuthGate } from '../../application/useAuthGate'
 import { useConfirmReason } from './useConfirmReason'
-import { useOrganizationWorkspace } from './useOrganizationWorkspace'
+import { useOrganizationWorkspace, type WorkspaceTab } from './useOrganizationWorkspace'
 import { useWorkspaceTabs } from './useWorkspaceTabs'
 
 const props = defineProps<{ organizationId: string }>()
 const id = computed(() => props.organizationId)
 const ws = useOrganizationWorkspace(id)
-const { status, retry } = useAuthGate(ws.load)
+const route = useRoute()
+async function loadWorkspace() {
+  if (await ws.load() && route.query['tab'] === 'my-certifications' && ws.tabs.value.some(tab => tab.id === 'my-certifications')) {
+    ws.tab.value = 'my-certifications'
+  }
+}
+const { status, retry } = useAuthGate(loadWorkspace)
 const confirm = useConfirmReason<true>()
 const router = useRouter()
 const tablist = ref<HTMLElement | null>(null)
-const { onKeydown } = useWorkspaceTabs(tablist, ws.tab)
+const certificationPanel = ref<InstanceType<typeof CertificationPanel> | null>(null)
+function selectTab(tab: WorkspaceTab) {
+  if (tab !== ws.tab.value && certificationPanel.value && !certificationPanel.value.canLeave()) return false
+  ws.tab.value = tab
+  return true
+}
+const { onKeydown } = useWorkspaceTabs(tablist, ws.tab, selectTab)
 useUiFeedback(ws.leave.done)
 // 切换组织时回到概览并重新读取，旧组织的数据与确认状态都不保留。
-watch(id, () => { ws.tab.value = 'overview'; confirm.close(); void ws.load() })
+watch(id, () => { ws.tab.value = 'overview'; confirm.close(); void loadWorkspace() })
+watch(() => route.query['tab'], () => { if (route.query['tab'] === 'my-certifications' && ws.tabs.value.some(tab => tab.id === 'my-certifications')) selectTab('my-certifications') })
 onBeforeUnmount(() => ws.mine.clear())
 
 async function leave() {
@@ -63,13 +76,14 @@ async function leave() {
           <button v-for="item in ws.tabs.value" :id="`ws-tab-${item.id}`" :key="item.id" type="button" role="tab" :data-tab="item.id"
             :aria-selected="ws.tab.value === item.id" :aria-controls="`ws-panel-${item.id}`" :tabindex="ws.tab.value === item.id ? 0 : -1"
             class="inline-flex min-h-11 min-w-max flex-1 items-center justify-center rounded-full border-0 px-2 text-sm whitespace-nowrap transition-[background-color,color] duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[.98] sm:flex-none sm:px-5"
-            :class="ws.tab.value === item.id ? 'bg-ink font-semibold text-surface' : 'bg-soft text-body hover:bg-sand hover:text-ink'" @click="ws.tab.value = item.id">{{ item.label }}</button>
+            :class="ws.tab.value === item.id ? 'bg-ink font-semibold text-surface' : 'bg-soft text-body hover:bg-sand hover:text-ink'" @click="selectTab(item.id)">{{ item.label }}</button>
         </div>
         <div :id="`ws-panel-${ws.tab.value}`" role="tabpanel" :aria-labelledby="`ws-tab-${ws.tab.value}`" tabindex="0"
           class="min-w-0 border-0 border-t border-solid border-ink pt-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent compact:p-6">
           <OverviewPanel v-if="ws.tab.value === 'overview'" :organization="ws.organization.value" :refresh="ws.load"
             @leave="confirm.open(true)" @saved="ws.applyPurpose" />
-          <MyCertificationEntry v-else-if="ws.tab.value === 'my-certifications'" :organization="ws.organization.value" />
+          <CertificationPanel v-else-if="ws.tab.value === 'my-certifications'" :key="`mine-${id}`" ref="certificationPanel"
+            :scope="{ type: 'organization', organizationId: id }" />
           <MembersPanel v-else-if="ws.tab.value === 'members'" :key="`m-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
           <InvitationsPanel v-else-if="ws.tab.value === 'invitations'" :key="`i-${id}`" :organization-id="id" />
           <JoinCodesPanel v-else-if="ws.tab.value === 'codes'" :key="`c-${id}`" :organization-id="id" />

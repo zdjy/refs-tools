@@ -1,6 +1,7 @@
 import { nextTick } from 'vue'
 import { createRouter, type RouteRecordRaw, type RouterHistory } from 'vue-router'
 import { editorialRoutes } from '../content/editorial-routes'
+import { legacyCertificationTarget } from '../features/certifications/certification-scope'
 import { modules, type NavigationSection } from '../navigation/modules'
 
 declare module 'vue-router' {
@@ -31,7 +32,9 @@ export function createAppRouter(history: RouterHistory) {
       { path: modules['wrong-questions'].path, name: 'wrong-questions', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'wrong-questions' }, meta: { title: modules['wrong-questions'].title, navigation: 'learning' } },
       { path: modules.exams.path, name: 'exams', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'exams' }, meta: { title: modules.exams.title, navigation: 'learning' } },
       { path: modules.results.path, name: 'results', component: () => import('../views/module-status/ModuleStatusView.vue'), props: { moduleId: 'results' }, meta: { title: modules.results.title, navigation: 'learning' } },
-      { path: modules.certifications.path, name: 'certifications', component: () => import('../views/certifications/CertificationsView.vue'), meta: { title: modules.certifications.title } },
+      { path: modules.certifications.path, name: 'certifications', component: () => import('../views/certifications/CertificationsView.vue'),
+        beforeEnter: to => legacyCertificationTarget(to.query['organizationId']) ?? true,
+        meta: { title: modules.certifications.title, navigation: 'account' } },
       // 组织路由全部是显式静态路径；静态的 discover / new 声明在动态 :organizationId 之前，且 id 参数只传给视图，授权由 API 裁决。
       { path: modules.organizations.path, name: 'organizations', component: () => import('../views/organizations/OrganizationsView.vue'), meta: { title: modules.organizations.title, navigation: 'organizations' } },
       { path: `${modules.organizations.path}/discover`, name: 'organization-discover', component: () => import('../views/organizations/OrganizationDirectoryView.vue'), meta: { title: '加入新组织', navigation: 'organizations' } },

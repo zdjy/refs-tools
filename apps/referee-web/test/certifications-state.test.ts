@@ -1,18 +1,19 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ref } from 'vue'
+import { createRenderer, defineComponent, ref } from 'vue'
 import type { Certification, CertificationAppeal, CertificationSummary } from '@refs-tools/contracts/certifications'
 import type { MyOrganization } from '@refs-tools/contracts/organization-self'
 import { CertificationsApiError, type CertificationsApi } from '../src/api/certifications.api'
 import type { OrganizationsApi } from '../src/api/organizations.api'
 import {
   applicantTag, appealDecisionOptions, certificationErrorMessage, pendingAppeal, reviewDecisionOptions,
-} from '../src/views/certifications/certifications.presentation'
+} from '../src/features/certifications/certifications.presentation'
 import {
   createBodyFrom, draftFrom, draftProblems, updateBodyFrom, uploadOptionsFor,
-} from '../src/views/certifications/useCertificationDraft'
-import { useCertifications } from '../src/views/certifications/useCertifications'
-import { useReviewAccess } from '../src/views/certifications/useReviewAccess'
-import { useReviewQueues } from '../src/views/certifications/useReviewQueues'
+} from '../src/features/certifications/useCertificationDraft'
+import { useCertificationForm } from '../src/features/certifications/useCertificationForm'
+import { useCertifications } from '../src/features/certifications/useCertifications'
+import { useReviewAccess } from '../src/features/certifications/useReviewAccess'
+import { useReviewQueues } from '../src/features/certifications/useReviewQueues'
 
 const iso = '2025-01-02T03:04:05.000Z'
 const record: Certification = {
@@ -90,6 +91,60 @@ describe('认证表单投影', () => {
 })
 
 describe('本人认证用例', () => {
+  it('固定范围的新建表单不能切换到平台或其他组织，载荷沿用入口范围', () => {
+    const renderer = createRenderer<Record<string, unknown>, Record<string, unknown>>({
+      createElement: () => ({}), createText: () => ({}), createComment: () => ({}), insert() {}, remove() {},
+      setText() {}, setElementText() {}, parentNode: () => null, nextSibling: () => null, patchProp() {},
+    })
+    let form!: ReturnType<typeof useCertificationForm>
+    const app = renderer.createApp(defineComponent({ setup() {
+      form = useCertificationForm({ initial: null, organizations: [organization()], takenOrganizationIds: [],
+        platformTaken: false, platformEligible: true, editing: false, busy: false, error: '',
+        fixedScope: { type: 'organization', organizationId: 'o1' } }, vi.fn(), vi.fn())
+      return () => null
+    } }))
+    vi.stubGlobal('window', { addEventListener() {}, removeEventListener() {} })
+    try {
+      app.mount({})
+      form.changeScope('platform', null)
+      form.changeScope('organization', 'o2')
+      expect(form.draft.fields.scopeType).toBe('organization')
+      expect(form.draft.fields.organizationId).toBe('o1')
+      expect(createBodyFrom(form.draft.fields).scope).toEqual({ type: 'organization', organizationId: 'o1' })
+      app.unmount()
+    } finally { vi.unstubAllGlobals() }
+  })
+
+  it('完整读取分页摘要后隔离平台与当前组织，资格不依赖当前页', async () => {
+    const platform: CertificationSummary = { ...summary, id: 'cp', scope: { type: 'platform', organizationId: null } }
+    const prerequisite: CertificationSummary = { ...summary, id: 'c2', scope: { type: 'organization', organizationId: 'o2' }, effectiveStatus: 'approved' }
+    const a = api({ mine: vi.fn(async ({ page: current }: { page: string }) => ({
+      items: [[summary], [platform], [prerequisite]][Number(current) - 1] ?? [], total: 3, page: Number(current), pageSize: 1,
+    })) })
+    const c = useCertifications(a, org(), { type: 'platform', organizationId: null })
+    await c.load()
+    expect(c.items.value).toEqual([platform])
+    expect(c.platformEligible.value).toBe(true)
+    expect(a.mine).toHaveBeenCalledTimes(3)
+    expect(await c.open(summary)).toBe(false)
+    expect(a.detail).not.toHaveBeenCalled()
+    const o = useCertifications(a, org(), { type: 'organization', organizationId: 'o1' })
+    await o.load()
+    expect(o.items.value).toEqual([summary])
+    expect(await o.open(platform)).toBe(false)
+  })
+
+  it('平台记录始终可查看，前置组织认证失效不隐藏已保存的平台申请', async () => {
+    const platform = { ...record, scope: { type: 'platform' as const, organizationId: null } }
+    const a = api({ mine: vi.fn(async () => page([platform])), detail: vi.fn(async () => platform) })
+    const c = useCertifications(a, org(), platform.scope)
+    await c.load()
+    expect(c.platformEligible.value).toBe(false)
+    expect(c.items.value).toHaveLength(1)
+    expect(await c.open(platform)).toBe(true)
+    expect(c.selectedRecord.value).toEqual(platform)
+  })
+
   it('保存后提交使用返回版本；部分成功保留原记录，不伪报已提交', async () => {
     const a = api({ create: vi.fn(async () => ({ ...record, version: 7 })), submit: vi.fn(async () => { throw new CertificationsApiError('NETWORK_ERROR', 0) }) })
     const c = useCertifications(a, org())

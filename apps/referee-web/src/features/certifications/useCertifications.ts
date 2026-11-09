@@ -1,26 +1,42 @@
 import { computed, ref } from 'vue'
 import type {
-  Certification, CertificationAppeal, CertificationHistory, CertificationSummary, CreateCertification, UpdateCertification,
+  Certification, CertificationAppeal, CertificationHistory, CertificationScope, CertificationSummary, CreateCertification, UpdateCertification,
 } from '@refs-tools/contracts/certifications'
 import type { MyOrganization } from '@refs-tools/contracts/organization-self'
-import { certificationsApi, type CertificationsApi } from '../../api/certifications.api'
+import type { Paged, PageQuery } from '@refs-tools/contracts/pagination'
+import { CertificationsApiError, certificationsApi, type CertificationsApi } from '../../api/certifications.api'
 import { organizationsApi, type OrganizationsApi } from '../../api/organizations.api'
 import { useCertificationAction, useCertificationLoadable } from './useCertificationState'
 
-const PAGE_SIZE = '20'
+import { sameCertificationScope } from './certification-scope'
+
+/** 完整读取本人摘要，避免范围隔离后漏掉后续页的前置认证或已有记录。 */
+async function allPages<T>(read: (query: PageQuery) => Promise<Paged<T>>): Promise<T[]> {
+  const items: T[] = []
+  let page = 1
+  while (true) {
+    const result = await read({ page: String(page), pageSize: '100' })
+    items.push(...result.items)
+    if (page * result.pageSize >= result.total) return items
+    if (!result.items.length) throw new CertificationsApiError('SERVICE_UNAVAILABLE', 0)
+    page++
+  }
+}
 
 /**
  * 裁判端认证工作台：本人当前认证、详情、历史与申诉，以及组织/平台范围的前置条件。
  * 列表与详情分开读取；写入成功后刷新列表和当前详情，刷新失败只提示陈旧，不把成功说成失败。
  */
-export function useCertifications(api: CertificationsApi = certificationsApi, orgApi: OrganizationsApi = organizationsApi) {
-  const page = ref(1)
+export function useCertifications(api: CertificationsApi = certificationsApi, orgApi: OrganizationsApi = organizationsApi,
+  scope?: CertificationScope) {
   const selectedId = ref<string | null>(null)
-  const mine = useCertificationLoadable(async () => api.mine({ page: String(page.value), pageSize: PAGE_SIZE }))
-  const organizations = useCertificationLoadable(async () => (await orgApi.mine({ pageSize: '100' })).items)
+  const mine = useCertificationLoadable(async () => allPages(api.mine))
+  const organizations = useCertificationLoadable(async () => allPages(orgApi.mine))
   const detail = useCertificationLoadable(async () => {
     if (!selectedId.value) throw new Error('missing certification id')
-    return api.detail(selectedId.value)
+    const record = await api.detail(selectedId.value)
+    if (scope && !sameCertificationScope(record.scope, scope)) throw new CertificationsApiError('NOT_FOUND', 404)
+    return record
   })
   const history = useCertificationLoadable(async () => {
     if (!selectedId.value) throw new Error('missing certification id')
@@ -35,12 +51,12 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
   const refreshing = ref(false)
   const locked = computed(() => action.busy.value || refreshing.value)
 
-  const items = computed<CertificationSummary[]>(() => mine.data.value?.items ?? [])
-  const pageCount = computed(() => Math.max(1, Math.ceil((mine.data.value?.total ?? 0) / Number(PAGE_SIZE))))
+  const allItems = computed<CertificationSummary[]>(() => mine.data.value ?? [])
+  const items = computed(() => allItems.value.filter(item => !scope || sameCertificationScope(item.scope, scope)))
   const orgItems = computed<MyOrganization[]>(() => organizations.data.value ?? [])
   const activeOrganizations = computed(() => orgItems.value.filter((item) => item.status === 'active' && item.membership?.status === 'active'))
   const orgNames = computed<Record<string, string>>(() => Object.fromEntries(orgItems.value.map((item) => [item.id, item.name])))
-  const platformEligible = computed(() => items.value.some((item) => item.scope.type === 'organization' && item.effectiveStatus === 'approved'))
+  const platformEligible = computed(() => allItems.value.some((item) => item.scope.type === 'organization' && item.effectiveStatus === 'approved'))
   const loading = computed(() => mine.loading.value && mine.data.value === null)
   const loadError = computed(() => (!mine.data.value ? mine.error.value : '') || (!organizations.data.value ? organizations.error.value : ''))
   const selectedRecord = computed<Certification | null>(() => detail.data.value)
@@ -50,10 +66,6 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
   async function load() {
     stale.value = ''
     await Promise.all([mine.load(), organizations.load()])
-  }
-  async function go(next: number) {
-    page.value = Math.min(Math.max(1, next), pageCount.value)
-    return mine.load()
   }
   async function refreshSelected() {
     if (!selectedId.value) return false
@@ -67,7 +79,7 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
     refreshing.value = false
   }
   async function open(item: Pick<CertificationSummary, 'id'>) {
-    if (locked.value) return false
+    if (locked.value || (scope && !items.value.some(record => record.id === item.id))) return false
     selectedId.value = item.id
     detail.clear(); history.clear(); appeals.clear()
     stale.value = ''
@@ -134,8 +146,8 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
     return ok
   }
   return {
-    page, pageCount, mine, organizations, activeOrganizations, platformEligible, orgNames, items, loading, loadError,
+    mine, organizations, activeOrganizations, platformEligible, orgNames, items, loading, loadError,
     selectedId, selectedRecord, historyItems, appealItems, detail, history, appeals, action, locked, stale,
-    load, go, open, close, createDraft, updateDraft, saveApplication, submit, appeal,
+    load, open, close, createDraft, updateDraft, saveApplication, submit, appeal,
   }
 }

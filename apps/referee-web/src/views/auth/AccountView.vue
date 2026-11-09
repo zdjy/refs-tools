@@ -2,6 +2,8 @@
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { BadgeCheck, ChevronRight } from '@lucide/vue'
+import { modules } from '../../navigation/modules'
 import { NAlert, NButton, NPopconfirm, useMessage } from 'naive-ui'
 import { cancelButtonProps, confirmButtonProps } from '../../components/ui/confirm-buttons'
 import { useAuthStore } from '../../stores/auth'
@@ -30,8 +32,13 @@ onMounted(() => { void auth.restore() })
       <template v-else-if="user && session">
         <header class="mb-7">
           <h2 class="text-ink mt-0 mr-0 mb-3 ml-0 text-[24px] leading-[1.4] tracking-[-.025em] wrap-anywhere">{{ user.displayName }}，你好</h2>
-          <p class="m-0 text-[14px] leading-[1.7] text-body">管理你的登录方式与账号安全。</p>
+          <p class="m-0 text-[14px] leading-[1.7] text-body">办理平台认证，管理你的登录方式与账号安全。</p>
         </header>
+        <RouterLink :to="modules.certifications.path" class="mb-6 flex min-h-11 items-center gap-3 border-0 border-y border-solid border-line py-4 text-ink no-underline transition-colors duration-200 hover:bg-soft active:scale-[.98]">
+          <BadgeCheck class="size-5 shrink-0" :stroke-width="1.75" aria-hidden="true" />
+          <span class="grid min-w-0 flex-1 gap-1"><span class="text-base font-semibold">平台认证</span><span class="text-[13px] leading-relaxed text-body">申请、办理进度、补件与申诉</span></span>
+          <ChevronRight class="size-5 shrink-0" :stroke-width="1.75" aria-hidden="true" />
+        </RouterLink>
         <RouterLink class="mb-6 inline-flex min-h-11 items-center rounded-full bg-soft px-4 text-[13px] font-semibold no-underline transition-[background] duration-200 ease-out hover:bg-line" to="/profile-setting">编辑账号资料</RouterLink>
         <dl class="m-0">
           <div class="mt-4"><dt class="mb-1.5 text-[12px] text-body">邮箱地址</dt><dd class="m-0 text-[14px] wrap-anywhere">{{ user.email }}</dd></div>

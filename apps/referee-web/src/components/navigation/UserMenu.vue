@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useDialog, useMessage } from 'naive-ui'
-import { Building2, ChevronDown, LogOut, MessageSquare, Settings, UserRound } from '@lucide/vue'
+import { BadgeCheck, Building2, ChevronDown, LogOut, MessageSquare, Settings, UserRound } from '@lucide/vue'
 import { useAuthStore } from '../../stores/auth'
 import { accountMenuLinks, type AccountMenuId } from '../../navigation/account-menu.presentation'
 import { ACCOUNT_MENU_ID, useAccountMenu } from './useAccountMenu'
@@ -14,7 +14,7 @@ const message = useMessage()
 const trigger = ref<HTMLButtonElement | null>(null)
 const panel = ref<HTMLElement | null>(null)
 const { open, toggle, close, onFocusout } = useAccountMenu(trigger, panel)
-const icons: Record<AccountMenuId, typeof UserRound> = { profile: UserRound, organizations: Building2, account: Settings, feedback: MessageSquare }
+const icons: Record<AccountMenuId, typeof UserRound> = { profile: UserRound, certifications: BadgeCheck, organizations: Building2, account: Settings, feedback: MessageSquare }
 const items = computed(() => accountMenuLinks.map((item) => ({ ...item, icon: icons[item.id] })))
 /** 有头像时用图片；缺省或加载失败时回落到昵称首字符，顶栏不出现空位。 */
 const initial = computed(() => Array.from(props.name.trim())[0] ?? '我')

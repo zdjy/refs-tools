@@ -70,7 +70,7 @@
 | 学习与备考 | 学习资料 | `/learning` | 规则资料、图文与音视频、收藏及最近访问 | 建设中 |
 | 学习与备考 | 练习与错题 | `/practice` | 顺序与随机练习、解析及错题复习 | 建设中 |
 | 学习与备考 | 正式考试 | `/exams` | 正式考试、考试历史与成绩查询 | 建设中 |
-| 资质与协作 | 认证与资质 | `/certifications` | 组织认证、平台认证、补件与申诉 | 建设中 |
+| 资质与协作 | 平台认证 | `/certifications` | 平台认证申请、进度、补件与申诉（FS-0031） | 可使用 |
 | 资质与协作 | 我的组织 | `/organizations` | 创建与加入组织、成员关系及组织事务 | 建设中 |
 | 资质与协作 | 赛事与履职 | `/events` | 选派确认、签到及赛后主记录 | 建设中 · Beta 规划 |
 | 场边与交流 | 裁判工具 | `/tools` | 本地比赛工作台与 GB 2312 区位码工具 | 部分可用 · Beta |
@@ -103,7 +103,7 @@
 | `/wrong-questions` | `wrong-questions` | 建设说明 | 学习 |
 | `/exams` | `exams` | 建设说明，附考试历史与成绩链接 | 学习 |
 | `/results` | `results` | 建设说明 | 学习 |
-| `/certifications` | `certifications` | 建设说明 | 无 |
+| `/certifications` | `certifications` | 平台认证工作台（FS-0031） | 我的 |
 | `/organizations` | `organizations` | 建设说明 | 无 |
 | `/events` | `events` | 建设说明 | 无 |
 | `/tools` | `tools` | 真实工具目录 | 工具 |

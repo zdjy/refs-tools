@@ -1,12 +1,12 @@
 import { computed, toRef } from 'vue'
-import type { Certification, CreateCertification, UpdateCertification } from '@refs-tools/contracts/certifications'
+import type { Certification, CertificationScope, CreateCertification, UpdateCertification } from '@refs-tools/contracts/certifications'
 import type { MyOrganization } from '@refs-tools/contracts/organization-self'
 import { useApplicationSteps } from './useApplicationSteps'
 import { createBodyFrom, updateBodyFrom, uploadOptionsFor, useCertificationDraft } from './useCertificationDraft'
 
 export type CertificationFormProps = {
   initial: Certification | null; organizations: MyOrganization[]; takenOrganizationIds: string[]; platformTaken: boolean
-  platformEligible: boolean; editing: boolean; busy: boolean; error: string; defaultScope?: 'organization' | 'platform' | undefined; defaultOrganizationId?: string | null | undefined
+  fixedScope?: CertificationScope | undefined; platformEligible: boolean; editing: boolean; busy: boolean; error: string; defaultScope?: 'organization' | 'platform' | undefined; defaultOrganizationId?: string | null | undefined
 }
 export type CertificationFormSave = { body: CreateCertification | UpdateCertification; mode: 'create' | 'update'; submit: boolean }
 
@@ -17,7 +17,8 @@ export function useCertificationForm(props: CertificationFormProps, save: (paylo
   if (!props.initial) {
     const preferred = availableOrganizations.value.find(item => item.id === props.defaultOrganizationId)?.id
     const first = preferred ?? availableOrganizations.value[0]?.id ?? null
-    draft.changeScope(props.defaultScope === 'platform' ? 'platform' : 'organization', props.defaultScope === 'platform' ? null : first)
+    draft.changeScope(props.fixedScope?.type ?? (props.defaultScope === 'platform' ? 'platform' : 'organization'),
+      props.fixedScope ? props.fixedScope.organizationId : props.defaultScope === 'platform' ? null : first)
   }
   const ui = useApplicationSteps(draft.fields, toRef(props, 'busy'), props.editing)
   const organizationName = computed(() => props.organizations.find(item => item.id === draft.fields.organizationId)?.name ?? '组织认证')
@@ -31,7 +32,7 @@ export function useCertificationForm(props: CertificationFormProps, save: (paylo
     ui.step.value++
   }
   function changeScope(type: 'organization' | 'platform', organizationId: string | null) {
-    if (ui.locked.value || (draft.fields.scopeType === type && draft.fields.organizationId === organizationId)) return
+    if (props.fixedScope || ui.locked.value || (draft.fields.scopeType === type && draft.fields.organizationId === organizationId)) return
     if (draft.fields.evidenceMediaIds.length || draft.fields.historyMediaIds.length) ui.scopeChange.value = { type, organizationId }
     else draft.changeScope(type, organizationId)
   }

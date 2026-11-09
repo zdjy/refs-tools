@@ -3,6 +3,7 @@ import { createMemoryHistory } from 'vue-router'
 import { createAppRouter } from '../src/router'
 import { learningEntries, moduleGroups, modules, primaryNavigation, desktopNavigation, relatedModules, toolEntries } from '../src/navigation/modules'
 import { accountMenuLinks } from '../src/navigation/account-menu.presentation'
+import { legacyCertificationTarget } from '../src/features/certifications/certification-scope'
 import { moduleStatus, navigationCurrent } from '../src/navigation/navigation.presentation'
 
 const router = createAppRouter(createMemoryHistory())
@@ -62,8 +63,16 @@ describe('裁判端静态路由与导航合同', () => {
     expect(desktopNavigation.map((item) => item.title)).toEqual(['社区', '学习', '组织', '工具'])
     expect(primaryNavigation.map((item) => item.title)).toEqual(['社区', '学习', '工具', '组织', '我的'])
     expect(primaryNavigation.find((item) => item.id === 'community')?.path).toBe('/')
-    expect(accountMenuLinks.map((item) => item.label)).toEqual(['我的主页', '我的组织', '账号设置', '意见反馈'])
+    expect(accountMenuLinks.map((item) => item.label)).toEqual(['我的主页', '平台认证', '我的组织', '账号设置', '意见反馈'])
     for (const item of accountMenuLinks) expect(router.resolve(item.path).name).not.toBe('not-found')
+  })
+
+  it('平台认证入口在全局账号菜单，旧组织深链回到本组织认证标签', () => {
+    expect(accountMenuLinks.find(item => item.id === 'certifications')?.path).toBe('/certifications')
+    expect(modules.certifications.title).toBe('平台认证')
+    expect(legacyCertificationTarget(undefined)).toBeNull()
+    expect(legacyCertificationTarget(['o1'])).toBeNull()
+    expect(legacyCertificationTarget('o/1')).toBe('/organizations/o%2F1?tab=my-certifications')
   })
 
   it('准确区分可用性及 Beta 规划', () => {
@@ -77,14 +86,14 @@ describe('裁判端静态路由与导航合同', () => {
   })
 
   it('当前页和栏目使用不同 aria-current，无归属模块不误高亮', () => {
-    const expected = { '/': 'community', '/learning': 'learning', '/practice': 'learning', '/wrong-questions': 'learning', '/exams': 'learning', '/results': 'learning', '/tools': 'tools', '/tools/gb2312': 'tools', '/workbench': 'tools', '/organizations': 'organizations', '/account': 'account', '/profile-setting': 'account' }
+    const expected = { '/': 'community', '/learning': 'learning', '/practice': 'learning', '/wrong-questions': 'learning', '/exams': 'learning', '/results': 'learning', '/tools': 'tools', '/tools/gb2312': 'tools', '/workbench': 'tools', '/organizations': 'organizations', '/account': 'account', '/profile-setting': 'account', '/certifications': 'account' }
     for (const [path, section] of Object.entries(expected)) {
       const route = router.resolve(path)
       expect(route.meta.navigation).toBe(section)
       const item = primaryNavigation.find((entry) => entry.id === section)!
       expect(navigationCurrent(route.meta.navigation, path, item)).toBe(path === item.path ? 'page' : 'location')
     }
-    for (const path of ['/certifications', '/events', '/login', '/register', '/missing']) {
+    for (const path of ['/events', '/login', '/register', '/missing']) {
       for (const item of primaryNavigation) expect(navigationCurrent(router.resolve(path).meta.navigation, path, item)).toBeUndefined()
     }
   })

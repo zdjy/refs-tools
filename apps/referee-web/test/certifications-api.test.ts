@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { HttpError } from '../src/api/http/errors'
 import type { PlatformClient } from '../src/api/http/platform-client'
 import { CertificationsApiError, createCertificationsApi } from '../src/api/certifications.api'
-import { certificationErrorMessage, certificationLoadErrorMessage } from '../src/views/certifications/certifications.presentation'
+import { certificationErrorMessage, certificationLoadErrorMessage } from '../src/features/certifications/certifications.presentation'
 
 const platform = (): PlatformClient => ({
   get: vi.fn(async () => ({})), post: vi.fn(async () => ({})), patch: vi.fn(async () => ({})),

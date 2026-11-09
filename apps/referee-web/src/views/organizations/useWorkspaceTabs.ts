@@ -22,7 +22,8 @@ export function scrollTabIntoView(tablist: HTMLElement | null, id: WorkspaceTab)
 }
 
 /** 焦点跟随选中项移动（自动激活）；焦点环由 focus-visible 提供。 */
-export function useWorkspaceTabs(tablist: Ref<HTMLElement | null>, active: Ref<WorkspaceTab>) {
+export function useWorkspaceTabs(tablist: Ref<HTMLElement | null>, active: Ref<WorkspaceTab>,
+  select: (tab: WorkspaceTab) => boolean = tab => { active.value = tab; return true }) {
   function onKeydown(event: KeyboardEvent): void {
     const tabs = [...(tablist.value?.querySelectorAll<HTMLElement>('[role="tab"]') ?? [])]
     const index = tabs.findIndex((tab) => tab.dataset['tab'] === active.value)
@@ -30,8 +31,7 @@ export function useWorkspaceTabs(tablist: Ref<HTMLElement | null>, active: Ref<W
     const target = next === null ? undefined : tabs[next]
     if (!target) return
     event.preventDefault()
-    active.value = target.dataset['tab'] as WorkspaceTab
-    target.focus()
+    if (select(target.dataset['tab'] as WorkspaceTab)) target.focus()
   }
   watch(active, (id) => { void nextTick(() => scrollTabIntoView(tablist.value, id)) })
   return { onKeydown }

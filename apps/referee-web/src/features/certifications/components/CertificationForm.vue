@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onBeforeRouteLeave } from 'vue-router'
+import { onBeforeUnmount, watch } from 'vue'
+import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 import { NAlert, NButton, NModal } from 'naive-ui'
 import { useCertificationForm, type CertificationFormProps, type CertificationFormSave } from '../useCertificationForm'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
@@ -16,17 +17,22 @@ const props = defineProps<CertificationFormProps>()
 const emit = defineEmits<{
   save: [payload: CertificationFormSave]
   cancel: []
+  protection: [state: { dirty: boolean; locked: boolean }]
 }>()
 const { draft, ui, organizationName, uploadOptions, next, changeScope, confirmScope, cancel, submit } = useCertificationForm(props, payload => emit('save', payload), () => emit('cancel'))
 const { step, root, locked, evidenceBusy, historyBusy, scopeChange, cancelRequested } = ui
-onBeforeRouteLeave(() => !locked.value && (!ui.dirty.value || window.confirm('申请材料尚未保存，确认离开并放弃本次修改？')))
-const steps = ['选择范围', '填写材料', '核对提交']
+function canLeave() { return !locked.value && (!ui.dirty.value || window.confirm('申请材料尚未保存，确认离开并放弃本次修改？')) }
+onBeforeRouteLeave(canLeave)
+onBeforeRouteUpdate(canLeave)
+watch([ui.dirty, locked], ([dirty, locked]) => emit('protection', { dirty, locked }), { immediate: true, flush: 'sync' })
+onBeforeUnmount(() => emit('protection', { dirty: false, locked: false }))
+const steps = ['确认范围', '填写材料', '核对提交']
 </script>
 
 <template>
   <form ref="root" class="grid gap-6 border-0 border-t border-solid border-ink pt-5 compact:p-6" novalidate :aria-busy="busy" @submit.prevent="step < 2 ? next() : submit(true)">
     <header class="grid gap-2">
-      <h2 tabindex="-1" class="m-0 text-xl text-ink">{{ editing ? '编辑申请材料' : '申请认证' }}</h2>
+      <h2 tabindex="-1" class="m-0 text-xl text-ink">{{ editing ? '编辑申请材料' : fixedScope?.type === 'platform' ? '申请平台认证' : '申请组织认证' }}</h2>
       <p class="m-0 max-w-[64ch] text-sm leading-relaxed text-body">
         {{ editing ? '保存后会生成新版本并保留旧材料。补件只适用于草稿或「需补件」状态。' : '填写材料并核对后，可保存草稿或直接提交审核；审核期间不能编辑。' }}
       </p>
@@ -39,7 +45,7 @@ const steps = ['选择范围', '填写材料', '核对提交']
     </ol>
     <p v-if="initial?.status === 'needs_more_information' && initial.reviewNote" role="status" class="m-0 border-0 border-l border-solid border-ink pl-3 text-base leading-relaxed text-ink">补件要求：{{ initial.reviewNote }}</p>
     <CertificationScopeFields v-if="step === 0" v-model:fields="draft.fields" :organizations="organizations" :taken-organization-ids="takenOrganizationIds"
-      :platform-taken="platformTaken" :platform-eligible="platformEligible" :editing="editing" :disabled="locked"
+      :platform-taken="platformTaken" :platform-eligible="platformEligible" :editing="editing" :fixed="!!fixedScope" :disabled="locked"
       :organization-id="draft.fields.organizationId" :organization-problem="draft.problems.organizationId"
       @change-scope="changeScope" />
     <div v-show="step === 1" class="grid gap-6">
