@@ -19,4 +19,5 @@ it('SDK 签名绑定精确 key、类型、owner 和禁止覆盖头，读取强�
   const read = await storage.signRead(media, 60)
   expect(new URL(read.url).searchParams.get('response-cache-control')).toBe('no-store')
   expect(new URL(read.url).searchParams.get('response-content-disposition')).toBe('attachment')
+  expect(new URL((await storage.signRead(media, 60, 'inline')).url).searchParams.get('response-content-disposition')).toBe('inline')
 })

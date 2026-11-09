@@ -29,9 +29,9 @@ export function createOssStorage(env: NodeJS.ProcessEnv): { storage: ObjectStora
         throw error
       }
     },
-    async signRead(media, seconds) {
+    async signRead(media, seconds, disposition = 'attachment') {
       return { url: client.signatureUrl(media.objectKey, { expires: seconds, response: {
-        'content-disposition': 'attachment', 'cache-control': 'no-store', 'content-type': media.contentType,
+        'content-disposition': disposition, 'cache-control': 'no-store', 'content-type': media.contentType,
       } }), expiresAt: expiresAt(seconds) }
     },
     async delete(key) { await client.delete(key) },

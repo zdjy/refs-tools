@@ -5,17 +5,18 @@ import { NAlert, NButton } from 'naive-ui'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
 import { useUiFeedback } from '../../components/ui/useUiFeedback'
+import CertificationReviewEntry from './components/CertificationReviewEntry.vue'
 import InvitationsPanel from './components/InvitationsPanel.vue'
 import JoinCodesPanel from './components/JoinCodesPanel.vue'
 import MembersPanel from './components/MembersPanel.vue'
 import OwnershipPanel from './components/OwnershipPanel.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
 import OverviewPanel from './components/OverviewPanel.vue'
-import ReasonDialog from './components/ReasonDialog.vue'
+import ReasonDialog from '../../components/ui/UiReasonDialog.vue'
 import RolesPanel from './components/RolesPanel.vue'
 import WorkspaceHeader from './components/WorkspaceHeader.vue'
 import { linkButton } from './organizations.presentation'
-import { useAuthGate } from './useAuthGate'
+import { useAuthGate } from '../../application/useAuthGate'
 import { useConfirmReason } from './useConfirmReason'
 import { useOrganizationWorkspace } from './useOrganizationWorkspace'
 import { useWorkspaceTabs } from './useWorkspaceTabs'
@@ -71,7 +72,8 @@ async function leave() {
           <InvitationsPanel v-else-if="ws.tab.value === 'invitations'" :key="`i-${id}`" :organization-id="id" />
           <JoinCodesPanel v-else-if="ws.tab.value === 'codes'" :key="`c-${id}`" :organization-id="id" />
           <OwnershipPanel v-else-if="ws.tab.value === 'ownership'" :key="`o-${id}`" :organization-id="id" :owner-user-id="ws.organization.value.ownerUserId" />
-          <RolesPanel v-else :key="`r-${id}`" :organization-id="id" />
+          <RolesPanel v-else-if="ws.tab.value === 'roles'" :key="`r-${id}`" :organization-id="id" />
+          <CertificationReviewEntry v-else :key="`cert-${id}`" :organization="ws.organization.value" />
         </div>
       </template>
     </div>

@@ -16,7 +16,7 @@ export const modules = {
   'wrong-questions': { id: 'wrong-questions', title: '错题本', path: '/wrong-questions', description: '错题收录、复习与作答反馈', availability: 'planned' },
   exams: { id: 'exams', title: '正式考试', path: '/exams', description: '正式考试、考试历史与成绩查询', availability: 'planned' },
   results: { id: 'results', title: '考试历史与成绩', path: '/results', description: '历史考试尝试、成绩与评分说明', availability: 'planned' },
-  certifications: { id: 'certifications', title: '认证与资质', path: '/certifications', description: '组织认证、平台认证、补件与申诉', availability: 'planned' },
+  certifications: { id: 'certifications', title: '认证与资质', path: '/certifications', description: '组织认证、平台认证、补件、历史与申诉', availability: 'available' },
   organizations: { id: 'organizations', title: '我的组织', path: '/organizations', description: '创建与加入组织、回应邀请、成员与角色管理', availability: 'partial' },
   events: { id: 'events', title: '赛事与履职', path: '/events', description: '选派确认、签到及赛后主记录', availability: 'planned', beta: true },
   tools: { id: 'tools', title: '裁判工具', path: '/tools', description: '本地比赛工作台与 GB 2312 区位码工具', availability: 'partial', beta: true },

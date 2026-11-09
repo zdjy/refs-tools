@@ -74,6 +74,7 @@ export const CertificationAppealEvidenceParamsSchema = Type.Object({ id: Uuid, a
 export const CertificationAppealParamsSchema = Type.Object({ id: Uuid, appealId: Uuid }, { additionalProperties: false })
 export const CertificationAppealResponseSchema = Type.Object({ data: CertificationAppealSchema })
 export const CertificationAppealListResponseSchema = pagedResponseSchema(CertificationAppealSchema)
+export type QualificationLevel = Static<typeof QualificationLevelSchema>
 export type CertificationScope = Static<typeof CertificationScopeSchema>
 export type CertificationStatus = Static<typeof CertificationStatusSchema>
 export type CertificationMaterials = Static<typeof CertificationMaterialsSchema>

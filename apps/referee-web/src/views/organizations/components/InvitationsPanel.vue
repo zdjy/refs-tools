@@ -9,7 +9,7 @@ import { useConfirmReason } from '../useConfirmReason'
 import { useInvitationManagement } from '../useMemberManagement'
 import InvitePeople from './InvitePeople.vue'
 import PagerBar from './PagerBar.vue'
-import ReasonDialog from './ReasonDialog.vue'
+import ReasonDialog from '../../../components/ui/UiReasonDialog.vue'
 
 const props = defineProps<{ organizationId: string }>()
 const inv = useInvitationManagement(ref(props.organizationId))

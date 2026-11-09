@@ -22,9 +22,11 @@ describe('裁判端静态路由与导航合同', () => {
       expect(route.meta.title).toBeTruthy()
       expect(typeof route.matched.at(-1)?.components?.default).toBe('function')
     }
-    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'certifications', 'events', 'rules', 'profile', 'feedback'] as const) {
+    for (const id of ['practice', 'wrong-questions', 'exams', 'results', 'events', 'rules', 'profile', 'feedback'] as const) {
       expect(router.resolve(modules[id].path).matched[0]?.props.default).toEqual({ moduleId: id })
     }
+    expect(router.resolve(modules.certifications.path).name).toBe('certifications')
+    expect(router.resolve(modules.certifications.path).matched[0]?.components?.default).toBeTypeOf('function')
     expect(router.resolve(modules.gb2312.path).matched[0]?.components?.default).toBeTypeOf('function')
   })
 
@@ -35,7 +37,10 @@ describe('裁判端静态路由与导航合同', () => {
     const workspace = router.resolve('/organizations/3f2b1c9e-0000-4000-8000-000000000001')
     expect(workspace.name).toBe('organization-workspace')
     expect(workspace.params['organizationId']).toBe('3f2b1c9e-0000-4000-8000-000000000001')
-    for (const path of ['/organizations', '/organizations/discover', '/organizations/new', '/organizations/abc']) {
+    const review = router.resolve('/organizations/3f2b1c9e-0000-4000-8000-000000000001/certifications/review')
+    expect(review.name).toBe('organization-certification-review')
+    expect(review.params['organizationId']).toBe('3f2b1c9e-0000-4000-8000-000000000001')
+    for (const path of ['/organizations', '/organizations/discover', '/organizations/new', '/organizations/abc', '/organizations/abc/certifications/review']) {
       expect(router.resolve(path).meta.navigation).toBe('organizations')
       expect(typeof router.resolve(path).matched.at(-1)?.components?.default).toBe('function')
     }
@@ -67,6 +72,7 @@ describe('裁判端静态路由与导航合同', () => {
     expect(moduleStatus(modules.workbench)).toBe('可使用 · Beta')
     expect(moduleStatus(modules.gb2312)).toBe('可使用 · Beta')
     expect(moduleStatus(modules.community)).toBe('可使用 · Beta')
+    expect(moduleStatus(modules.certifications)).toBe('可使用')
     for (const id of ['events', 'rules'] as const) expect(moduleStatus(modules[id])).toBe('建设中 · Beta 规划')
   })
 

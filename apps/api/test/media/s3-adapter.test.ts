@@ -34,6 +34,8 @@ it('浏览器签名使用外部地址，并绑定精确 key、类型、归属和
   expect(read.searchParams.get('X-Amz-Expires')).toBe('60')
   expect(read.searchParams.get('response-cache-control')).toBe('no-store')
   expect(read.searchParams.get('response-content-disposition')).toBe('attachment')
+  const inline = new URL((await storage.signRead(media, 60, 'inline')).url)
+  expect(inline.searchParams.get('response-content-disposition')).toBe('inline')
 })
 
 it('HEAD 映射可信元数据，只有 404 表示缺失，删除限定 Bucket/key', async () => {

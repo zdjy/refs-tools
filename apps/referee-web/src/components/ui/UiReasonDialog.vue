@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { NAlert, NButton, NInput, NModal } from 'naive-ui'
-import { refereeModalStyle } from '../../../ui-theme'
-import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
-import { REASON_MAX } from '../useConfirmReason'
+import { refereeModalStyle } from '../../ui-theme'
+import UiSubmitHint from './UiSubmitHint.vue'
+import { REASON_MAX } from '../../domain/audit-reason'
 
 /**
- * 需要理由与二次确认的操作：移除成员、驳回申请、撤销邀请、退出组织。
+ * 需要理由与二次确认的通用弹窗：成员管理、认证审核等写操作复用同一交互。
  * 弹窗未关闭时错误与结果都在这里显示；提交期间不可关闭，避免用户误以为已取消。
  * 理由会进入审计，因此提示不要填写链接或凭据。
  */

@@ -79,7 +79,7 @@ describe('接收人收件箱', () => {
 })
 
 describe('工作区标签页', () => {
-  const mine = (patch: Record<string, unknown>) => ({ id: 'o1', name: '协会', canManage: true, isOwner: false, ...patch })
+  const mine = (patch: Record<string, unknown>) => ({ id: 'o1', name: '协会', canManage: true, isOwner: false, roles: [], membership: null, ...patch })
   const tabsFor = async (patch: Record<string, unknown>) => {
     const state = useOrganizationWorkspace(ref('o1'), { mine: vi.fn(async () => page([mine(patch)])) } as never)
     await state.load(); return state.tabs.value.map(item => item.id)
@@ -88,5 +88,13 @@ describe('工作区标签页', () => {
     expect(await tabsFor({ isOwner: true })).toContain('ownership')
     expect(await tabsFor({ isOwner: false })).not.toContain('ownership')
     expect(await tabsFor({ isOwner: false, canManage: false })).toEqual(['overview'])
+  })
+  it('认证员看到认证审核，负责人看到申诉复核，同一标签不会重复', async () => {
+    expect(await tabsFor({ isOwner: false, roles: ['certifier'] })).toContain('certifications')
+    // 认证员通常没有成员管理能力，入口不能因 canManage=false 被截断。
+    expect(await tabsFor({ isOwner: false, canManage: false, roles: ['certifier'] })).toEqual(['overview', 'certifications'])
+    expect(await tabsFor({ isOwner: true, roles: [] })).toContain('certifications')
+    const both = await tabsFor({ isOwner: true, roles: ['certifier'] })
+    expect(both.filter((id) => id === 'certifications')).toHaveLength(1)
   })
 })

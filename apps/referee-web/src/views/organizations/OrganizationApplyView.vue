@@ -8,7 +8,7 @@ import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import ApplicationForm from './components/ApplicationForm.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
 import { linkButton } from './organizations.presentation'
-import { useAuthGate } from './useAuthGate'
+import { useAuthGate } from '../../application/useAuthGate'
 import { useOrganizationApplication } from './useOrganizationApplication'
 
 const app = useOrganizationApplication()

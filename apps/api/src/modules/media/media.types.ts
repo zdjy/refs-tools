@@ -18,7 +18,8 @@ export type ObjectStat = { sizeBytes: number; contentType: string; etag: string;
 export interface ObjectStorage {
   signUpload(media: StoredMedia, expiresSeconds: number): Promise<UploadAuthorization>
   stat(objectKey: string): Promise<ObjectStat | null>
-  signRead(media: StoredMedia, expiresSeconds: number): Promise<{ url: string; expiresAt: string }>
+  /** 默认强制下载；认证原件限定图片/PDF，允许 inline 预览，避免把 HTML 等类型内联渲染。 */
+  signRead(media: StoredMedia, expiresSeconds: number, disposition?: 'inline' | 'attachment'): Promise<{ url: string; expiresAt: string }>
   delete(objectKey: string): Promise<void>
 }
 export interface MediaRepository {

@@ -1,17 +1,8 @@
 import { ref } from 'vue'
+import { reasonProblem } from '../../domain/audit-reason'
 
-/** 理由长度上限，与服务端契约一致（MemberChange.reason）。 */
-export const REASON_MAX = 500
-const sensitive = /(?:https?:|[a-z][a-z0-9+.-]*:\/\/|password|token|secret|signature|验证码|密码|密钥)/i
-
-/** 校验理由是否可提交；与服务端审计白名单规则一致，让用户在提交前就知道哪些内容不允许。 */
-export function reasonProblem(reason: string): string {
-  const value = reason.trim()
-  if (!value) return '请填写操作理由'
-  if (value.length > REASON_MAX) return `理由不超过 ${REASON_MAX} 个字符`
-  if (sensitive.test(value)) return '理由中不能包含链接、密码或令牌等敏感内容'
-  return ''
-}
+// 理由校验与认证等审计写操作共用同一规则，避免两处上限或敏感词不一致。
+export { REASON_MAX, reasonProblem } from '../../domain/audit-reason'
 
 /**
  * 「理由 + 二次确认」对话状态。`visible` 控制显示；`target` 保存待确认的操作对象，

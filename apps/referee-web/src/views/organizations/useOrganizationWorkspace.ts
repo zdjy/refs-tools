@@ -3,7 +3,7 @@ import type { MyOrganization, OrganizationProfileUpdated } from '@refs-tools/con
 import { organizationsApi, type OrganizationsApi } from '../../api/organizations.api'
 import { useAction, useLoadable } from './organization-primitives'
 
-export type WorkspaceTab = 'overview' | 'members' | 'invitations' | 'codes' | 'roles' | 'ownership'
+export type WorkspaceTab = 'overview' | 'members' | 'invitations' | 'codes' | 'roles' | 'certifications' | 'ownership'
 
 /**
  * 单个组织的工作区：从「我的组织」中取出当前组织与本人成员关系，
@@ -20,12 +20,17 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
   const notFound = computed(() => mine.data.value !== null && !organization.value && !left.value)
   const tabs = computed<{ id: WorkspaceTab; label: string }[]>(() => {
     const base: { id: WorkspaceTab; label: string }[] = [{ id: 'overview', label: '概览' }]
-    if (!organization.value?.canManage) return base
+    // 认证审核不依赖成员管理能力：仅有 certifier 角色的成员也能进入，不能先被 canManage 截断。
+    const certifier = organization.value?.roles.includes('certifier') ?? false
+    const certification: { id: WorkspaceTab; label: string }[] = certifier
+      ? [{ id: 'certifications', label: '认证审核' }]
+      : organization.value?.isOwner ? [{ id: 'certifications', label: '申诉复核' }] : []
+    if (!organization.value?.canManage) return [...base, ...certification]
     const managed: { id: WorkspaceTab; label: string }[] = [
       { id: 'members', label: '成员' }, { id: 'invitations', label: '邀请' }, { id: 'codes', label: '成员码' }]
     // 移交所有权只属于负责人：组织者能管理成员但不能移交，服务端同样只认 organization.manage。
     const owner: { id: WorkspaceTab; label: string }[] = organization.value.isOwner ? [{ id: 'ownership', label: '移交' }] : []
-    return [...base, ...managed, { id: 'roles', label: '角色' }, ...owner]
+    return [...base, ...managed, { id: 'roles', label: '角色' }, ...certification, ...owner]
   })
 
   async function load() {

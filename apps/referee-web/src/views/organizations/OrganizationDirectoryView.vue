@@ -9,7 +9,7 @@ import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import DirectoryList from './components/DirectoryList.vue'
 import JoinByCode from './components/JoinByCode.vue'
 import OrganizationsSignIn from './components/OrganizationsSignIn.vue'
-import { useAuthGate } from './useAuthGate'
+import { useAuthGate } from '../../application/useAuthGate'
 import { useOrganizationDirectory } from './useOrganizationDirectory'
 
 const dir = useOrganizationDirectory()

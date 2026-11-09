@@ -49,9 +49,9 @@ export function createS3Storage(env: NodeJS.ProcessEnv): { storage: ObjectStorag
         throw error
       }
     },
-    async signRead(media, seconds) {
+    async signRead(media, seconds, disposition = 'attachment') {
       const url = await getSignedUrl(signer, new GetObjectCommand({ Bucket: bucket, Key: media.objectKey,
-        ResponseContentDisposition: 'attachment', ResponseCacheControl: 'no-store', ResponseContentType: media.contentType }), { expiresIn: seconds })
+        ResponseContentDisposition: disposition, ResponseCacheControl: 'no-store', ResponseContentType: media.contentType }), { expiresIn: seconds })
       return { url, expiresAt: expiresAt(seconds) }
     },
     async delete(key) { await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key })) },

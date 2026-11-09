@@ -60,7 +60,8 @@ try {
   }
   const widths = [...new Set([...css.matchAll(/@media\s*\(width\s*>=\s*(\d+)px\)/g)].map((match) => Number(match[1])))]
   assert.deepEqual(widths, breakpoints.map(([, width]) => width), '产物包含未登记的宽度断点')
-  for (const forbidden of ['.bg-blue-500', '.rounded-lg{', String.raw`.rounded-3xl`, '.shadow-2xl', String.raw`.\33 xl\:block`, '.font-serif', '12347px', 'oklch(', '::file-selector-button', 'box-sizing:border-box;margin:0;padding:0']) {
+  // `file:` 变体用于 MediaUpload 的原生文件按钮适配，不等于启用 Preflight；仍禁止其携带默认主题色。
+  for (const forbidden of ['.bg-blue-500', '.rounded-lg{', String.raw`.rounded-3xl`, '.shadow-2xl', String.raw`.\33 xl\:block`, '.font-serif', '12347px', 'oklch(', 'box-sizing:border-box;margin:0;padding:0']) {
     assert(!css.includes(forbidden), `意外生成默认主题、Preflight 或扫描范围外规则：${forbidden}`)
   }
   assert(!css.includes('@theme') && !css.includes('@source'), 'Tailwind 指令未被编译')

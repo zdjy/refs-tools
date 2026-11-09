@@ -12,7 +12,7 @@ import { useMemberManagement } from '../useMemberManagement'
 import MemberDetailDialog from './MemberDetailDialog.vue'
 import MemberRoster from './MemberRoster.vue'
 import PagerBar from './PagerBar.vue'
-import ReasonDialog from './ReasonDialog.vue'
+import ReasonDialog from '../../../components/ui/UiReasonDialog.vue'
 
 const props = defineProps<{ organizationId: string; ownerUserId?: string }>()
 const members = useMemberManagement(ref(props.organizationId))
