@@ -20,7 +20,7 @@ API 直接依赖 `casbin`，不部署独立服务、不使用 Casbin 数据库 a
 
 ```sql
 GRANT USAGE ON SCHEMA app_schema TO api_runtime;
-GRANT SELECT, INSERT, UPDATE ON app_schema.users, app_schema.email_challenges,
+GRANT SELECT, INSERT, UPDATE ON app_schema.users, app_schema.referee_profiles, app_schema.email_challenges,
   app_schema.auth_sessions, app_schema.auth_rate_limits, app_schema.role_bindings TO api_runtime;
 -- 组织治理与成员流程需要 INSERT；归属锁定的 FOR SHARE 需要 UPDATE。
 GRANT SELECT, INSERT, UPDATE ON app_schema.organizations, app_schema.organization_memberships,

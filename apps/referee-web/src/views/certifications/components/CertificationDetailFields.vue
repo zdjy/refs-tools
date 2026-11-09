@@ -4,7 +4,7 @@ import { formatDate, formatDateTime, qualificationLevelLabels, scopeName } from 
 import CertificationEvidenceGroup from './CertificationEvidenceGroup.vue'
 
 /** 申请材料只读投影：详情页与组织审核台共用，避免两处字段或顺序不一致。 */
-const props = defineProps<{ record: Certification; orgNames?: Record<string, string>; appealId?: string | undefined }>()
+const props = defineProps<{ record: Certification; orgNames?: Record<string, string>; appealId?: string | undefined; showReview?: boolean }>()
 </script>
 
 <template>
@@ -25,7 +25,7 @@ const props = defineProps<{ record: Certification; orgNames?: Record<string, str
       <CertificationEvidenceGroup label="证书原件" :ids="props.record.evidenceMediaIds" :certification-id="props.record.id" :appeal-id="props.appealId" />
       <CertificationEvidenceGroup label="履历材料" :ids="props.record.historyMediaIds" :certification-id="props.record.id" :appeal-id="props.appealId" />
     </div>
-    <section v-if="props.record.reviewNote || props.record.reviewedAt" aria-labelledby="review-note-title" class="grid gap-2 border-0 border-t border-solid border-line pt-4">
+    <section v-if="showReview !== false && (props.record.reviewNote || props.record.reviewedAt)" aria-labelledby="review-note-title" class="grid gap-2 border-0 border-t border-solid border-line pt-4">
       <h3 id="review-note-title" class="m-0 text-[13px] font-semibold text-body">审核信息</h3>
       <p class="m-0 text-sm leading-relaxed text-ink">
         <template v-if="props.record.reviewedAt">审核时间：{{ formatDateTime(props.record.reviewedAt) }}。</template>

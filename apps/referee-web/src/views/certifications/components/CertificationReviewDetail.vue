@@ -18,18 +18,19 @@ import {
 const props = defineProps<{
   record: Certification; orgNames: Record<string, string>; historyItems: CertificationHistory[]; historyLoading: boolean
   historyError: string; appealItems: CertificationAppeal[]; appealsLoading: boolean; appealsError: string
-  mode: 'review' | 'appeal'; currentUserId: string; busy: boolean; error: string; stale: string; canReadHistory?: boolean
+  mode: 'review' | 'records' | 'appeal'; currentUserId: string; busy: boolean; error: string; stale: string; canReadHistory?: boolean
+  applicant?: { nickname: string; legalName: string | null } | null; selectedAppealId?: string | null
 }>()
 const emit = defineEmits<{
   decide: [decision: CertificationDecision['decision']]; decideAppeal: [appeal: CertificationAppeal, decision: NonNullable<CertificationAppeal['decision']>]
   retryHistory: []; retryAppeals: []
 }>()
 const openAppeal = computed(() => pendingAppeal(props.appealItems))
-const options = computed(() => props.mode === 'review' ? reviewDecisionOptions(props.record.status) : [])
+const options = computed(() => props.mode !== 'appeal' ? reviewDecisionOptions(props.record.status) : [])
 const appealOptions = computed(() => appealDecisionOptions())
 const selfReview = computed(() => props.record.subjectUserId === props.currentUserId)
 // 申诉复核读取原始材料也走申诉证据入口，负责人没有普通认证材料读取权限。
-const evidenceAppealId = computed(() => props.mode === 'appeal' ? openAppeal.value?.id : undefined)
+const evidenceAppealId = computed(() => props.mode === 'appeal' ? props.selectedAppealId ?? openAppeal.value?.id : undefined)
 const reviewerConflict = computed(() => !!openAppeal.value
   && (openAppeal.value.originalReviewerId === props.currentUserId || openAppeal.value.appellantId === props.currentUserId))
 const closedAppeals = computed(() => props.appealItems.filter((item) => item.id !== openAppeal.value?.id))
@@ -46,20 +47,22 @@ const conflictText = computed(() => openAppeal.value?.originalReviewerId === pro
     <header class="grid gap-3">
       <p class="m-0 text-[13px] font-semibold text-body">审核记录</p>
       <div class="flex flex-wrap items-center gap-3">
-        <h2 id="review-detail-title" tabindex="-1" class="m-0 text-[24px] leading-tight font-bold tracking-[-.02em] text-ink focus:outline-hidden">{{ applicantTag(record.subjectUserId) }}</h2>
+        <h2 id="review-detail-title" tabindex="-1" class="m-0 wrap-anywhere text-[24px] leading-tight font-bold tracking-[-.02em] text-ink focus:outline-hidden">{{ applicant?.legalName || '未填写实名' }} · {{ applicant?.nickname || '未设置昵称' }}</h2>
         <CertificationStatusBadge :status="record.status" />
         <CertificationStatusBadge v-if="record.effectiveStatus !== record.status" :status="record.effectiveStatus" :text="`效力：${certificationStatusText[record.effectiveStatus].label}`" />
       </div>
-      <p class="m-0 max-w-[64ch] text-sm leading-relaxed text-body">{{ certificationStatusText[record.status].hint }}</p>
-      <p class="m-0 font-mono text-[13px] text-body">版本 {{ record.version }} · 更新 {{ formatDateTime(record.updatedAt) }}</p>
+      <p class="m-0 max-w-[64ch] text-sm leading-relaxed text-body">{{ mode === 'appeal' ? '先核对原决定、申诉理由与补充材料，再作出独立复核决定。' : record.status === 'under_review' ? '请核对证书信息、原件、履历与个人声明，再选择审核决定。' : '请核对当前审核结论与实际效力，后续决定仍需填写理由。' }}</p>
+      <p v-if="record.reviewNote" class="m-0 whitespace-pre-line text-base leading-relaxed text-ink wrap-anywhere">审核理由：{{ record.reviewNote }}</p>
+      <p class="m-0 font-mono text-[13px] text-body">{{ applicantTag(record.subjectUserId) }} · 版本 {{ record.version }} · 更新 {{ formatDateTime(record.updatedAt) }}</p>
       <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>
       <p v-if="stale" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed text-body">{{ stale }}</p>
     </header>
-    <CertificationDetailFields :record="record" :org-names="orgNames" :appeal-id="evidenceAppealId" />
+    <CertificationDetailFields :record="record" :show-review="false" :org-names="orgNames" :appeal-id="evidenceAppealId" />
 
-    <section v-if="mode === 'review'" aria-labelledby="decision-title" class="grid gap-3 border-0 border-t border-solid border-line pt-4">
+    <section v-if="mode !== 'appeal'" aria-labelledby="decision-title" class="grid gap-3 border-0 border-t border-solid border-line pt-4">
       <h3 id="decision-title" class="m-0 text-sm font-semibold text-ink">审核决定</h3>
       <p v-if="selfReview" role="alert" class="m-0 rounded-xl border border-solid border-line bg-soft p-3 text-[13px] leading-relaxed text-danger">这是你本人的申请，不能审核自己的记录。请等待另一位认证员处理。</p>
+      <p v-else-if="openAppeal" role="status" class="m-0 text-sm text-body">已有待处理申诉，请先完成独立复核。</p>
       <p v-else-if="!options.length" class="m-0 text-sm leading-relaxed text-body">当前状态没有可执行的人工决定。若材料有误，请等待申诉流程。</p>
       <div v-else class="flex flex-wrap gap-2">
         <n-button v-for="option in options" :key="option.value" :type="option.value === 'approve' ? 'primary' : option.danger ? 'error' : 'default'"

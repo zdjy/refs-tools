@@ -28,6 +28,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/system/organization/organization.vue'),
       },
       {
+        path: 'certification',
+        name: 'system_certification',
+        meta: { title: 'route.system_certification' },
+        component: () => import('@/views/system/certification/certification.vue'),
+      },
+      {
         path: 'file',
         name: 'system_file',
         meta: { title: 'route.system_file' },

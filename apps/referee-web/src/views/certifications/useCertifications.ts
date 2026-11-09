@@ -2,7 +2,6 @@ import { computed, ref } from 'vue'
 import type {
   Certification, CertificationAppeal, CertificationHistory, CertificationSummary, CreateCertification, UpdateCertification,
 } from '@refs-tools/contracts/certifications'
-import type { Paged } from '@refs-tools/contracts/pagination'
 import type { MyOrganization } from '@refs-tools/contracts/organization-self'
 import { certificationsApi, type CertificationsApi } from '../../api/certifications.api'
 import { organizationsApi, type OrganizationsApi } from '../../api/organizations.api'
@@ -33,6 +32,8 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
   })
   const action = useCertificationAction()
   const stale = ref('')
+  const refreshing = ref(false)
+  const locked = computed(() => action.busy.value || refreshing.value)
 
   const items = computed<CertificationSummary[]>(() => mine.data.value?.items ?? [])
   const pageCount = computed(() => Math.max(1, Math.ceil((mine.data.value?.total ?? 0) / Number(PAGE_SIZE))))
@@ -41,7 +42,7 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
   const orgNames = computed<Record<string, string>>(() => Object.fromEntries(orgItems.value.map((item) => [item.id, item.name])))
   const platformEligible = computed(() => items.value.some((item) => item.scope.type === 'organization' && item.effectiveStatus === 'approved'))
   const loading = computed(() => mine.loading.value && mine.data.value === null)
-  const loadError = computed(() => mine.error.value || organizations.error.value)
+  const loadError = computed(() => (!mine.data.value ? mine.error.value : '') || (!organizations.data.value ? organizations.error.value : ''))
   const selectedRecord = computed<Certification | null>(() => detail.data.value)
   const historyItems = computed<CertificationHistory[]>(() => history.data.value?.items ?? [])
   const appealItems = computed<CertificationAppeal[]>(() => appeals.data.value?.items ?? [])
@@ -60,18 +61,42 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
     return d && h && a
   }
   async function refreshAfterWrite() {
+    refreshing.value = true
     const [list, current] = await Promise.all([mine.load(), refreshSelected()])
     stale.value = list && current ? '' : '操作已生效，但当前页面刷新失败，显示的可能是旧数据。请只重新读取，不要重复提交。'
+    refreshing.value = false
   }
   async function open(item: Pick<CertificationSummary, 'id'>) {
+    if (locked.value) return false
     selectedId.value = item.id
     detail.clear(); history.clear(); appeals.clear()
     stale.value = ''
     return refreshSelected()
   }
   function close() {
+    if (locked.value) return
     selectedId.value = null
     detail.clear(); history.clear(); appeals.clear()
+  }
+
+  /** 一次办理连续保存与提交；保存成功后保留 ID，提交失败不重新创建同范围申请。 */
+  async function saveApplication(body: CreateCertification | UpdateCertification, record: Certification | null, send: boolean) {
+    if (locked.value) return { ok: false, stored: false, record }
+    let saved: Certification | null = record
+    let stored = false
+    const ok = await action.run(async () => {
+      saved = record ? await api.update(record.id, body as UpdateCertification) : await api.create(body as CreateCertification, crypto.randomUUID())
+      stored = true
+      selectedId.value = saved.id
+      detail.data.value = saved
+      if (send) detail.data.value = await api.submit(saved.id, saved.version)
+    }, send ? '已提交审核，等待审核员处理。' : '申请材料已保存，尚未提交审核。')
+    if (!ok && stored) {
+      action.done.value = '申请材料已保存；提交审核尚未确认。请重新读取核对状态。'
+      action.error.value = `材料已保存，尚未确认提交审核。${action.error.value}`
+    }
+    if (ok) await refreshAfterWrite()
+    return { ok, stored, record: saved }
   }
 
   async function createDraft(body: CreateCertification) {
@@ -93,6 +118,7 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
     return ok
   }
   async function submit(record: Certification) {
+    if (locked.value || stale.value) return false
     const ok = await action.run(async () => {
       detail.data.value = await api.submit(record.id, record.version)
     }, '已提交审核，等待认证员处理。')
@@ -100,6 +126,7 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
     return ok
   }
   async function appeal(record: Certification, body: { reason: string; evidenceMediaIds: string[] }) {
+    if (locked.value || stale.value) return false
     const ok = await action.run(async () => {
       await api.createAppeal(record.id, { ...body, expectedVersion: record.version })
     }, '申诉已提交，等待独立复核。')
@@ -108,7 +135,7 @@ export function useCertifications(api: CertificationsApi = certificationsApi, or
   }
   return {
     page, pageCount, mine, organizations, activeOrganizations, platformEligible, orgNames, items, loading, loadError,
-    selectedId, selectedRecord, historyItems, appealItems, detail, history, appeals, action, stale,
-    load, go, open, close, createDraft, updateDraft, submit, appeal,
+    selectedId, selectedRecord, historyItems, appealItems, detail, history, appeals, action, locked, stale,
+    load, go, open, close, createDraft, updateDraft, saveApplication, submit, appeal,
   }
 }

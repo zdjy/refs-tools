@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, watch } from 'vue'
 import { NButton, NModal } from 'naive-ui'
 import { FileText } from '@lucide/vue'
 import { refereeModalStyle } from '../../../ui-theme'
@@ -12,6 +13,8 @@ const props = defineProps<{ label: string; ids: string[]; certificationId: strin
 const evidence = useCertificationEvidence()
 const open = (mediaId: string) => { void evidence.load(props.certificationId, mediaId, props.appealId) }
 const close = () => { evidence.close() }
+watch(() => [props.certificationId, props.appealId], close)
+onBeforeUnmount(close)
 </script>
 
 <template>

@@ -16,10 +16,13 @@ const emit = defineEmits<{ 'update:show': [value: boolean]; confirm: [body: { re
 const reason = ref('')
 const evidenceMediaIds = ref<string[]>([])
 const problem = ref('')
+const uploading = ref(false)
+const locked = computed(() => props.busy || uploading.value)
 const limit = 10
 const canAdd = computed(() => evidenceMediaIds.value.length < limit)
 watch(() => props.show, (visible) => { if (visible) { reason.value = ''; evidenceMediaIds.value = []; problem.value = '' } })
 function submit() {
+  if (locked.value) return
   problem.value = reasonProblem(reason.value)
   if (problem.value) return
   emit('confirm', { reason: reason.value.trim(), evidenceMediaIds: [...evidenceMediaIds.value] })
@@ -28,7 +31,7 @@ function submit() {
 
 <template>
   <n-modal :show="show" preset="card" title="提交认证申诉" class="max-w-[620px]" :style="refereeModalStyle" :aria-label="'提交认证申诉'"
-    :closable="!busy" :mask-closable="false" :close-on-esc="!busy" @update:show="emit('update:show', $event)">
+    :closable="!locked" :mask-closable="false" :close-on-esc="!locked" @update:show="emit('update:show', $event)">
     <form class="grid gap-4" @submit.prevent="submit">
       <p class="m-0 max-w-[60ch] text-sm leading-relaxed text-body">
         申诉会交给独立复核人处理，原审核人必须回避。复核前原认证结论与效力保持不变。
@@ -47,12 +50,12 @@ function submit() {
       </div>
       <CertificationMediaField label="申诉补充材料" hint="可选。最多 10 个，须与本次认证范围一致；复核人通过认证专用入口读取。"
         :ids="evidenceMediaIds" :options="uploadOptions" :disabled="busy || !canAdd" :max="limit"
-        @add="evidenceMediaIds.push($event)" @remove="evidenceMediaIds.splice($event, 1)" />
+        @add="evidenceMediaIds.push($event)" @remove="evidenceMediaIds.splice($event, 1)" @busy="uploading = $event" />
       <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>
       <UiSubmitHint :busy="busy" />
       <div class="flex flex-wrap justify-end gap-2">
-        <n-button secondary :disabled="busy" @click="emit('update:show', false)">取消</n-button>
-        <n-button type="primary" attr-type="submit" :loading="busy" :disabled="busy">提交申诉</n-button>
+        <n-button secondary :disabled="locked" @click="emit('update:show', false)">取消</n-button>
+        <n-button type="primary" attr-type="submit" :loading="busy" :disabled="locked">提交申诉</n-button>
       </div>
     </form>
   </n-modal>

@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto'
-import type { Certification, CertificationScope, CreateCertification, UpdateCertification } from '@refs-tools/contracts/certifications'
+import type { Certification, CertificationScope, CreateCertification, UpdateCertification, CertificationRecordsQuery } from '@refs-tools/contracts/certifications'
 import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { DomainError } from '../../application/errors.js'
+import { appendAudit } from '../audit/audit.service.js'
 import { certificationAccount, certificationAudit, certificationHidden, lockCertification, lockPrerequisiteOrganizations, requireCertificationMedia,
   requireCertificationReviewer, requireCertificationSubject, requireCertificationVersion, saveCertification } from './certifications.access.js'
 import type { CertificationDependencies } from './certifications.types.js'
@@ -94,7 +95,27 @@ export class CertificationsService {
       if (scope.type === 'organization') await r.certifications.lockOrganization(scope.organizationId)
       await certificationAccount(r, actor)
       await requireCertificationReviewer(r, this.d, actor, scope, appealQueue)
-      return r.certifications.list({ scope, queue: !appealQueue, appealQueue }, query)
+      const result = await r.certifications.reviewList({ scope, queue: !appealQueue, appealQueue }, query)
+      await this.auditList(r, actor, scope)
+      return result
     })
+  }
+
+  /** 管理记录排除未提交草稿，保持普通审核权限，不因组织负责人身份扩大读取。 */
+  async records(actor: string, scope: CertificationScope, query: CertificationRecordsQuery) {
+    return this.d.transaction.run(async r => {
+      if (scope.type === 'organization') await r.certifications.lockOrganization(scope.organizationId)
+      await certificationAccount(r, actor)
+      await requireCertificationReviewer(r, this.d, actor, scope)
+      const result = await r.certifications.reviewList({ scope, records: true, ...(query.status ? { status: query.status } : {}) }, query)
+      await this.auditList(r, actor, scope)
+      return result
+    })
+  }
+
+  private async auditList(r: import('./certifications.types.js').CertificationRepositories, actor: string, scope: CertificationScope) {
+    await appendAudit(r.audit, { actorUserId: actor, action: 'certification.queried', resourceType: 'certification',
+      resourceId: scope.organizationId ?? actor, scopeType: scope.type, scopeId: scope.organizationId,
+      organizationId: scope.organizationId, reason: null, before: null, after: null }, this.d.now())
   }
 }

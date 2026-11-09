@@ -14,8 +14,8 @@ export function useReviewAccess(organizationId: Ref<string>, api: OrganizationsA
   const isOwner = computed(() => organization.value?.isOwner ?? false)
   const hasAccess = computed(() => isCertifier.value || isOwner.value)
   const tabs = computed(() => {
-    const items: { id: 'review' | 'appeal'; label: string }[] = []
-    if (isCertifier.value) items.push({ id: 'review', label: '待审核' })
+    const items: { id: 'review' | 'records' | 'appeal'; label: string }[] = []
+    if (isCertifier.value) items.push({ id: 'review', label: '待审核' }, { id: 'records', label: '认证记录' })
     if (isOwner.value) items.push({ id: 'appeal', label: '待复核' })
     return items
   })

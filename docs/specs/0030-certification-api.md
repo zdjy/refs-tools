@@ -29,6 +29,8 @@
 | `GET /certifications/:id/history` | 受控完整历史，分页并审计 |
 | `GET /organizations/:orgId/certifications/review-queue` | 本组织 certifier 待审摘要 |
 | `GET /admin/certifications/review-queue` | 平台管理员的平台申请待审摘要 |
+| `GET /organizations/:orgId/certifications` | 本组织认证员已提交记录，状态筛选、分页，见 FS-0032 |
+| `GET /admin/certifications` | 平台已提交认证记录，状态筛选、分页，见 FS-0032 |
 | `POST /organizations/:orgId/certifications/:id/decision` | 组织人工决定，expectedVersion、decision、reason |
 | `POST /organizations/:orgId/certifications/:id/revoke` | owner/certifier 撤销，expectedVersion、reason |
 | `POST /admin/certifications/:id/decision` | 平台人工决定，expectedVersion、decision、reason |
@@ -41,7 +43,7 @@
 | `GET /certifications/:id/evidence/:mediaId/read-url` | 本人/该认证审核范围读取已关联当前或历史证据，60 秒 |
 | `GET /certifications/:id/appeals/:appealId/evidence/:mediaId/read-url` | 本人/非原审核人的复核权限读取原始及申诉证据，60 秒 |
 
-集合接口使用共享 page/pageSize 与 `{items,total,page,pageSize}`。认证和申诉队列返回认证摘要，详情仍单独授权。错误组织 ID 与无权的组织资源隐藏为 404；平台门禁返回 403。版本冲突返回 409。普通文件治理入口下载认证原件返回 403 `CERTIFICATION_ACCESS_REQUIRED`，元数据仍可治理。
+集合接口使用共享 page/pageSize 与 `{items,total,page,pageSize}`。审核/申诉队列及审核记录列表返回审核用途摘要（含可空实名、昵称，不含联系方式），同事务记录读取审计；本人摘要保持原投影，详情仍单独授权。错误组织 ID 与无权的组织资源隐藏为 404；平台门禁返回 403。版本冲突返回 409。普通文件治理入口下载认证原件返回 403 `CERTIFICATION_ACCESS_REQUIRED`，元数据仍可治理。
 
 ## 3. 留存与部署
 
@@ -52,6 +54,6 @@
 - 本轮全量快速测试：116 文件、675 项通过；独立 PostgreSQL 17 测试库：17 文件、91 项通过。认证新增领域 2 项、Service 10 项、HTTP 3 项、真实数据库 7 项；另补通用媒体治理入口拒绝认证原件的回归。最终补充申诉完整材料入口、退出后撤销与 task7 角色顺序回归后，相关 5 文件 43 项快测、认证 7 项真实数据库检查再次通过；未重复执行整套快测。
 - 验证内容：幂等创建、材料用途/归属/范围、补件版本、自审、跨组织、实时撤权、成员退出/恢复及冻结、平台前置条件重验和独立效力、并发审核、冻结与平台提交的锁协调、申诉回避、不可变历史、审计故障回滚、签名期间撤权不返回链接、Cookie/Origin/Schema 门禁与 no-store。
 - `pnpm typecheck`、workspace 生产构建通过。迁移包含从空 schema 升级、幂等、回滚与重新应用。
-- 未实现：管理端平台认证审核界面；指定复核员分配、通知、证据删除审批与法定留存清理。裁判端申请/材料/历史/申诉与组织审核/复核界面已由 [FS-0031](0031-certification-ui.md) 实现。
+- 管理端平台认证审核界面与审核记录查询已由 [FS-0032](0032-certification-operations.md) 接续；未实现：指定复核员分配、通知、证据删除审批与法定留存清理。裁判端申请/材料/历史/申诉与组织审核/复核界面已由 [FS-0031](0031-certification-ui.md) 实现。
 - 未执行：真实 OSS/MinIO 文件上传到认证再读取的端到端联调、认证浏览器验收、生产/开发常驻库迁移。本轮只迁移独立测试 schema。
 - 交付自检：SQL/驱动边界、单连接事务、版本/唯一约束、同事务审计、共享契约、Service/domain 测试、固定授权策略与实时撤权已核验；新增生产文件均在规约行数上限内，Service 函数按上限检查。UI、请求网关、Pinia、Router、Naive UI、Tailwind、触控/焦点/reduced-motion 为本次后端改动不适用；未新增依赖。最终相关快测使用 10ms RSS 采样，Vitest 进程（含测试线程）峰值约 157.2 MiB，启动进程约 41.0 MiB；该抽样检查低于 300 MB，不代表全套测试的持续进程树内存上界。

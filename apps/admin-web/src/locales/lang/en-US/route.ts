@@ -50,6 +50,7 @@ export default {
   system_user: 'User',
   system_organization: 'Organizations',
   system_file: 'Files',
+  system_certification: 'Certifications',
   login: 'Login',
   errorPage: 'Page not found',
 };

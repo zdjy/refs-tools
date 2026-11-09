@@ -4,6 +4,7 @@ import type { PageQuery, Paged } from '@refs-tools/contracts/pagination'
 import { effectiveCertificationStatus } from '@refs-tools/domain'
 import type { CertificationFilter, CertificationsRepository } from './certifications.types.js'
 import { PgCertificationAppealsRepository } from './certification-appeals.repository.js'
+import { PgCertificationListRepository } from './certification-list.repository.js'
 
 type Row = { payload: Certification; organization_active: boolean; member_active: boolean }
 const effect = `COALESCE(o.status='active',true) AS organization_active,
@@ -12,10 +13,6 @@ const effect = `COALESCE(o.status='active',true) AS organization_active,
 const from = 'FROM certifications c LEFT JOIN organizations o ON o.id=c.organization_id'
 function map(row: Row): Certification {
   return { ...row.payload, effectiveStatus: effectiveCertificationStatus(row.payload.status, row.organization_active, row.member_active) }
-}
-function summary(record: Certification): CertificationSummary {
-  const { id, subjectUserId, scope, level, status, effectiveStatus, reviewedAt, version, createdAt, updatedAt } = record
-  return { id, subjectUserId, scope, level, status, effectiveStatus, reviewedAt, version, createdAt, updatedAt }
 }
 function paging(query: PageQuery) { return { page: Number(query.page ?? '1'), pageSize: Number(query.pageSize ?? '20') } }
 
@@ -67,17 +64,11 @@ export class PgCertificationsRepository extends PgCertificationAppealsRepository
   }
 
   async list(filter: CertificationFilter, query: PageQuery): Promise<Paged<CertificationSummary>> {
-    const { page, pageSize } = paging(query)
-    const values = [filter.subjectUserId ?? null, filter.scope?.type ?? null, filter.scope?.organizationId ?? null, filter.queue ?? false, filter.appealQueue ?? false]
-    const where = `WHERE ($1::uuid IS NULL OR c.subject_user_id=$1) AND ($2::text IS NULL OR c.scope_type=$2)
-      AND ($2::text IS NULL OR c.organization_id IS NOT DISTINCT FROM $3::uuid)
-      AND (NOT $5::boolean OR EXISTS(SELECT 1 FROM certification_appeals a WHERE a.certification_id=c.id AND a.status='pending'))
-      AND (NOT $4::boolean OR (c.status='under_review' AND (c.scope_type='platform' OR
-        (o.status='active' AND EXISTS(SELECT 1 FROM organization_memberships m WHERE m.organization_id=c.organization_id AND m.user_id=c.subject_user_id AND m.status='active')))))`
-    const count = await this.db.query<{ total: string }>(`SELECT count(*) AS total ${from} ${where}`, values)
-    const result = await this.db.query<Row>(`SELECT c.payload,${effect} ${from} ${where}
-      ORDER BY c.created_at DESC,c.id DESC LIMIT $6 OFFSET $7`, [...values, pageSize, (page - 1) * pageSize])
-    return { items: result.rows.map(row => summary(map(row))), total: Number(count.rows[0]!.total), page, pageSize }
+    return new PgCertificationListRepository(this.db).list(filter, query)
+  }
+
+  async reviewList(filter: CertificationFilter, query: PageQuery) {
+    return new PgCertificationListRepository(this.db).reviewList(filter, query)
   }
 
   async prerequisiteOrganizations(subject: string) {

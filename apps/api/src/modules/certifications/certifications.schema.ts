@@ -10,7 +10,10 @@ export const updateSchema = { ...detailSchema, body: c.UpdateCertificationSchema
 export const submitSchema = { ...detailSchema, body: c.CertificationVersionSchema }
 export const historySchema = { params: c.CertificationParamsSchema, querystring: c.CertificationQuerySchema,
   response: { 200: c.CertificationHistoryResponseSchema } }
-export const organizationQueueSchema = { ...mineSchema, params: c.CertificationQueueParamsSchema }
+export const reviewQueueSchema = { querystring: c.CertificationQuerySchema, response: { 200: c.CertificationReviewListResponseSchema } }
+export const organizationQueueSchema = { ...reviewQueueSchema, params: c.CertificationQueueParamsSchema }
+export const recordsSchema = { ...reviewQueueSchema, querystring: c.CertificationRecordsQuerySchema }
+export const organizationRecordsSchema = { ...recordsSchema, params: c.CertificationQueueParamsSchema }
 export const decisionSchema = { ...detailSchema, body: c.CertificationDecisionSchema }
 export const organizationDecisionSchema = { ...decisionSchema, params: c.OrganizationCertificationParamsSchema }
 export const revokeSchema = { ...organizationDecisionSchema, body: c.RevokeCertificationSchema }

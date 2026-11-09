@@ -3,7 +3,8 @@
 - 状态：裁判端与组织审核界面已实现；本地 MinIO 直传/读取、桌面与 390px 移动视口主路径已联调，生产存储与完整浏览器验收待完成。
 - 范围：`/certifications` 的本人认证工作台，组织工作区的认证审核入口与 `/organizations/:organizationId/certifications/review` 审核台。
 - 依据：[FS-0030 §1–2](0030-certification-api.md)、[FS-0001 §7](0001-mvp-scope-and-business-rules.md#7-认证与资质)、[ADR 0036](../decisions/0036-certification-history-and-evidence-access.md)、[场边 UI 基线](../ui/courtside.md)。
-- 不在范围：平台管理员的平台认证审核界面、指定复核员分配、通知与证据删除审批。
+- 后续优化：[FS-0032](0032-certification-operations.md) 接续分步申请、审核身份投影、记录管理与平台管理端审核；下述原始布局与步骤以 FS-0032 为准。
+- 不在范围：指定复核员分配、通知与证据删除审批。
 
 ## 1. 本人认证工作台
 

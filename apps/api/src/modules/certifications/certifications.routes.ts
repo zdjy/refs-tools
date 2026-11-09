@@ -2,7 +2,7 @@ import type { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { apiResponse } from '@refs-tools/contracts'
 import type { CertificationParams, CertificationQueueParams, OrganizationCertificationParams, CertificationAppealParams,
   CertificationEvidenceParams, CertificationAppealEvidenceParams, CreateCertification, UpdateCertification,
-  CertificationVersion, RevokeCertification, CertificationDecision, CreateCertificationAppeal, CertificationAppealDecision } from '@refs-tools/contracts/certifications'
+  CertificationVersion, RevokeCertification, CertificationDecision, CreateCertificationAppeal, CertificationAppealDecision, CertificationRecordsQuery } from '@refs-tools/contracts/certifications'
 import type { PageQuery } from '@refs-tools/contracts/pagination'
 import { requireSameOrigin, sessionToken } from '../auth/auth.http.js'
 import type { SessionService } from '../auth/session.service.js'
@@ -44,9 +44,13 @@ export function certificationsRoutes(d: CertificationRouteDependencies): Fastify
       async request => apiResponse(await d.service.queue(await actor(request), { type: 'organization', organizationId: request.params.orgId }, request.query)))
     app.get<{ Params: CertificationQueueParams } & Page>('/organizations/:orgId/certifications/appeal-queue', { schema: s.organizationQueueSchema },
       async request => apiResponse(await d.service.queue(await actor(request), { type: 'organization', organizationId: request.params.orgId }, request.query, true)))
-    app.get<Page>('/admin/certifications/appeal-queue', { schema: s.mineSchema },
+    app.get<{ Params: CertificationQueueParams; Querystring: CertificationRecordsQuery }>('/organizations/:orgId/certifications', { schema: s.organizationRecordsSchema },
+      async request => apiResponse(await d.service.records(await actor(request), { type: 'organization', organizationId: request.params.orgId }, request.query)))
+    app.get<{ Querystring: CertificationRecordsQuery }>('/admin/certifications', { schema: s.recordsSchema },
+      async request => apiResponse(await d.service.records(await actor(request), { type: 'platform', organizationId: null }, request.query)))
+    app.get<Page>('/admin/certifications/appeal-queue', { schema: s.reviewQueueSchema },
       async request => apiResponse(await d.service.queue(await actor(request), { type: 'platform', organizationId: null }, request.query, true)))
-    app.get<Page>('/admin/certifications/review-queue', { schema: s.mineSchema },
+    app.get<Page>('/admin/certifications/review-queue', { schema: s.reviewQueueSchema },
       async request => apiResponse(await d.service.queue(await actor(request), { type: 'platform', organizationId: null }, request.query)))
     app.post<{ Params: OrganizationCertificationParams; Body: CertificationDecision }>('/organizations/:orgId/certifications/:id/decision',
       { schema: s.organizationDecisionSchema, bodyLimit: 4096 }, async request => apiResponse(await d.review.decide(await actor(request), request.params.id,

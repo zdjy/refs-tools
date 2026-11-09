@@ -87,6 +87,10 @@ export function buildDevApiEnv({ requireCa = true } = {}) {
       }
     }
   }
+  // packages/contracts 的 dist/ 是已忽略提交的构建产物；本机未重建时会缺新增导出，
+  // Fastify 注册 response schema 时读到 undefined 会直接崩溃。启用其 exports 的 "development" 条件，
+  // 让 API 在开发期直接读源码：tsx 会一并监视契约文件，改动即时生效。
+  env['NODE_OPTIONS'] = [env['NODE_OPTIONS'], '--conditions=development'].filter(Boolean).join(' ')
   return env
 }
 

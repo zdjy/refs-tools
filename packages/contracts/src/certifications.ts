@@ -44,6 +44,11 @@ export const CertificationSchema = Type.Object({
 }, { additionalProperties: false })
 export const CertificationSummarySchema = Type.Pick(CertificationSchema,
   ['id', 'subjectUserId', 'scope', 'level', 'status', 'effectiveStatus', 'reviewedAt', 'version', 'createdAt', 'updatedAt'])
+/** 仅在授权的认证审核列表返回当前身份，不复制联系方式或写入历史快照。 */
+export const CertificationApplicantSchema = Type.Object({ nickname: Type.String(), legalName: Type.Union([Type.String(), Type.Null()]) }, { additionalProperties: false })
+export const CertificationReviewSummarySchema = Type.Object({ ...CertificationSummarySchema.properties, applicant: CertificationApplicantSchema }, { additionalProperties: false })
+export const CertificationRecordsQuerySchema = Type.Object({ ...PageQuerySchema.properties, status: Type.Optional(CertificationStatusSchema) }, { additionalProperties: false })
+export const CertificationReviewListResponseSchema = pagedResponseSchema(CertificationReviewSummarySchema)
 export const CertificationParamsSchema = Type.Object({ id: Uuid }, { additionalProperties: false })
 export const CertificationQueueParamsSchema = Type.Object({ orgId: Uuid }, { additionalProperties: false })
 export const OrganizationCertificationParamsSchema = Type.Object({ orgId: Uuid, id: Uuid }, { additionalProperties: false })
@@ -80,6 +85,8 @@ export type CertificationStatus = Static<typeof CertificationStatusSchema>
 export type CertificationMaterials = Static<typeof CertificationMaterialsSchema>
 export type Certification = Static<typeof CertificationSchema>
 export type CertificationSummary = Static<typeof CertificationSummarySchema>
+export type CertificationReviewSummary = Static<typeof CertificationReviewSummarySchema>
+export type CertificationRecordsQuery = Static<typeof CertificationRecordsQuerySchema>
 export type CreateCertification = Static<typeof CreateCertificationSchema>
 export type UpdateCertification = Static<typeof UpdateCertificationSchema>
 export type CertificationVersion = Static<typeof CertificationVersionSchema>

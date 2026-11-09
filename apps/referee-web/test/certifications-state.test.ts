@@ -33,7 +33,7 @@ const api = (patch: Record<string, unknown> = {}) => ({
   appeals: vi.fn(async () => page([])), create: vi.fn(async () => record), update: vi.fn(async () => record),
   submit: vi.fn(async () => ({ ...record, status: 'under_review', version: 2 })), createAppeal: vi.fn(async () => appeal),
   decide: vi.fn(async () => ({ ...record, status: 'approved', version: 2 })), decideAppeal: vi.fn(async () => appeal),
-  reviewQueue: vi.fn(async () => page([summary])), appealQueue: vi.fn(async () => page([summary])),
+  reviewQueue: vi.fn(async () => page([summary])), appealQueue: vi.fn(async () => page([summary])), records: vi.fn(async () => page([summary])),
   evidenceUrl: vi.fn(async () => ({ url: 'https://storage/signed', expiresAt: iso })), ...patch,
 } as unknown as CertificationsApi)
 const org = (patch: Record<string, unknown> = {}) => ({ mine: vi.fn(async () => page([])), ...patch } as unknown as OrganizationsApi)
@@ -90,6 +90,17 @@ describe('认证表单投影', () => {
 })
 
 describe('本人认证用例', () => {
+  it('保存后提交使用返回版本；部分成功保留原记录，不伪报已提交', async () => {
+    const a = api({ create: vi.fn(async () => ({ ...record, version: 7 })), submit: vi.fn(async () => { throw new CertificationsApiError('NETWORK_ERROR', 0) }) })
+    const c = useCertifications(a, org())
+    const result = await c.saveApplication(createBodyFrom(draftFrom(record)), null, true)
+    expect(result).toMatchObject({ ok: false, stored: true, record: { id: 'c1', version: 7 } })
+    expect(a.submit).toHaveBeenCalledWith('c1', 7)
+    expect(c.selectedRecord.value?.id).toBe('c1')
+    expect(c.action.error.value).toContain('材料已保存')
+    expect(c.action.done.value).toContain('提交审核尚未确认')
+  })
+
   it('保存草稿后选中新记录并刷新详情；失败不报成功', async () => {
     const a = api(), c = useCertifications(a, org())
     const body = createBodyFrom(draftFrom(record))
@@ -175,7 +186,7 @@ describe('组织审核用例', () => {
     const access = useReviewAccess(ref('o1'), orgApi)
     await access.load()
     expect(access.hasAccess.value).toBe(true)
-    expect(access.tabs.value.map((item) => item.id)).toEqual(['review', 'appeal'])
+    expect(access.tabs.value.map((item) => item.id)).toEqual(['review', 'records', 'appeal'])
     const ownerOnly = useReviewAccess(ref('o1'), org({ mine: vi.fn(async () => page([organization({ isOwner: true })])) }))
     await ownerOnly.load()
     expect(ownerOnly.tabs.value.map((item) => item.id)).toEqual(['appeal'])

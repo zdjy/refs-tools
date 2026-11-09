@@ -44,11 +44,15 @@ const statusHint = computed(() => certificationStatusText[props.record.status].h
         当前效力为「{{ certificationStatusText[record.effectiveStatus].label }}」：组织已冻结或你的成员关系已失效。恢复后效力自动恢复；人工暂停与撤销不会自动恢复。
       </p>
       <p class="m-0 font-mono text-[13px] text-body">版本 {{ record.version }} · 更新 {{ formatDateTime(record.updatedAt) }}</p>
+      <div v-if="record.reviewNote" class="grid gap-1 border-0 border-l border-solid border-ink pl-3">
+        <h3 class="m-0 text-sm font-semibold text-body">审核理由与补件要求</h3>
+        <p class="m-0 whitespace-pre-line text-base leading-relaxed text-ink wrap-anywhere">{{ record.reviewNote }}</p>
+      </div>
       <div class="flex flex-wrap gap-2">
-        <n-button v-if="editable" type="primary" :disabled="busy" @click="emit('edit')">编辑材料</n-button>
+        <n-button v-if="editable" :disabled="busy" @click="emit('edit')">{{ record.status === 'draft' ? '继续申请' : '补充材料' }}</n-button>
         <n-popconfirm v-if="editable" :positive-button-props="confirmButtonProps" :negative-button-props="cancelButtonProps"
           positive-text="提交审核" negative-text="再核对一下" @positive-click="emit('submit')">
-          <template #trigger><n-button :loading="busy" :disabled="busy">提交审核</n-button></template>
+          <template #trigger><n-button type="primary" :loading="busy" :disabled="busy">提交审核</n-button></template>
           提交后进入审核队列，审核期间不能编辑材料。确认材料与声明均无误？
         </n-popconfirm>
         <n-button v-if="appealable" :disabled="busy" @click="emit('appeal')">提交申诉</n-button>
@@ -58,7 +62,7 @@ const statusHint = computed(() => certificationStatusText[props.record.status].h
       <n-alert v-if="error" type="error" :show-icon="false" role="alert">{{ error }}</n-alert>
       <p v-if="stale" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed text-body">{{ stale }}</p>
     </header>
-    <CertificationDetailFields :record="record" :org-names="orgNames" />
+    <CertificationDetailFields :record="record" :show-review="false" :org-names="orgNames" />
     <div v-if="appealsLoading" role="status" class="m-0 text-[13px] text-body">正在读取申诉记录…</div>
     <div v-else-if="appealsError" class="grid gap-2">
       <p role="alert" class="m-0 text-[13px] text-danger">{{ appealsError }}</p>

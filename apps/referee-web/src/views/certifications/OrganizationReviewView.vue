@@ -1,24 +1,25 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { CertificationAppeal, CertificationDecision } from '@refs-tools/contracts/certifications'
+import { computed, nextTick, ref, watch } from 'vue'
+import type { CertificationReviewSummary } from '@refs-tools/contracts/certifications'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { NAlert, NButton } from 'naive-ui'
+import { NAlert, NButton, NSelect } from 'naive-ui'
 import { ArrowLeft, ShieldCheck } from '@lucide/vue'
 import NavigationShell from '../../components/navigation/NavigationShell.vue'
 import UiLoadingRegion from '../../components/ui/UiLoadingRegion.vue'
 import UiReasonDialog from '../../components/ui/UiReasonDialog.vue'
+import { useUiFeedback } from '../../components/ui/useUiFeedback'
 import { useAuthStore } from '../../stores/auth'
-import { reasonProblem } from '../../domain/audit-reason'
 import { useAuthGate } from '../../application/useAuthGate'
 import { roleLabels } from '../organizations/organizations.presentation'
 import CertificationPager from './components/CertificationPager.vue'
 import CertificationReviewDetail from './components/CertificationReviewDetail.vue'
 import CertificationReviewQueue from './components/CertificationReviewQueue.vue'
 import CertificationsSignIn from './components/CertificationsSignIn.vue'
-import { appealDecisionOptions, decisionLabels, reviewDecisionOptions } from './certifications.presentation'
+import { certificationStatusText } from './certifications.presentation'
 import { useReviewAccess } from './useReviewAccess'
 import { useReviewQueues } from './useReviewQueues'
+import { useReviewDecision } from './useReviewDecision'
 
 /**
  * 组织认证审核台：certifier 看待审，owner 看待复核。入口可见性只用于呈现，
@@ -35,51 +36,35 @@ const { status, retry } = useAuthGate(async () => {
   if (first && !access.tabs.value.some((item) => item.id === review.tab.value)) review.tab.value = first
   if (access.hasAccess.value) await review.load()
 })
-const listState = computed(() => review.tab.value === 'review' ? review.queue : review.appealQueue)
-const activePage = computed(() => review.tab.value === 'review' ? review.reviewPage.value : review.appealPage.value)
-const activeCount = computed(() => review.tab.value === 'review' ? review.reviewPageCount.value : review.appealPageCount.value)
-const countOf = (tab: 'review' | 'appeal') => tab === 'review' ? review.queue.data.value?.total ?? 0 : review.appealQueue.data.value?.total ?? 0
+const listState = computed(() => review.tab.value === 'records' ? review.records : review.tab.value === 'review' ? review.queue : review.appealQueue)
+const activePage = computed(() => review.tab.value === 'records' ? review.recordPage.value : review.tab.value === 'review' ? review.reviewPage.value : review.appealPage.value)
+const activeCount = computed(() => review.tab.value === 'records' ? review.recordPageCount.value : review.tab.value === 'review' ? review.reviewPageCount.value : review.appealPageCount.value)
+const countOf = (tab: 'review' | 'records' | 'appeal') => (tab === 'records' ? review.records : tab === 'review' ? review.queue : review.appealQueue).data.value?.total ?? 0
 const currentUserId = computed(() => user.value?.id ?? '')
 const orgNames = computed(() => access.organization.value ? { [access.organization.value.id]: access.organization.value.name } : {})
 watch(() => review.tab.value, () => review.close())
-
-type Pending = { kind: 'decision'; decision: CertificationDecision['decision'] }
-  | { kind: 'appeal'; appeal: CertificationAppeal; decision: NonNullable<CertificationAppeal['decision']> }
-const pending = ref<Pending | null>(null)
-const reason = ref('')
-const problem = ref('')
-const showDialog = ref(false)
-const dialogCopy = computed(() => {
-  const current = pending.value
-  if (!current) return { title: '', description: '', label: '', danger: false }
-  if (current.kind === 'decision') {
-    const option = reviewDecisionOptions(review.record.value?.status ?? 'draft').find((item) => item.value === current.decision)
-    return { title: decisionLabels[current.decision], description: option?.hint ?? '', label: decisionLabels[current.decision], danger: current.decision === 'revoke' }
-  }
-  const option = appealDecisionOptions().find((item) => item.value === current.decision)
-  return { title: `申诉复核：${option?.label ?? ''}`, description: option?.hint ?? '', label: option?.label ?? '提交复核', danger: false }
+const statusOptions = Object.entries(certificationStatusText).filter(([value]) => value !== 'draft').map(([value, item]) => ({ value, label: item.label }))
+const nextItem = computed(() => {
+  const items = review.currentItems.value, index = items.findIndex(item => item.id === review.selectedId.value)
+  return items[index + 1]
 })
-function openDecision(decision: CertificationDecision['decision']) {
-  pending.value = { kind: 'decision', decision }
-  reason.value = ''; problem.value = ''; showDialog.value = true
+useUiFeedback(review.action.done)
+const detailArea = ref<HTMLElement | null>(null)
+const queueArea = ref<HTMLElement | null>(null)
+let queueScroll = 0
+async function open(item: CertificationReviewSummary) {
+  queueScroll = window.scrollY
+  await review.open(item)
+  await nextTick()
+  detailArea.value?.querySelector<HTMLElement>('h2')?.focus()
 }
-function openAppealDecision(appeal: CertificationAppeal, decision: NonNullable<CertificationAppeal['decision']>) {
-  pending.value = { kind: 'appeal', appeal, decision }
-  reason.value = ''; problem.value = ''; showDialog.value = true
+function back() {
+  review.close()
+  void nextTick(() => { window.scrollTo(0, queueScroll); queueArea.value?.focus({ preventScroll: true }) })
 }
-function closeDialog(visible: boolean) { if (!visible && !review.action.busy.value) { showDialog.value = false; pending.value = null } }
-async function confirmDialog() {
-  const current = pending.value
-  const record = review.record.value
-  if (!current || !record) return
-  problem.value = reasonProblem(reason.value)
-  if (problem.value) return
-  const ok = current.kind === 'decision'
-    ? await review.decide(record, current.decision, reason.value.trim())
-    : await review.decideAppeal(record, current.appeal, current.decision, reason.value.trim())
-  if (ok) { showDialog.value = false; pending.value = null; reason.value = '' }
-}
-function selectTab(tab: 'review' | 'appeal') { review.tab.value = tab }
+
+const { reason, problem, showDialog, dialogCopy, openDecision, openAppealDecision, closeDialog, confirmDialog } = useReviewDecision(review)
+function selectTab(tab: 'review' | 'records' | 'appeal') { if (!review.locked.value && !showDialog.value) review.tab.value = tab }
 </script>
 
 <template>
@@ -88,9 +73,9 @@ function selectTab(tab: 'review' | 'appeal') { review.tab.value = tab }
       <RouterLink :to="`/organizations/${id}`" class="inline-flex min-h-11 w-fit items-center gap-2 text-sm text-body no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <ArrowLeft class="size-4" :stroke-width="1.75" aria-hidden="true" />返回组织
       </RouterLink>
-      <header class="grid gap-2 border-0 border-l border-solid border-ink pl-4 compact:p-8">
+      <header class="grid gap-2">
         <p class="m-0 flex items-center gap-2 text-[13px] font-semibold text-body"><ShieldCheck class="size-4" :stroke-width="1.75" aria-hidden="true" />组织认证审核</p>
-        <h1 class="m-0 text-[32px] leading-[1.1] font-bold tracking-[-0.03em] text-ink wrap-anywhere focus:outline-hidden compact:text-5xl">{{ access.organization.value?.name ?? '认证审核' }}</h1>
+        <h1 class="m-0 text-[32px] leading-[1.1] font-bold tracking-[-0.03em] text-ink wrap-anywhere focus:outline-hidden compact:text-[32px]">{{ access.organization.value?.name ?? '认证审核' }}</h1>
         <p class="m-0 max-w-[64ch] text-sm leading-relaxed text-body">
           审核本组织的认证材料。你不能审核本人申请；申诉由负责人复核，原审核人必须回避。
         </p>
@@ -111,9 +96,8 @@ function selectTab(tab: 'review' | 'appeal') { review.tab.value = tab }
         <div><RouterLink :to="`/organizations/${id}`" class="inline-flex min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-surface no-underline hover:bg-black active:scale-95">返回组织</RouterLink></div>
       </section>
       <template v-else>
-        <div class="flex flex-wrap gap-2" role="tablist" aria-label="审核队列">
-          <button v-for="tab in access.tabs.value" :key="tab.id" type="button" role="tab" :aria-selected="review.tab.value === tab.id"
-            :tabindex="review.tab.value === tab.id ? 0 : -1"
+        <div class="flex flex-wrap gap-2" aria-label="审核队列">
+          <button v-for="tab in access.tabs.value" :key="tab.id" type="button" :aria-current="review.tab.value === tab.id ? 'page' : undefined" :disabled="review.action.busy.value || showDialog"
             class="inline-flex min-h-11 items-center gap-2 rounded-full border-0 px-5 text-sm transition-[background-color,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[.98]"
             :class="review.tab.value === tab.id ? 'bg-ink font-semibold text-surface' : 'bg-soft text-body hover:bg-sand hover:text-ink'"
             @click="selectTab(tab.id)">
@@ -121,26 +105,40 @@ function selectTab(tab: 'review' | 'appeal') { review.tab.value = tab }
           </button>
         </div>
         <p v-if="review.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed text-body">
-          {{ review.stale.value }}<n-button text type="primary" class="ml-2" @click="review.load()">重新读取</n-button>
+          {{ review.stale.value }}<n-button text type="primary" class="ml-2" @click="review.load(); review.refreshSelected()">重新读取</n-button>
         </p>
+        <div class="grid min-w-0 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+        <div ref="queueArea" tabindex="-1" class="min-w-0 gap-4" :class="review.selectedId.value ? 'hidden lg:grid lg:content-start' : 'grid content-start'">
+        <n-select v-if="review.tab.value === 'records'" v-model:value="review.status.value" :options="statusOptions" clearable placeholder="全部已提交状态" aria-label="筛选认证状态" :disabled="review.action.busy.value" @update:value="review.go(1)" />
         <UiLoadingRegion v-if="listState.loading.value && !listState.data.value" :loading="true" label="读取审核队列" :lines="4" @retry="listState.load()" />
-        <div v-else-if="listState.error.value && !listState.data.value" class="grid max-w-[560px] gap-3">
+        <div v-else-if="listState.error.value" class="grid max-w-[560px] gap-3">
           <n-alert type="error" :show-icon="false" role="alert">{{ listState.error.value }}</n-alert>
           <div><n-button type="primary" @click="listState.load()">重新读取</n-button></div>
         </div>
         <template v-else>
-          <CertificationReviewQueue :items="review.currentItems.value" :selected-id="review.selectedId.value" :mode="review.tab.value" @select="review.open" />
-          <CertificationPager :page="activePage" :page-count="activeCount" :busy="listState.loading.value" @go="review.go" />
+          <CertificationReviewQueue :items="review.currentItems.value" :selected-id="review.selectedId.value" :mode="review.tab.value" :disabled="review.action.busy.value || showDialog" @select="open" />
+          <CertificationPager :page="activePage" :page-count="activeCount" :busy="listState.loading.value || review.locked.value || showDialog" @go="review.go" />
         </template>
+        </div>
+        <div ref="detailArea" class="grid min-w-0 content-start gap-4">
+        <div v-if="review.selectedId.value" class="flex flex-wrap gap-2">
+          <n-button secondary :disabled="review.action.busy.value || showDialog" @click="back">返回队列</n-button>
+          <n-button v-if="nextItem" secondary :disabled="review.action.busy.value || showDialog" @click="open(nextItem)">下一条</n-button>
+        </div>
+        <p v-if="review.action.done.value" role="status" class="m-0 text-base text-ink">{{ review.action.done.value }}</p>
+        <UiLoadingRegion v-if="review.detail.loading.value && !review.record.value" :loading="true" label="读取申请材料" :lines="5" />
+        <p v-if="!review.selectedId.value" class="m-0 text-sm text-body">从队列选择一条记录，核对材料后作出决定。</p>
         <div v-if="review.detail.error.value && !review.record.value" class="grid max-w-[560px] gap-3 border-0 border-t border-solid border-ink pt-5" role="alert">
           <p class="m-0 text-sm leading-relaxed text-danger">{{ review.detail.error.value }}</p>
           <div><n-button secondary @click="review.selectedId.value ? review.open({ id: review.selectedId.value }) : review.load()">重新读取</n-button></div>
         </div>
-        <CertificationReviewDetail v-if="review.record.value" :record="review.record.value" :org-names="orgNames" :history-items="review.historyItems.value"
+        <CertificationReviewDetail v-if="review.record.value" :key="review.record.value.id" :record="review.record.value" :org-names="orgNames" :history-items="review.historyItems.value"
           :history-loading="review.history.loading.value" :history-error="review.history.error.value" :appeal-items="review.appealList.value"
           :appeals-loading="review.appeals.loading.value" :appeals-error="review.appeals.error.value" :mode="review.tab.value"
-          :current-user-id="currentUserId" :can-read-history="access.isCertifier.value" :busy="review.action.busy.value" :error="review.action.error.value" :stale="review.stale.value"
+          :selected-appeal-id="review.selectedAppealId.value" :applicant="review.applicant.value" :current-user-id="currentUserId" :can-read-history="access.isCertifier.value" :busy="review.locked.value || review.detail.loading.value || !!review.stale.value || !!review.detail.error.value" :error="review.action.error.value" :stale="review.stale.value"
           @decide="openDecision" @decide-appeal="openAppealDecision" @retry-history="review.history.load()" @retry-appeals="review.appeals.load()" />
+        </div>
+        </div>
       </template>
     </div>
     <UiReasonDialog :show="showDialog" v-model:reason="reason" :title="dialogCopy.title" :description="dialogCopy.description"

@@ -36,6 +36,18 @@ describe('认证 HTTP 门禁与契约', () => {
       expect(f.r.certifications.insert).not.toHaveBeenCalled()
     } finally { await f.app.close() }
   })
+  it('审核记录端点接受分页筛选，响应保留最小身份且不泄漏材料', async () => {
+    const f = await fixture()
+    try {
+      const response = await f.app.inject({ url: `/api/v1/organizations/${f.org}/certifications?status=approved&page=2&pageSize=10`, headers: f.headers })
+      expect(response.statusCode).toBe(200)
+      expect(response.json().data.items[0].applicant).toEqual({ nickname: '裁判昵称', legalName: '裁判实名' })
+      expect(response.json().data.items[0]).not.toHaveProperty('certificateNumber')
+      expect(response.headers['cache-control']).toBe('no-store')
+      const invalid = await f.app.inject({ url: '/api/v1/admin/certifications?status=invalid', headers: f.headers })
+      expect(invalid.statusCode).toBe(400)
+    } finally { await f.app.close() }
+  })
   it('Cookie 主体创建草稿、提交并读取证据，响应不包含内部存储路径', async () => {
     const f = await fixture(); f.setExists(false)
     try {

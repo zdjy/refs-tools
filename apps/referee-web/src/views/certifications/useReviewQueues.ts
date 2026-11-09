@@ -1,6 +1,6 @@
 import { computed, ref, type Ref } from 'vue'
 import type {
-  Certification, CertificationAppeal, CertificationDecision, CertificationHistory, CertificationSummary,
+  Certification, CertificationAppeal, CertificationDecision, CertificationHistory, CertificationSummary, CertificationReviewSummary, CertificationStatus,
 } from '@refs-tools/contracts/certifications'
 import type { Paged } from '@refs-tools/contracts/pagination'
 import { certificationsApi, type CertificationsApi } from '../../api/certifications.api'
@@ -18,16 +18,23 @@ const emptyPage = <T>(): Paged<T> => ({ items: [], total: 0, page: 1, pageSize: 
 export function useReviewQueues(
   organizationId: Ref<string>, access: { isCertifier: Ref<boolean>; isOwner: Ref<boolean> }, api: CertificationsApi = certificationsApi,
 ) {
-  const tab = ref<'review' | 'appeal'>('review')
+  const tab = ref<'review' | 'records' | 'appeal'>('review')
+  const recordPage = ref(1)
+  const status = ref<CertificationStatus | null>(null)
+  const applicant = ref<CertificationReviewSummary['applicant'] | null>(null)
+  let selection = 0
   const reviewPage = ref(1)
   const appealPage = ref(1)
   const selectedId = ref<string | null>(null)
   // 负责人没有 certifier 权限，不能用普通详情/历史入口；申诉复核改用 application 入口读取当前申请。
   const selectedAppealId = ref<string | null>(null)
   const queue = useCertificationLoadable(async () =>
-    access.isCertifier.value ? api.reviewQueue(organizationId.value, { page: String(reviewPage.value), pageSize: PAGE_SIZE }) : emptyPage<CertificationSummary>())
+    access.isCertifier.value ? api.reviewQueue(organizationId.value, { page: String(reviewPage.value), pageSize: PAGE_SIZE }) : emptyPage<CertificationReviewSummary>())
   const appealQueue = useCertificationLoadable(async () =>
-    access.isOwner.value ? api.appealQueue(organizationId.value, { page: String(appealPage.value), pageSize: PAGE_SIZE }) : emptyPage<CertificationSummary>())
+    access.isOwner.value ? api.appealQueue(organizationId.value, { page: String(appealPage.value), pageSize: PAGE_SIZE }) : emptyPage<CertificationReviewSummary>())
+  const records = useCertificationLoadable(async () => access.isCertifier.value
+    ? api.records(organizationId.value, { page: String(recordPage.value), pageSize: PAGE_SIZE, ...(status.value ? { status: status.value } : {}) })
+    : emptyPage<CertificationReviewSummary>())
   const detail = useCertificationLoadable(async () => {
     if (!selectedId.value) throw new Error('missing certification id')
     if (selectedAppealId.value) return api.appealApplication(selectedId.value, selectedAppealId.value)
@@ -45,10 +52,13 @@ export function useReviewQueues(
   })
   const action = useCertificationAction()
   const stale = ref('')
+  const refreshing = ref(false)
+  const locked = computed(() => action.busy.value || refreshing.value)
 
-  const queueItems = computed<CertificationSummary[]>(() => queue.data.value?.items ?? [])
-  const appealItems = computed<CertificationSummary[]>(() => appealQueue.data.value?.items ?? [])
-  const currentItems = computed(() => tab.value === 'review' ? queueItems.value : appealItems.value)
+  const queueItems = computed<CertificationReviewSummary[]>(() => queue.data.value?.items ?? [])
+  const appealItems = computed<CertificationReviewSummary[]>(() => appealQueue.data.value?.items ?? [])
+  const currentItems = computed(() => tab.value === 'records' ? records.data.value?.items ?? [] : tab.value === 'review' ? queueItems.value : appealItems.value)
+  const recordPageCount = computed(() => Math.max(1, Math.ceil((records.data.value?.total ?? 0) / Number(PAGE_SIZE))))
   const reviewPageCount = computed(() => Math.max(1, Math.ceil((queue.data.value?.total ?? 0) / Number(PAGE_SIZE))))
   const appealPageCount = computed(() => Math.max(1, Math.ceil((appealQueue.data.value?.total ?? 0) / Number(PAGE_SIZE))))
   const record = computed<Certification | null>(() => detail.data.value)
@@ -58,9 +68,14 @@ export function useReviewQueues(
 
   async function load() {
     stale.value = ''
-    await Promise.all([queue.load(), appealQueue.load()])
+    await Promise.all([queue.load(), appealQueue.load(), access.isCertifier.value ? records.load() : Promise.resolve(true)])
   }
   async function go(next: number) {
+    if (locked.value) return false
+    if (tab.value === 'records') {
+      recordPage.value = Math.min(Math.max(1, next), recordPageCount.value)
+      return records.load()
+    }
     if (tab.value === 'review') reviewPage.value = Math.min(Math.max(1, next), reviewPageCount.value)
     else appealPage.value = Math.min(Math.max(1, next), appealPageCount.value)
     return tab.value === 'review' ? queue.load() : appealQueue.load()
@@ -68,15 +83,23 @@ export function useReviewQueues(
   /** 先读申诉（负责人可读），再决定用普通详情还是申诉 application 入口；历史仍只对 certifier 读取。 */
   async function refreshSelected() {
     if (!selectedId.value) return false
+    const current = selection
     const a = await appeals.load()
+    if (current !== selection) return false
+    if (!a) { detail.error.value = appeals.error.value; return false }
     // 决定后申诉不再是 pending，但复核人仍可用 application 入口查看已处理材料，因此保留上次申诉 ID。
     const pending = access.isOwner.value ? pendingAppeal(appeals.data.value?.items ?? []) : null
     if (pending) selectedAppealId.value = pending.id
     const d = await detail.load()
+    if (current !== selection) return false
     const h = access.isCertifier.value ? await history.load() : true
     return d && h && a
   }
-  async function open(item: Pick<CertificationSummary, 'id'>) {
+  async function open(item: Pick<CertificationSummary, 'id'> & Partial<Pick<CertificationReviewSummary, 'applicant'>>) {
+    if (locked.value) return false
+    selection++
+    applicant.value = item.applicant ?? (selectedId.value === item.id ? applicant.value : null)
+    action.reset()
     selectedId.value = item.id
     selectedAppealId.value = null
     detail.clear(); history.clear(); appeals.clear()
@@ -84,24 +107,30 @@ export function useReviewQueues(
     return refreshSelected()
   }
   function close() {
+    if (locked.value) return
+    selection++
+    applicant.value = null
     selectedId.value = null
     selectedAppealId.value = null
     detail.clear(); history.clear(); appeals.clear()
   }
   async function refreshAfterWrite() {
-    const [a, b, current] = await Promise.all([
+    refreshing.value = true
+    const [a, b, current, listed] = await Promise.all([
       access.isCertifier.value ? queue.load() : Promise.resolve(true),
       access.isOwner.value ? appealQueue.load() : Promise.resolve(true),
       refreshSelected(),
+      access.isCertifier.value ? records.load() : Promise.resolve(true),
     ])
-    stale.value = a && b && current ? '' : '决定已生效，但队列或详情刷新失败。请只重新读取，不要重复提交。'
+    stale.value = a && b && current && listed ? '' : '决定已生效，但队列或详情刷新失败。请只重新读取，不要重复提交。'
+    refreshing.value = false
   }
   async function decide(record: Certification, decision: CertificationDecision['decision'], reason: string) {
     const ok = await action.run(async () => {
       detail.data.value = await api.decide(organizationId.value, record.id, {
         expectedVersion: record.version, decision, reason,
       })
-    }, `已${decisionLabels[decision]}「${record.certificateNumber}」。`)
+    }, `认证决定已生效：${decisionLabels[decision]}。`)
     if (ok) await refreshAfterWrite()
     return ok
   }
@@ -114,8 +143,8 @@ export function useReviewQueues(
     return ok
   }
   return {
-    tab, reviewPage, appealPage, queue, appealQueue, queueItems, appealItems, currentItems,
-    reviewPageCount, appealPageCount, selectedId, record, historyItems, appealList, openAppeal, detail, history, appeals,
-    action, stale, load, go, open, close, decide, decideAppeal,
+    tab, reviewPage, appealPage, recordPage, recordPageCount, records, status, applicant, queue, appealQueue, queueItems, appealItems, currentItems,
+    reviewPageCount, appealPageCount, selectedId, selectedAppealId, record, historyItems, appealList, openAppeal, detail, history, appeals,
+    action, locked, stale, refreshSelected, load, go, open, close, decide, decideAppeal,
   }
 }

@@ -50,6 +50,7 @@ export default {
   system_user: '用户管理',
   system_organization: '组织管理',
   system_file: '文件管理',
+  system_certification: '认证审核',
   login: '登录',
   errorPage: '页面不存在',
 };

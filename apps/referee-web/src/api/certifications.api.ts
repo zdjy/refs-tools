@@ -1,6 +1,6 @@
 import type {
   Certification, CertificationAppeal, CertificationAppealDecision, CertificationDecision, CertificationHistory,
-  CertificationSummary, CreateCertification, CreateCertificationAppeal, UpdateCertification,
+  CertificationSummary, CertificationReviewSummary, CertificationRecordsQuery, CreateCertification, CreateCertificationAppeal, UpdateCertification,
 } from '@refs-tools/contracts/certifications'
 import type { ReadAuthorization } from '@refs-tools/contracts/media'
 import type { Paged, PageQuery } from '@refs-tools/contracts/pagination'
@@ -46,9 +46,11 @@ export function createCertificationsApi(client: PlatformClient) {
     history: (recordId: string, value: PageQuery = {}) =>
       call(client.get<Paged<CertificationHistory>>(`/certifications/${id(recordId)}/history${page(value)}`)),
     reviewQueue: (orgId: string, value: PageQuery = {}) =>
-      call(client.get<Paged<CertificationSummary>>(`/organizations/${id(orgId)}/certifications/review-queue${page(value)}`)),
+      call(client.get<Paged<CertificationReviewSummary>>(`/organizations/${id(orgId)}/certifications/review-queue${page(value)}`)),
     appealQueue: (orgId: string, value: PageQuery = {}) =>
-      call(client.get<Paged<CertificationSummary>>(`/organizations/${id(orgId)}/certifications/appeal-queue${page(value)}`)),
+      call(client.get<Paged<CertificationReviewSummary>>(`/organizations/${id(orgId)}/certifications/appeal-queue${page(value)}`)),
+    records: (orgId: string, value: CertificationRecordsQuery = {}) =>
+      call(client.get<Paged<CertificationReviewSummary>>(`/organizations/${id(orgId)}/certifications${query(value)}`)),
     decide: (orgId: string, recordId: string, body: CertificationDecision) =>
       call(client.post<Certification>(`/organizations/${id(orgId)}/certifications/${id(recordId)}/decision`, body)),
     appeals: (recordId: string, value: PageQuery = {}) =>

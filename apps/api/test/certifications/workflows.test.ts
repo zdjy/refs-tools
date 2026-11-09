@@ -3,6 +3,17 @@ import { describe, expect, it, vi } from 'vitest'
 import { certificationFixture } from './fixture.js'
 
 describe('认证申请与审核边界', () => {
+  it('审核身份投影与记录筛选沿用实时授权，负责人不因身份读取普通记录', async () => {
+    const f = certificationFixture()
+    const result = await f.service.records(f.reviewer, f.scope, { status: 'approved', page: '2' })
+    expect(result.items[0]?.applicant).toEqual({ nickname: '裁判昵称', legalName: '裁判实名' })
+    expect(f.r.certifications.reviewList).toHaveBeenCalledWith({ scope: f.scope, records: true, status: 'approved' }, { status: 'approved', page: '2' })
+    expect(JSON.stringify(f.audits)).not.toContain('裁判实名')
+    await expect(f.service.records(f.owner, f.scope, {})).rejects.toMatchObject({ statusCode: 404 })
+    f.setRevoked(true)
+    await expect(f.service.records(f.reviewer, f.scope, {})).rejects.toMatchObject({ statusCode: 404 })
+  })
+
   it('创建幂等且拒绝同键不同材料；版本历史不含签名链接', async () => {
     const f = certificationFixture(); f.setExists(false)
     const created = await f.service.create(f.subject, f.input, 'create-1')

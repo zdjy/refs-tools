@@ -1,11 +1,11 @@
-import type { Certification, CertificationAppeal, CertificationHistory, CertificationScope, CertificationSummary } from '@refs-tools/contracts/certifications'
+import type { Certification, CertificationAppeal, CertificationHistory, CertificationScope, CertificationSummary, CertificationReviewSummary, CertificationStatus } from '@refs-tools/contracts/certifications'
 import type { PageQuery, Paged } from '@refs-tools/contracts/pagination'
 import type { TransactionRunner } from '../../application/transaction.js'
 import type { AuthorizationRepository, PermissionEvaluator } from '../authorization/authorization.types.js'
 import type { AuditRepository } from '../audit/audit.types.js'
 import type { MediaRepository, ObjectStorage } from '../media/media.types.js'
 
-export type CertificationFilter = { subjectUserId?: string; scope?: CertificationScope; queue?: boolean; appealQueue?: boolean }
+export type CertificationFilter = { subjectUserId?: string; scope?: CertificationScope; queue?: boolean; appealQueue?: boolean; status?: CertificationStatus; records?: boolean }
 export interface CertificationsRepository {
   /** 先取得轻量归属，再按组织 → 账号 → 认证顺序加锁，避免与成员操作反向锁定。 */
   locate(id: string): Promise<{ subjectUserId: string; scope: CertificationScope } | null>
@@ -16,6 +16,7 @@ export interface CertificationsRepository {
   request(subject: string, key: string): Promise<{ id: string; fingerprint: string } | null>
   save(record: Certification, expectedVersion: number): Promise<boolean>
   list(filter: CertificationFilter, query: PageQuery): Promise<Paged<CertificationSummary>>
+  reviewList(filter: CertificationFilter, query: PageQuery): Promise<Paged<CertificationReviewSummary>>
   prerequisiteOrganizations(subject: string): Promise<string[]>
   hasPrerequisite(subject: string, organizationIds: string[]): Promise<boolean>
   appendHistory(record: Certification, actor: string, action: string, now: string): Promise<void>

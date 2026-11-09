@@ -32,6 +32,7 @@ export function certificationFixture() {
     current: vi.fn(async () => exists ? { ...record } : null), request: vi.fn(async (_subject, key) => requests.get(key) ?? null),
     insert: vi.fn(async (value, key, fingerprint) => { record = value; exists = true; requests.set(key, { id: value.id, fingerprint }) }),
     save: vi.fn(async value => { record = value; return true }), list: vi.fn(async () => page(exists ? [record] : [])),
+    reviewList: vi.fn(async () => page(exists ? [{ ...record, applicant: { nickname: '裁判昵称', legalName: '裁判实名' } }] : [])),
     prerequisiteOrganizations: vi.fn(async () => [org]), hasPrerequisite: vi.fn(async () => prerequisite),
     appendHistory: vi.fn(async value => { histories.push(structuredClone(value)) }), history: vi.fn(async () => page([])),
     hasPendingAppeal: vi.fn(async () => [...appeals.values()].some(a => a.status === 'pending')),
