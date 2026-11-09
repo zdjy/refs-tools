@@ -21,6 +21,7 @@ export function useMemberManagement(organizationId: Ref<string>, api: Organizati
   const stale = ref('')
 
   const items = computed<Membership[]>(() => list.data.value?.items ?? [])
+  const canManage = computed(() => list.data.value?.canManage === true)
   const total = computed(() => list.data.value?.total ?? 0)
   const pageCount = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
   const filtering = computed(() => keyword.value.trim() !== '')
@@ -37,6 +38,7 @@ export function useMemberManagement(organizationId: Ref<string>, api: Organizati
   }
 
   async function decide(member: Membership, decision: 'approve' | 'reject' | 'remove', reason: string) {
+    if (!canManage.value) return false
     const names = { approve: '已批准', reject: '已驳回', remove: '已移除' } as const
     const ok = await action.run(async () => {
       await api.decideMember(organizationId.value, member.id, { action: decision, expectedVersion: member.version, reason })
@@ -44,7 +46,7 @@ export function useMemberManagement(organizationId: Ref<string>, api: Organizati
     if (ok) stale.value = (await reload()) ? '' : '操作已生效，但名单刷新失败，当前显示可能不是最新。请只重新读取，不要重复提交。'
     return ok
   }
-  return { page, keyword, items, total, pageCount, filtering, list, action, stale, load, go, search, decide }
+  return { page, keyword, items, canManage, total, pageCount, filtering, list, action, stale, load, go, search, decide }
 }
 
 /** 邀请列表、按昵称/邮箱检索候选人并发起邀请，以及撤销。邀请创建不等于对方已收到或已加入。 */

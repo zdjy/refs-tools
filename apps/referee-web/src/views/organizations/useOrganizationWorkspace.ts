@@ -22,6 +22,7 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
     const base: { id: WorkspaceTab; label: string }[] = [{ id: 'overview', label: '概览' }]
     // 正式成员都能提交自己的认证；入口独立成标签，避免藏在概览里。
     if (organization.value?.membership?.status === 'active') base.push({ id: 'my-certifications', label: '本组织认证' })
+    if (organization.value?.membership?.status === 'active' || organization.value?.canManage) base.push({ id: 'members', label: '成员' })
     // 认证审核不依赖成员管理能力：仅有 certifier 角色的成员也能进入，不能先被 canManage 截断。
     const certifier = organization.value?.roles.includes('certifier') ?? false
     const certification: { id: WorkspaceTab; label: string }[] = certifier
@@ -29,7 +30,7 @@ export function useOrganizationWorkspace(organizationId: Ref<string>, api: Organ
       : organization.value?.isOwner ? [{ id: 'certifications', label: '申诉复核' }] : []
     if (!organization.value?.canManage) return [...base, ...certification]
     const managed: { id: WorkspaceTab; label: string }[] = [
-      { id: 'members', label: '成员' }, { id: 'invitations', label: '邀请' }, { id: 'codes', label: '成员码' }]
+      { id: 'invitations', label: '邀请' }, { id: 'codes', label: '成员码' }]
     // 移交所有权只属于负责人：组织者能管理成员但不能移交，服务端同样只认 organization.manage。
     const owner: { id: WorkspaceTab; label: string }[] = organization.value.isOwner ? [{ id: 'ownership', label: '移交' }] : []
     return [...base, ...managed, { id: 'roles', label: '角色' }, ...certification, ...owner]

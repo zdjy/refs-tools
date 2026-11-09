@@ -27,6 +27,11 @@ describe('成员名单行投影', () => {
     expect(memberRowView(member({ status: 'left' }), 'owner').decisions).toEqual([])
   })
 
+  it('只读名单不投影任何管理操作', () => {
+    expect(memberRowView(member(), 'owner', false).decisions).toEqual([])
+    expect(memberRowView(member({ status: 'pending' }), 'owner', false).decisions).toEqual([])
+  })
+
   it('首字母按码点取，保留表情与生僻字；空昵称回退问号', () => {
     expect(memberRowView(member({ displayName: ' 陈静 ' }), '').initial).toBe('陈')
     expect(memberRowView(member({ displayName: '𠮷田' }), '').initial).toBe('𠮷')

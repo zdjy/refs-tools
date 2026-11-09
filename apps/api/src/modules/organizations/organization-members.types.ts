@@ -4,7 +4,8 @@ import type { TransactionRunner } from '../../application/transaction.js'
 import type { PermissionEvaluator } from '../authorization/authorization.types.js'
 
 export interface OrganizationMembersRepository {
-  members(id: string, query: MemberListQuery): Promise<Omit<MembershipList, 'canManage'>>
+  /** 普通成员读取时由 Service 强制限定正式成员，不能由客户端解除。 */
+  members(id: string, query: MemberListQuery, activeOnly: boolean): Promise<Omit<MembershipList, 'canManage'>>
   invitations(filter: { organizationId?: string; userId?: string }, query: MemberPageQuery, now: Date): Promise<Omit<InvitationList, 'canManage'>>
   membership(organizationId: string, id: string): Promise<Membership | null>
   /** 按组织成员管理用途读取联系方式投影；不存在或不属于该组织时返回 null。 */

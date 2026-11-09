@@ -30,7 +30,7 @@ describe('组织成员 HTTP 边界', () => {
     try {
       const response = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships?page=1&pageSize=20&keyword=%E6%88%90`, headers: f.headers })
       expect(response.statusCode).toBe(200); expect(response.json().data).toMatchObject({ canManage: true, total: 1 })
-      expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '1', pageSize: '20', keyword: '成' })
+      expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '1', pageSize: '20', keyword: '成' }, false)
       const contact = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships/${f.member.id}/contact`, headers: f.headers })
       expect(contact.statusCode).toBe(200); expect(contact.json().data).toEqual(f.contact)
       expect(contact.body).not.toContain('@example.com'); expect(contact.body).not.toContain('详细地址')
@@ -40,6 +40,19 @@ describe('组织成员 HTTP 边界', () => {
       expect((await f.app.inject({ method: 'POST', url: `/api/v1/organizations/${f.id}/invitations/${f.invitation.id}/accept`, headers: f.headers })).statusCode).toBe(404)
       const inbox = await f.app.inject({ url: '/api/v1/me/organization-invitations', headers: f.headers })
       expect(inbox.statusCode).toBe(200); expect(f.r.members.invitations).toHaveBeenCalledWith({ userId: f.actor }, {}, f.now)
+    } finally { await f.app.close() }
+  })
+  it('无角色正式成员可读取名单但不可读取联系方式，客户端不能放宽名单范围', async () => {
+    const f = await fixture()
+    vi.mocked(f.r.authorization.findBindings).mockResolvedValue([])
+    try {
+      const response = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships`, headers: f.headers })
+      expect(response.statusCode).toBe(200)
+      expect(response.headers['cache-control']).toBe('no-store')
+      expect(response.json().data.canManage).toBe(false)
+      expect(f.r.members.members).toHaveBeenCalledWith(f.id, {}, true)
+      expect((await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships/${f.member.id}/contact`, headers: f.headers })).statusCode).toBe(404)
+      expect((await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships?activeOnly=false`, headers: f.headers })).statusCode).toBe(400)
     } finally { await f.app.close() }
   })
   it('非法 ID、分页、越界有效期与附加角色拒绝', async () => {

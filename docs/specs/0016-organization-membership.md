@@ -22,7 +22,8 @@
 
 所有路径以 `/api/v1` 为前缀，契约位于 `contracts/organization-members`。
 
-- `GET /organizations/:id/memberships`、`GET /organizations/:id/invitations`：平台审计读取或组织成员管理权限；返回分页数据与 canManage。
+- `GET /organizations/:id/memberships`：本组织正式成员均可读取正式名单；组织成员管理者与平台审计账号仍可读取申请及历史记录。返回分页数据与 `canManage`，只读访问不授予管理权限，见 [FS-0027 §18](0027-referee-organizations.md#18-所有正式成员可查看成员名单)。
+- `GET /organizations/:id/invitations`：平台审计读取或组织成员管理权限；返回分页数据与 `canManage`，不随成员名单开放。
 - `POST /organizations/:id/invitations`：组织成员管理权限，`{userId,validDays}`。
 - `POST /organizations/:id/invitations/:recordId/revoke`：组织成员管理权限，`{expectedVersion,reason}`。
 - `GET /me/organization-invitations`：本人邀请分页，不包含其他人的邀请。

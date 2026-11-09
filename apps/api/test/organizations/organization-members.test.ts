@@ -5,7 +5,7 @@ describe('组织成员用例', () => {
   it('成员名单把页码与关键词一起透传给 Repository，筛选后的计数由 SQL 保证', async () => {
     const f = memberFixture()
     await f.members.list(f.actor, f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' })
-    expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' })
+    expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' }, false)
   })
   it('成员管理者读取联系方式投影，读取审计与返回同事务；平台账号不能读取', async () => {
     const f = memberFixture()
@@ -16,6 +16,24 @@ describe('组织成员用例', () => {
     await expect(f.members.contact(f.user, f.id, f.member.id)).rejects.toMatchObject({ statusCode: 404 })
     vi.mocked(f.r.members.memberContact).mockResolvedValueOnce(null)
     await expect(f.members.contact(f.actor, f.id, f.member.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+  it('正式成员无须角色即可读取名单，但不能读取邀请、联系方式或管理成员', async () => {
+    const f = memberFixture()
+    vi.mocked(f.r.authorization.findBindings).mockResolvedValue([])
+    expect((await f.members.list(f.user, f.id, {})).canManage).toBe(false)
+    expect(f.r.members.members).toHaveBeenCalledWith(f.id, {}, true)
+    expect(f.r.audit.append).toHaveBeenCalledWith(expect.objectContaining({ action: 'membership.queried' }))
+    await expect(f.invitations.list(f.user, f.id, {})).rejects.toMatchObject({ statusCode: 403 })
+    await expect(f.members.contact(f.user, f.id, f.member.id)).rejects.toMatchObject({ statusCode: 404 })
+    await expect(f.members.decide(f.user, f.id, f.member.id, { action: 'approve', expectedVersion: 1, reason: '批准' })).rejects.toMatchObject({ statusCode: 404 })
+  })
+  it('非正式成员不能读取名单，成员失效后重新读取立即拒绝', async () => {
+    const f = memberFixture()
+    vi.mocked(f.r.authorization.findBindings).mockResolvedValue([])
+    await f.members.list(f.user, f.id, {})
+    vi.mocked(f.r.authorization.isActiveMember).mockResolvedValue(false)
+    await expect(f.members.list(f.user, f.id, {})).rejects.toMatchObject({ statusCode: 403 })
+    expect(f.r.members.members).toHaveBeenCalledTimes(1)
   })
   it('平台只有只读治理能力，不能隐式邀请或审核成员', async () => {
     const f = memberFixture()

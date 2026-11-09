@@ -39,7 +39,7 @@ export interface MemberRowView {
  * 负责人行标注身份且不出现移除按钮：`memberDecisions` 已排除负责人本人，
  * 这里只补上身份标注，不重复实现权限判断。
  */
-export function memberRowView(member: Membership, ownerUserId: string): MemberRowView {
+export function memberRowView(member: Membership, ownerUserId: string, canManage = true): MemberRowView {
   return {
     id: member.id,
     name: member.displayName,
@@ -49,6 +49,6 @@ export function memberRowView(member: Membership, ownerUserId: string): MemberRo
     statusDot: statusDot[member.status],
     datePrefix: datePrefix(member.status),
     dateText: formatDate(member.createdAt),
-    decisions: memberDecisions(member, ownerUserId),
+    decisions: canManage ? memberDecisions(member, ownerUserId) : [],
   }
 }

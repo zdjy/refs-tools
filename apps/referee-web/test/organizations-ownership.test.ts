@@ -91,8 +91,14 @@ describe('工作区标签页', () => {
   })
   it('正式成员的「我的认证」独立成标签，不藏在概览里', async () => {
     const membership = { id: 'm1', status: 'active' as const, version: 1 }
-    expect(await tabsFor({ canManage: false, membership })).toEqual(['overview', 'my-certifications'])
-    expect(await tabsFor({ canManage: false, membership, roles: ['certifier'] })).toEqual(['overview', 'my-certifications', 'certifications'])
+    expect(await tabsFor({ canManage: false, membership })).toEqual(['overview', 'my-certifications', 'members'])
+    expect(await tabsFor({ canManage: false, membership, roles: ['certifier'] })).toEqual(['overview', 'my-certifications', 'members', 'certifications'])
+  })
+  it.each([{ roles: [] }, { roles: ['certifier'] }, { roles: ['organizer'] }, { roles: ['owner'] }])('所有正式成员角色 $roles 均有唯一成员入口，待审核申请人不可读', async ({ roles }) => {
+    const tabs = await tabsFor({ canManage: roles.includes('organizer') || roles.includes('owner'), roles,
+      membership: { id: 'm1', status: 'active', version: 1 } })
+    expect(tabs.filter(id => id === 'members')).toHaveLength(1)
+    expect(await tabsFor({ canManage: false, membership: { id: 'm1', status: 'pending', version: 1 } })).not.toContain('members')
   })
   it('认证员看到认证审核，负责人看到申诉复核，同一标签不会重复', async () => {
     expect(await tabsFor({ isOwner: false, roles: ['certifier'] })).toContain('certifications')

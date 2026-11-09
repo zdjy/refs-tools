@@ -6,15 +6,15 @@ import { appendAudit } from '../audit/audit.service.js'
 import { memberAccess, memberAudit, memberVersion, revokeMemberRoles } from './organization-members.access.js'
 import type { MemberDependencies } from './organization-members.types.js'
 
-/** 成员管理读取可供平台治理，写入仅由组织运营权限或成员本人发起。 */
+/** 正式成员可读取本组织名单；管理记录和联系方式仍受独立授权保护。 */
 export class OrganizationMembersService {
   constructor(private readonly d: MemberDependencies) {}
 
   async list(actor: string, id: string, query: MemberListQuery) {
     const now = this.d.now()
     return this.d.transaction.run(async r => {
-      const { canManage } = await memberAccess(r, this.d, actor, id, now, 'read')
-      const result = await r.members.members(id, query)
+      const { canManage, activeOnly } = await memberAccess(r, this.d, actor, id, now, 'roster')
+      const result = await r.members.members(id, query, activeOnly)
       await appendAudit(r.audit, { actorUserId: actor, action: 'membership.queried', resourceType: 'organization', resourceId: id,
         scopeType: 'organization', scopeId: id, organizationId: id, before: null, after: null, reason: null }, now)
       return { ...result, canManage }

@@ -19,15 +19,16 @@ const pagination = (query: MemberPageQuery) => ({ page: Number(query.page ?? 1),
 export class PgOrganizationMembersRepository implements OrganizationMembersRepository {
   constructor(private readonly connection: Pick<PoolClient, 'query'>) {}
 
-  async members(id: string, query: MemberListQuery) {
+  async members(id: string, query: MemberListQuery, activeOnly: boolean) {
     const { page, pageSize } = pagination(query)
     // 关键词只按昵称子串过滤，计数与取页共用同一条件，因此筛选后的分页总数与页数一致。
     const keyword = (query.keyword ?? '').trim().toLowerCase()
     const from = `FROM organization_memberships m JOIN users u ON u.id=m.user_id
-      WHERE m.organization_id=$1 AND ($2='' OR strpos(lower(u.display_name),$2)>0)`
-    const count = await this.connection.query<{ total: string }>(`SELECT count(*) AS total ${from}`, [id, keyword])
+      WHERE m.organization_id=$1 AND ($2='' OR strpos(lower(u.display_name),$2)>0)
+      AND (NOT $3::boolean OR m.status='active')`
+    const count = await this.connection.query<{ total: string }>(`SELECT count(*) AS total ${from}`, [id, keyword, activeOnly])
     const rows = await this.connection.query<MemberRow>(`SELECT ${memberColumns} ${from}
-      ORDER BY m.created_at DESC,m.id DESC LIMIT $3 OFFSET $4`, [id, keyword, pageSize, (page - 1) * pageSize])
+      ORDER BY m.created_at DESC,m.id DESC LIMIT $4 OFFSET $5`, [id, keyword, activeOnly, pageSize, (page - 1) * pageSize])
     return { items: rows.rows.map(mapMember), total: Number(count.rows[0]!.total), page, pageSize }
   }
 

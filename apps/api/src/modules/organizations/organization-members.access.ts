@@ -5,13 +5,13 @@ import { requirePermission } from '../authorization/authorization.service.js'
 import type { MemberDependencies, MemberRepositories } from './organization-members.types.js'
 
 /** 先锁组织再读授权，避免成员写入与冻结、撤权之间使用陈旧依据。 */
-export async function memberAccess(r: MemberRepositories, d: MemberDependencies, actor: string, id: string, now: Date, mode: 'manage' | 'read' | 'self') {
+export async function memberAccess(r: MemberRepositories, d: MemberDependencies, actor: string, id: string, now: Date, mode: 'manage' | 'read' | 'roster' | 'self') {
   const organization = await r.organizations.find(id, true)
   if (!organization) throw new DomainError('NOT_FOUND', '组织不存在', 404)
   if (!await r.identities.requireActiveActor(actor)) throw new DomainError('UNAUTHENTICATED', '请重新登录', 401)
   if (mode === 'self') {
     if (organization.status !== 'active') throw new DomainError('ORGANIZATION_INACTIVE', '组织当前不接受成员变更', 409)
-    return { organization, canManage: false, canGrant: false }
+    return { organization, canManage: false, canGrant: false, activeOnly: false }
   }
   const resource = await r.authorization.resolveScope({ type: 'organization', id })
   const context = { subjectUserId: actor, resource: resource!, bindings: await r.authorization.findBindings(actor),
@@ -19,10 +19,13 @@ export async function memberAccess(r: MemberRepositories, d: MemberDependencies,
   const canManage = !!resource && d.permissions.isPermitted('organization.members.manage', context)
   // 角色授予仅限组织 owner；平台角色的范围不覆盖组织资源，因此平台管理员得到 false。
   const canGrant = !!resource && d.permissions.isPermitted('role.manage', context)
+  if (mode === 'roster' && context.activeMember) {
+    return { organization, canManage, canGrant, activeOnly: !canManage }
+  }
   if (!canManage) await requirePermission(r.authorization, { subjectUserId: actor,
-    permission: mode === 'read' ? 'platform.manage' : 'organization.members.manage',
-    resource: mode === 'read' ? { type: 'platform', id: null } : { type: 'organization', id } }, now, d.permissions)
-  return { organization, canManage, canGrant }
+    permission: mode !== 'manage' ? 'platform.manage' : 'organization.members.manage',
+    resource: mode !== 'manage' ? { type: 'platform', id: null } : { type: 'organization', id } }, now, d.permissions)
+  return { organization, canManage, canGrant, activeOnly: false }
 }
 
 /** 仅保存状态、版本与账号标识；与业务变更处于同一事务。 */

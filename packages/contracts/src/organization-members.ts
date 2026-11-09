@@ -46,6 +46,7 @@ export const MembershipDecisionSchema = Type.Object({ ...MemberChangeSchema.prop
 }, { additionalProperties: false })
 export const MembershipResponseSchema = Type.Object({ data: MembershipSchema })
 export const InvitationResponseSchema = Type.Object({ data: OrganizationInvitationSchema })
+/** 正式成员可读本组织正式名单；申请/历史需管理或平台审计权限，canManage 不因只读访问而提升。 */
 export const MembershipListResponseSchema = pagedResponseSchema(MembershipSchema, { canManage: Type.Boolean() })
 export const InvitationListResponseSchema = pagedResponseSchema(OrganizationInvitationSchema, { canManage: Type.Boolean() })
 export type Membership = Static<typeof MembershipSchema>

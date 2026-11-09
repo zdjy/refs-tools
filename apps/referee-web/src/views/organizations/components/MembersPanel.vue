@@ -34,7 +34,7 @@ async function submit() {
 
 <template>
   <section aria-labelledby="members-title" class="grid gap-4">
-    <h2 id="members-title" class="m-0 text-lg text-ink">成员与入会申请</h2>
+    <h2 id="members-title" class="m-0 text-lg text-ink">{{ members.canManage.value ? '成员与入会申请' : '成员名单' }}</h2>
     <form role="search" class="grid gap-2 compact:grid-cols-[minmax(0,1fr)_auto]" @submit.prevent="members.search()">
       <label for="member-keyword" class="sr-only">按成员昵称搜索，留空显示全部</label>
       <n-input id="member-keyword" v-model:value="members.keyword.value" placeholder="输入昵称搜索成员，留空显示全部" clearable
@@ -55,7 +55,7 @@ async function submit() {
         {{ members.filtering.value ? `匹配 ${members.total.value} 位成员` : `共 ${members.total.value} 位成员` }}
       </p>
       <MemberRoster v-if="members.items.value.length" :items="members.items.value" :owner-user-id="ownerUserId ?? ''"
-        :busy="members.list.loading.value || members.action.busy.value" :aria-busy="members.list.loading.value || members.action.busy.value"
+        :can-manage="members.canManage.value" :busy="members.list.loading.value || members.action.busy.value" :aria-busy="members.list.loading.value || members.action.busy.value"
         @open="detail.open" @decide="(member, decision) => confirm.open({ member, decision })" />
       <p v-else class="m-0 border-0 border-y border-solid border-line px-4 py-6 text-sm leading-relaxed text-body">
         {{ members.filtering.value ? '没有匹配的成员。换一个昵称，或清空关键词查看全部。' : '还没有成员记录。' }}

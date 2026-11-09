@@ -171,7 +171,7 @@ describe('成员名单检索与分页', () => {
     expect(state.filtering.value).toBe(false)
   })
   it('移除后当前页越界时回退到新的最后一页，而不是停在空列表', async () => {
-    const pages = [{ items: [member()], total: 21 }, { items: [member({ id: 'm2' })], total: 21 },
+    const pages = [{ items: [member()], total: 21, canManage: true }, { items: [member({ id: 'm2' })], total: 21, canManage: true },
       { items: [], total: 20 }, { items: [member({ id: 'm3' })], total: 20 }]
     const members = vi.fn(async () => ({ page: 1, pageSize: 20, ...pages.shift()! }))
     const decideMember = vi.fn(async () => ({}))
@@ -183,6 +183,15 @@ describe('成员名单检索与分页', () => {
     expect(state.page.value).toBe(1); expect(state.items.value.map(item => item.id)).toEqual(['m3'])
     expect(state.stale.value).toBe('')
   })
+  it('名单能力取服务端回执，无管理权限时拒绝提交管理动作', async () => {
+    const members = vi.fn(async () => ({ items: [member()], total: 1, page: 1, pageSize: 20, canManage: false }))
+    const decideMember = vi.fn(), state = useMemberManagement(ref('o'), api({ members, decideMember }))
+    expect(state.canManage.value).toBe(false)
+    await state.load()
+    expect(state.items.value).toHaveLength(1)
+    expect(await state.decide(member(), 'remove', '移除')).toBe(false)
+    expect(decideMember).not.toHaveBeenCalled()
+  })
   it('表格操作列按状态与负责人身份投影，负责人不会被移除', () => {
     expect(memberDecisions(member({ status: 'pending' }), 'u')).toEqual(['reject', 'approve'])
     expect(memberDecisions(member(), 'owner')).toEqual(['remove'])
@@ -190,7 +199,7 @@ describe('成员名单检索与分页', () => {
     expect(memberDecisions(member({ status: 'rejected' }), 'owner')).toEqual([])
   })
   it('移除成功但刷新失败时保留成功事实并只提示重新读取', async () => {
-    const members = vi.fn().mockResolvedValueOnce({ items: [member()], total: 1, page: 1, pageSize: 20 })
+    const members = vi.fn().mockResolvedValueOnce({ items: [member()], total: 1, page: 1, pageSize: 20, canManage: true })
       .mockRejectedValueOnce(new OrganizationsApiError('NETWORK_ERROR', 0))
     const state = useMemberManagement(ref('o'), api({ members, decideMember: vi.fn(async () => ({})) }))
     await state.load()
