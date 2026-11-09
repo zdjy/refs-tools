@@ -22,7 +22,7 @@ FS-0020 把「账号设置」放进账号菜单，但落点 `/account` 只能查
 | 昵称 | `users.display_name`（唯一来源，不双写） | 去首尾空白后 1–80 字符；保存后顶栏与社区显示同步刷新 |
 | 头像 | `referee_profiles.avatar_media_id` → `media_objects` | `purpose=avatar`、`target=self`（省略 target 时服务端按本人补齐，契约不接受 `self` 目标类型），仅 JPEG/PNG/WebP，≤ 2 MiB；客户端先压缩为最长边 1600px 的 JPEG 预览。顶栏账号按钮与账号设置页头像预览共用同一头像 |
 | 真实姓名 | `referee_profiles.legal_name` | 选填，去空白后 ≤ 40 字符；变更写入审计（只记录版本投影，不记录姓名内容） |
-| 手机号 | `referee_profiles.phone_e164` | 选填，E.164 格式；**不做短信验证**，页面明确标注未验证且不用于登录 |
+| 手机号 | `referee_profiles.phone_e164` | 选填，E.164 格式；界面拆成「国家/地区代码下拉框 + 本地号码」，保存时合并为 E.164；**不做短信验证**，页面明确标注未验证且不用于登录 |
 | 地区 | `referee_profiles.region_code` / `region_label` | 省/市/区三级联选，存区县级 6 位代码 + 展示快照；代码与标签必须成对 |
 | 详细地址 | `referee_profiles.address_detail` | 选填，≤ 200 字符 |
 | 出生日期 | `referee_profiles.birth_date` | 选填，`YYYY-MM-DD`，范围 1900-01-01 至今天 |
@@ -82,10 +82,16 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
   - 「上一步」保留已获取的验证码；最后一步提交时合并校验全部步骤。
   - `/account` 中的同一部件（非嵌入模式）行为一致，仅保留自带上外边距与分隔线。
 - 地区选择必须到区/县才回写；只选省或市时不提交该字段，并保留「未填写」语义。
+- 手机号输入：国家/地区代码用**可搜索下拉框**选择，本地号码单独输入，用户不再手写 `+86` 一类代码。
+  - 下拉选项来自 `scripts/generate-dial-codes.mjs` 生成的国家代码表（来源 libphonenumber-js metadata，Apache-2.0），中文地区名由 `Intl.DisplayNames` 在运行时解析，不额外打包名称表；`+86` 置顶，其余按中文名排序。
+  - 搜索同时匹配国家代码数字、中文地区名与 ISO 地区代码（`86`、`中国`、`cn` 均可命中）；同一代码覆盖多个地区时（如 `+1`）展示「首个地区名等 N 个地区」，搜索仍能命中全部地区名。
+  - 本地号码只保留数字，分隔符一律去掉；把完整号码（`+8613800138000`）粘贴进本地号码框时自动识别并切换国家代码、只保留本地号码。
+  - 读取已有档案时按国家代码最长前缀拆分；无法识别的代码保留原始前缀并在下拉框中显示，避免未改动的号码在保存时被悄悄改写。
+  - 本地号码为空即「未填写」，提交 `null`；合并后的 E.164 仍由 `packages/domain` 校验，长度与格式规则不变。
 
 ## 6. 可访问性与响应式
 
-- 所有输入有显式 `<label>` 或 `aria-label`；错误通过 `aria-invalid` 与 `aria-describedby` 关联到说明文本，提交失败聚焦首个无效输入。
+- 所有输入有显式 `<label>` 或 `aria-label`；错误通过 `aria-invalid` 与 `aria-describedby` 关联到说明文本，提交失败聚焦首个无效输入。手机号的国家/地区代码下拉框与本地号码输入共用同一条说明与错误文本，下拉框本身带 `aria-label="国家/地区代码"`，两者都反映 `aria-invalid`。
 - 步骤指示器为有序列表，当前项带 `aria-current="step"`，并有「第 N / M 步」文本状态；已完成与未完成不只靠颜色区分。
 - 分区栏使用 `role="tablist"` / `role="tab"` / `role="tabpanel"`，面板以 `aria-labelledby` 指向所属分区按钮；激活分区 `aria-selected="true"`，非激活分区 `tabindex="-1"`（roving tabindex）。
 - 方向键：`ArrowLeft`/`ArrowUp` 与 `ArrowRight`/`ArrowDown` 都按同一次序循环并移动焦点，`Home`/`End` 跳到首尾；因断点会改变视觉方向，不声明 `aria-orientation`。分区按钮可点击，也可 `Enter`/`Space` 触发。
@@ -102,13 +108,14 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
 - `apps/referee-web/test/profile-settings.test.ts`、`email-change.test.ts`：字段 diff、无变化不发请求、冲突后重读、字段错误定位、两步验证码与密码分支、分步校验、上一步保留输入、提交成功后复位。
 - `apps/referee-web/test/usePasswordSettings.test.ts`：首次设置单步骤、有密码时两步导航、上一步保留验证码、最终提交一次报出全部缺失项。
 - `apps/referee-web/test/profile-tabs.test.ts`：分区顺序固定、方向键循环与 `Home`/`End`、非导航按键不拦截。
+- `apps/referee-web/test/profile-phone.test.ts`：E.164 拆分/合并互逆、未填写回落默认代码、未知代码保留原始前缀、下拉代码唯一且 `+86` 置顶、多地区标签与数量、搜索命中数字/中文名/ISO 代码。
 - `apps/referee-web/test/avatar-state.test.ts`：无头像不请求签名、同一媒体 ID 只签名一次、签名失败降级、`invalidate` 后重新签名、迟到响应不覆盖新账号。
 
 ## 8. 验收记录
 
 - `pnpm typecheck`、`pnpm test`（78 文件 / 396 用例）、`pnpm test:db`（14 文件 / 58 用例）、`pnpm build`、`pnpm --filter @refs-tools/referee-web test:styles` 通过。
 - `pnpm test:db`（14 文件 / 58 用例）在本地测试库通过，其中迁移测试覆盖 `0008` 的 up/down 与幂等重跑，`profiles.integration.test.ts` 覆盖空档案读取、昵称与档案同事务落库、陈旧版本拒绝、地区成对约束、手机号 E.164 约束与头像归属外键。
-- 行政区数据由 `pnpm regions:data` 生成（`scripts/generate-regions.mjs`，来源 `modood/Administrative-divisions-of-China`，MIT），仅保留省/市/区三级，按路由懒加载。
+- 行政区数据由 `pnpm regions:data` 生成（`scripts/generate-regions.mjs`，来源 `modood/Administrative-divisions-of-China`，MIT），仅保留省/市/区三级，按路由懒加载。国家/地区代码表由 `pnpm dial-codes:data` 生成（`scripts/generate-dial-codes.mjs`，来源 libphonenumber-js 1.12.16 metadata，Apache-2.0），生成 206 个国家/地区代码、产物 7.1 KB，随账号设置路由打包（`ProfileSettingsView` 产物 201.41 kB / gzip 50.08 kB）。
 - 浏览器验收（`https://localhost:8443/profile-setting`，合成账号 `alova-test@example.com`，视口 305/360/485/768/960/1200 宽）：
   - 320px 与 375px：页面 `scrollWidth === clientWidth`，步骤指示器 `scrollWidth === clientWidth`，无横向滚动条；步骤条收敛为 ①——②——③，文字由「第 N / M 步」提供；三个分区按钮单行不折行。
   - 960px：分区栏为左侧 200px 纵向栏（三项目标 y 递增），右侧面板正常；1200px：步骤显示圆点 + 标题 + 说明，指示器宽度 706px < 卡片 756px。
@@ -116,3 +123,9 @@ MVP-001 §2.3 要求「用户邮箱、手机号唯一」。本次手机号**不�
   - 键盘：`ArrowRight`/`End` 循环移动并同步焦点与面板，roving `tabindex` 为 `0/-1/-1`，焦点环可见。
 - 头像直传在热更新开发模式（`pnpm dev`）下实测阻塞过：浏览器只信任的是开发 CA（`.cache/dev-certs/ca.crt`），而对象存储入口 `https://localhost:9443` 由 Compose 自签证书提供服务，预签名 `PUT` 被拦为 `net::ERR_CERT_AUTHORITY_INVALID`，随后 `POST /api/v1/media/{id}/complete` 返回 `409 OBJECT_NOT_FOUND`，页面提示「上传未完成」。代码与 API 行为符合预期（核验未通过不上报为已保存），处理方式是把 Compose 公开证书一并导入当前用户根证书存储并完全重启浏览器，见 README「本机热更新开发」与 [ADR 0026](../decisions/0026-local-hot-reload-dev-environment.md)。
 - 未执行：信任两张证书后的头像直传与新 SMTP 服务器链路浏览器复验，需在部署环境复核。
+
+### 8.1 手机号区号改为下拉选择（本次变更）
+
+- `pnpm typecheck`、`pnpm test`（113 文件 / 660 用例，新增 `profile-phone.test.ts` 8 用例）、`pnpm --filter @refs-tools/referee-web build`、`pnpm --filter @refs-tools/referee-web test:styles` 通过。
+- 浏览器验收（临时入口渲染该字段，headless Chrome，288px 内容宽度等同 320px 视口）：无横向溢出；基础档下拉框 136px、号码输入 144px（`sm` 起 160px / 120px），`+86` 默认选中且「中国 +86」不折行、长名称按省略号截断；在下拉框输入「香港」后选项收敛为 1 项（「香港 +852」）。
+- 未执行：真实设备触屏与键盘（Tab / 方向键 / 回车选中）复验、`/profile-setting` 完整页面回归（需启动 Compose 基础设施与本地 API）；另 Windows headless Chrome 最小视口为 500px，320px 档改用「固定 288px 容器 + 强制基础档类名」等价验证。

@@ -7,6 +7,7 @@
     "build": "pnpm --recursive --if-present run build",
     "brand:icons": "node scripts/brand-icons.mjs",
     "regions:data": "node scripts/generate-regions.mjs",
+    "dial-codes:data": "node scripts/generate-dial-codes.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:stop": "node scripts/dev-stop.mjs",
     "dev:api": "node scripts/dev-api.mjs",

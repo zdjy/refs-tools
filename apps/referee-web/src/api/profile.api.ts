@@ -36,7 +36,7 @@ export function profileErrorMessage(error: unknown): string {
     VERSION_CONFLICT: '档案已被其他设备或后台更新，请刷新页面后再提交。',
     INVALID_NICKNAME: '昵称需为 1-80 个字符。',
     INVALID_LEGAL_NAME: '真实姓名不超过 40 个字符。',
-    INVALID_PHONE: '请填写含国家代码的手机号，例如 +8613800138000。',
+    INVALID_PHONE: '请选择国家/地区代码并填写本地号码，号码不再包含 + 与国家代码。',
     INVALID_REGION: '请选择完整的省/市/区。',
     INVALID_ADDRESS: '详细地址不超过 200 个字符。',
     INVALID_BIRTH_DATE: '请选择 1900-01-01 至今天的有效生日。',

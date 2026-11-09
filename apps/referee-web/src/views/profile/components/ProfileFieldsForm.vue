@@ -4,6 +4,7 @@ import { NButton, NDatePicker, NInput } from 'naive-ui'
 import type { ProfileFieldKey, ProfileFieldsState } from '../useProfileSettings'
 import RegionSelect, { type RegionSelection } from '../../../components/ui/UiRegionSelect.vue'
 import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue'
+import ProfilePhoneField from './ProfilePhoneField.vue'
 
 const props = defineProps<{ fields: ProfileFieldsState; fieldError: { field: ProfileFieldKey; message: string } | null; saving: boolean }>()
 const emit = defineEmits<{ save: [] }>()
@@ -43,11 +44,10 @@ const textProps = (key: ProfileFieldKey, describedBy: string) => ({
     </div>
     <div class="grid gap-2">
       <label class="text-[14px] font-semibold" for="profile-phone">手机号（选填）</label>
-      <n-input id="profile-phone" v-model:value="fields.phone" :maxlength="20" :disabled="saving"
-        placeholder="+8613800138000"
-        v-bind="invalid('phone') ? { status: 'error' as const } : {}" :input-props="{ ...textProps('phone', 'profile-phone-hint'), inputmode: 'tel' }" />
+      <ProfilePhoneField v-model="fields.phone" input-id="profile-phone" described-by="profile-phone-hint"
+        :disabled="saving" :invalid="invalid('phone')" />
       <p id="profile-phone-hint" class="m-0 text-[12px] leading-[1.7]" :class="invalid('phone') ? 'text-danger' : 'text-body'">
-        {{ message('phone') || '请填写含国家代码的完整号码。当前仅作联系方式保存，未做短信验证，也不能用于登录。' }}
+        {{ message('phone') || '选择国家/地区代码后填写本地号码，不需要再输入 + 和国家代码。当前仅作联系方式保存，未做短信验证，也不能用于登录。' }}
       </p>
     </div>
     <div class="grid gap-2">
