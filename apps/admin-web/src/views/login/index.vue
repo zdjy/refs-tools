@@ -35,50 +35,7 @@
         <p class="mb-8 mt-0 text-sm text-[var(--login-text-secondary)]">{{
           t('login.subtitle')
         }}</p>
-        <n-form
-          ref="formRef"
-          :model="formInline"
-          :rules="rules"
-          size="large"
-          @keydown.enter="handleSubmit"
-        >
-          <n-form-item path="username">
-            <n-input
-              ref="usernameRef"
-              v-model:value="formInline.username"
-              :placeholder="t('login.usernamePlaceholder')"
-              :aria-label="t('login.usernamePlaceholder')"
-              clearable
-            >
-              <template #prefix>
-                <n-icon size="18"><PersonOutline /></n-icon>
-              </template>
-            </n-input>
-          </n-form-item>
-          <n-form-item path="password">
-            <n-input
-              v-model:value="formInline.password"
-              type="password"
-              show-password-on="click"
-              :placeholder="t('login.passwordPlaceholder')"
-              :aria-label="t('login.passwordPlaceholder')"
-            >
-              <template #prefix>
-                <n-icon size="18"><LockClosedOutline /></n-icon>
-              </template>
-            </n-input>
-          </n-form-item>
-          <n-button
-            class="mt-2"
-            type="primary"
-            size="large"
-            block
-            :loading="loading"
-            @click="handleSubmit"
-          >
-            {{ t('login.submit') }}
-          </n-button>
-        </n-form>
+        <LoginForm @success="handleSuccess" />
         <p class="mb-0 mt-6 text-center text-sm text-[var(--login-text-secondary)]">
           {{ t('login.accessNote') }}
         </p>
@@ -88,41 +45,23 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, reactive, ref } from 'vue';
+  import { computed } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { useI18n } from 'vue-i18n';
-  import { useMessage, useThemeVars } from 'naive-ui';
-  import type { FormInst, FormRules, InputInst } from 'naive-ui';
-  import { LockClosedOutline, PersonOutline } from '@vicons/ionicons5';
-  import { ResultEnum } from '@/enums/httpEnum';
+  import { useThemeVars } from 'naive-ui';
   import { PageEnum } from '@/enums/pageEnum';
   import { websiteConfig } from '@/config/website.config';
   import { useBrandLogo } from '@/hooks/setting/useBrandLogo';
-  import { useUserStore } from '@/store/modules/user';
-
-  interface FormState {
-    username: string;
-    password: string;
-  }
+  import LoginForm from './components/LoginForm.vue';
 
   const { t } = useI18n();
   const features = computed(() => [t('login.featureUsers'), t('login.featureOrgs'), t('login.featureFiles')]);
   const themeVars = useThemeVars();
   // 登录页左侧品牌栏底色随主题变化，方标同样按主题切换。
   const logo = useBrandLogo();
-  const message = useMessage();
   const router = useRouter();
   const route = useRoute();
-  const userStore = useUserStore();
-  const formRef = ref<FormInst | null>(null);
-  const usernameRef = ref<InputInst | null>(null);
-  const loading = ref(false);
   const currentYear = new Date().getFullYear();
-  const formInline = reactive<FormState>({ username: '', password: '' });
-  const rules = computed<FormRules>(() => ({
-    username: { required: true, message: t('login.usernameRequired'), trigger: 'blur' },
-    password: { required: true, message: t('login.passwordRequired'), trigger: 'blur' },
-  }));
   const cssVars = computed<Record<string, string>>(() => ({
     '--login-bg': themeVars.value.bodyColor,
     '--login-brand': themeVars.value.tableHeaderColor,
@@ -132,35 +71,8 @@
     '--login-text-secondary': themeVars.value.textColor3,
   }));
 
-  async function handleSubmit() {
-    if (loading.value) return;
-    try {
-      await formRef.value?.validate();
-    } catch {
-      return;
-    }
-    loading.value = true;
-    const pendingMessage = message.loading(t('login.loggingIn'), { duration: 0 });
-    try {
-      const { code, message: msg } = await userStore.login({
-        username: formInline.username,
-        password: formInline.password,
-      });
-      if (code === ResultEnum.SUCCESS) {
-        const toPath = decodeURIComponent((route.query?.redirect as string) || '/');
-        message.success(t('login.loginSuccess'));
-        router.replace(route.name === PageEnum.BASE_LOGIN_NAME ? '/' : toPath);
-      } else {
-        message.info(msg || t('login.loginFailed'));
-      }
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : t('login.loginFailedRetry'));
-    } finally {
-      pendingMessage.destroy();
-      loading.value = false;
-    }
+  function handleSuccess() {
+    const toPath = decodeURIComponent((route.query?.redirect as string) || '/');
+    router.replace(route.name === PageEnum.BASE_LOGIN_NAME ? '/' : toPath);
   }
-  onMounted(() => {
-    usernameRef.value?.focus();
-  });
 </script>
