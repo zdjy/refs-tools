@@ -32,6 +32,7 @@ export interface MediaRepository {
   recordEvent(event: MediaProviderEvent, now: string): Promise<boolean>
   cleanupCandidates(now: string, limit: number): Promise<StoredMedia[]>
   markCleaned(id: string, now: string): Promise<void>
+  hasLearningReferences(id: string): Promise<boolean>
 }
 export type MediaRepositories = { media: MediaRepository; authorization: AuthorizationRepository; audit: AuditRepository }
 /** 后续业务模块必须核对实际目标/状态/归属；未注入时拒绝，不能仅凭组织角色放行答卷或赛后资料。 */

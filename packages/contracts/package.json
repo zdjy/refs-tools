@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./learning": {
+      "types": "./src/learning.ts",
+      "development": "./src/learning.ts",
+      "import": "./dist/learning.js"
+    },
     "./certifications": {
       "types": "./src/certifications.ts",
       "development": "./src/certifications.ts",

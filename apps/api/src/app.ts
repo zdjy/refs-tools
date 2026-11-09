@@ -1,6 +1,7 @@
 import Fastify, { LogController, type FastifyInstance, type FastifyServerOptions } from 'fastify'
 import { ApiError, apiError, apiResponse } from '@refs-tools/contracts'
 
+import { learningRoutes, type LearningRouteDependencies } from './modules/learning/learning.routes.js'
 import { certificationsRoutes, type CertificationRouteDependencies } from './modules/certifications/certifications.routes.js'
 import { DomainError } from './application/errors.js'
 import { authRoutes, type AuthRouteDependencies } from './modules/auth/auth.routes.js'
@@ -17,7 +18,7 @@ import { mediaRoutes, type MediaRouteDependencies } from './modules/media/media.
 import { storageEventRoutes, type StorageEventDependencies } from './providers/object-storage/event-routes.js'
 
 type AppOptions = FastifyServerOptions
-type AppDependencies = { certifications?: CertificationRouteDependencies; adminMedia?: AdminMediaRouteDependencies; auth?: AuthRouteDependencies; audit?: AuditRouteDependencies; adminUsers?: AdminUsersRouteDependencies; media?: MediaRouteDependencies;
+type AppDependencies = { learning?: LearningRouteDependencies; certifications?: CertificationRouteDependencies; adminMedia?: AdminMediaRouteDependencies; auth?: AuthRouteDependencies; audit?: AuditRouteDependencies; adminUsers?: AdminUsersRouteDependencies; media?: MediaRouteDependencies;
   organizationAccess?: AccessRouteDependencies; organizationMembers?: MemberRouteDependencies; organizations?: OrganizationsRouteDependencies; profiles?: ProfilesRouteDependencies;
   platformInvites?: PlatformInviteRouteDependencies; organizationOwnership?: OwnershipRouteDependencies;
   storageEvents?: StorageEventDependencies; close?: () => Promise<void> }
@@ -71,6 +72,7 @@ export async function buildApp(options: AppOptions = {}, dependencies: AppDepend
   })
 
   if (dependencies.close) app.addHook('onClose', dependencies.close)
+  if (dependencies.learning) await app.register(learningRoutes(dependencies.learning), { prefix: '/api/v1' })
   if (dependencies.certifications) await app.register(certificationsRoutes(dependencies.certifications), { prefix: '/api/v1' })
   if (dependencies.auth) await app.register(authRoutes(dependencies.auth), { prefix: '/api/v1/auth' })
   if (dependencies.audit) await app.register(auditRoutes(dependencies.audit), { prefix: '/api/v1' })

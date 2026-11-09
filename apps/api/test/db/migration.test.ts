@@ -8,10 +8,11 @@ import { appliedMigrations, loadMigrations, migrateDown, migrateUp } from '../..
 import { createTransactionRunner, withTransaction } from '../../src/infrastructure/database/transaction.js'
 
 const migrations = await loadMigrations(migrationsDirectory)
+const migrationIds = ['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009', '0010', '0011', '0012']
 
 describe('迁移文件', () => {
   it('加载可执行及可回滚的核心迁移', () => {
-    expect(migrations.map(({ id }) => id)).toEqual(['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009', '0010', '0011'])
+    expect(migrations.map(({ id }) => id)).toEqual(migrationIds)
     expect(migrations[0]?.up).toContain('CREATE FUNCTION set_updated_at()')
     expect(migrations[0]?.down).toContain('DROP FUNCTION set_updated_at()')
   })
@@ -29,8 +30,10 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
   afterAll(async () => { await database?.close() })
 
   it('空 schema 可迁移、幂等重跑、回滚后重新应用', async () => {
-    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009', '0010', '0011'])
+    expect(await applyTestMigrations(pool)).toEqual(migrationIds)
     expect(await applyTestMigrations(pool)).toEqual([])
+    expect(await migrateDown(pool, migrations)).toBe('0012')
+    expect((await pool.query("SELECT to_regclass('learning_assets') AS table")).rows[0].table).toBeNull()
     expect(await migrateDown(pool, migrations)).toBe('0011')
     expect((await pool.query("SELECT to_regclass('certifications') AS table")).rows[0].table).toBeNull()
     expect(await migrateDown(pool, migrations)).toBe('0010')
@@ -59,13 +62,13 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
     expect(result.rows[0].function).toBeNull()
     expect(await appliedMigrations(pool)).toEqual([])
     expect(await migrateDown(pool, migrations)).toBeNull()
-    expect(await applyTestMigrations(pool)).toEqual(['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009', '0010', '0011'])
+    expect(await applyTestMigrations(pool)).toEqual(migrationIds)
   })
 
   it('并发迁移只应用一次', async () => {
     const results = await Promise.all([applyTestMigrations(pool), applyTestMigrations(pool)])
-    expect(results.flat()).toEqual(['0001', '0002', '0003', '0004', '0005', '0006', '0007', '0008', '0009', '0010', '0011'])
-    expect(await appliedMigrations(pool)).toHaveLength(11)
+    expect(results.flat()).toEqual(migrationIds)
+    expect(await appliedMigrations(pool)).toHaveLength(migrationIds.length)
   })
 
   it('失败的迁移连同 DDL 一起回滚', async () => {
@@ -77,7 +80,7 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('PostgreSQL 基架', () => {
     }])).rejects.toMatchObject({ code: '22012' })
     const result = await pool.query("SELECT to_regclass('failed_migration') AS table")
     expect(result.rows[0].table).toBeNull()
-    expect(await appliedMigrations(pool)).toHaveLength(11)
+    expect(await appliedMigrations(pool)).toHaveLength(migrationIds.length)
   })
 
   it('唯一约束及外键拒绝非法写入', async () => {

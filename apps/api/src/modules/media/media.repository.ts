@@ -76,6 +76,11 @@ export class PgMediaRepository implements MediaRepository {
     return result.rows.map(map)
   }
 
+  async hasLearningReferences(id: string) {
+    const result = await this.connection.query<{ found: boolean }>('SELECT EXISTS(SELECT 1 FROM learning_asset_media WHERE media_id=$1) AS found', [id])
+    return result.rows[0]!.found
+  }
+
   async markCleaned(id: string, now: string) {
     await this.connection.query("UPDATE media_objects SET cleaned_at=$2 WHERE id=$1 AND status IN ('expired','rejected','deleted')", [id, now])
   }

@@ -19,7 +19,7 @@
 
 ### 不宣称完成的能力
 
-- 当前 learning 限 content_editor/owner，认证/论坛未发布附件限 owner；组织认证草稿要求当前 active membership/organization。学习发布后的读者共享、认证审核员读取、活动考试答卷、已签到主裁上传必须由所属模块解析真实关系，未接入时拒绝。不以客户端 target 或组织管理角色替代。
+- 通用 learning 媒体入口仍限 content_editor/owner；Task 9 已新增按当前发布资料关系授权登录读者的专用入口及历史引用留存保护，见 [FS-0033](0033-learning-assets-api.md) 与 [ADR 0039](../decisions/0039-learning-versions-and-media-access.md)。认证/论坛未发布附件限 owner；组织认证草稿要求当前 active membership/organization。学习发布后的读者共享已由 learning 专用入口解析，认证审核员读取、活动考试答卷、已签到主裁上传必须由所属模块解析真实关系，未接入时拒绝。不以客户端 target 或组织管理角色替代。
 - 无真实 OSS 部署参数，不宣称完成 CORS、RAM、生命周期、桥接器联调；无 multipart、病毒扫描、文件内容签名检测或公共媒体发布。元数据核验不能证明文件内容安全。
 - PUT 无浏览器可设置的精确 Content-Length，最终 HEAD 控制可用性，不宣称存储已强制大小上限。Bucket 配额/告警与内容安全仍需部署验证。
 - 没有完整认证/考试/赛后页面、原图选择或压缩交互，不把复用部件视为完整业务闭环。

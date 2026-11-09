@@ -25,6 +25,7 @@ export function mediaHarness() {
       async transition(id, from, status, _at, stat) { const media = records.get(id)!; if (media.status === from) records.set(id, { ...media, status, ...(stat ? { verifiedSizeBytes: stat.sizeBytes, etag: stat.etag } : {}) }) },
       async recordEvent(event) { if (events.has(event.eventId)) return false; events.add(event.eventId); return true },
       async cleanupCandidates(at, limit) { return [...records.values()].filter((m) => m.expiresAt <= at && !m.cleanedAt && m.status !== 'available').slice(0, limit) },
+      async hasLearningReferences() { return false },
       async markCleaned(id, at) { records.set(id, { ...records.get(id)!, cleanedAt: at }) },
     },
     authorization: {

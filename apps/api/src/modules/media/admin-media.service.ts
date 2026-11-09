@@ -47,7 +47,8 @@ export class AdminMediaService {
     const reason = this.reason(input)
     const media = await this.dependencies.transaction.run(async repositories => {
       const current = await this.current(repositories, actor, id)
-      if (current.status === 'available' && ['certification_evidence', 'exam_answer', 'post_game_record'].includes(current.purpose)) {
+      if ((current.purpose === 'learning' && await repositories.media.hasLearningReferences(id))
+        || (current.status === 'available' && ['certification_evidence', 'exam_answer', 'post_game_record'].includes(current.purpose))) {
         throw new DomainError('MEDIA_RETENTION_REQUIRED', '留存材料须由所属业务审批删除', 409)
       }
       if (current.status !== 'deleted') await repositories.media.transition(id, current.status, 'deleted', this.dependencies.now().toISOString())

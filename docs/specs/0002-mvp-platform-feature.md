@@ -692,9 +692,10 @@ export type AuditEvent = {
 
 ### Task 9：学习分类、内容版本与媒体发布
 
+- **状态**：后端已实现，类型/生产构建、754 项全量快测与 98 项真实 PostgreSQL 检查通过。范围、精确接口和未完成项见 [FS-0033](0033-learning-assets-api.md) 与 [ADR 0039](../decisions/0039-learning-versions-and-media-access.md)。学习 UI、真实存储业务端到端及后续考试历史引用授权待完成。
 - **依赖**：Task 5、Task 4。
 - **实现**：三级分类、多对多挂载、资料版本、发布/下线和下载策略；只允许引用 available media。
-- **文件**：`apps/api/db/migrations/0007_learning_assets.sql`、`apps/api/src/modules/learning/*`、`packages/contracts/src/learning.ts`。
+- **文件**：`apps/api/db/migrations/0012_learning_assets.sql`（接续现有迁移，不覆盖组织的 `0007`）、`apps/api/src/modules/learning/*`、`packages/contracts/src/learning.ts`。
 - **测试**：`apps/api/test/learning/category-depth.test.ts`、`asset-version-immutability.test.ts`、`download-policy.test.ts`；覆盖第 4 层拒绝和下线后旧快照可读。
 
 ### Task 10：题型、题目版本与练习判分

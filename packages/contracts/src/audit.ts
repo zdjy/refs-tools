@@ -14,6 +14,7 @@ export const AuditActionSchema = Type.Union([
   Type.Literal('organization.updated'),
   Type.Literal('organization.reviewed'), Type.Literal('organization.frozen'), Type.Literal('organization.ownership_transferred'),
   Type.Literal('certification.changed'), Type.Literal('certification.queried'), Type.Literal('certification.decided'), Type.Literal('certification.revoked'), Type.Literal('certification.appealed'),
+  Type.Literal('learning.category_changed'), Type.Literal('learning.versioned'), Type.Literal('learning.published'), Type.Literal('learning.unpublished'),
   Type.Literal('exam.published'), Type.Literal('question.versioned'), Type.Literal('grading.reviewed'), Type.Literal('grading.overridden'),
   Type.Literal('profile.updated'), Type.Literal('media.queried'), Type.Literal('media.read_authorized'), Type.Literal('media.deleted'), Type.Literal('moderation.decided'),
   Type.Literal('assignment.changed'), Type.Literal('attendance.corrected'), Type.Literal('post_game_record.changed'),
@@ -22,6 +23,7 @@ export const AuditResourceTypeSchema = Type.Union([
   Type.Literal('membership'), Type.Literal('organization_invitation'), Type.Literal('organization_join_code'),
   Type.Literal('platform_organization_invite'), Type.Literal('organization_ownership_transfer'),
   Type.Literal('role_binding'), Type.Literal('audit_log'), Type.Literal('organization'), Type.Literal('user'),
+  Type.Literal('learning_category'), Type.Literal('learning_asset'),
   Type.Literal('certification'), Type.Literal('exam'), Type.Literal('question'), Type.Literal('attempt'),
   Type.Literal('media'), Type.Literal('forum_resource'), Type.Literal('assignment'), Type.Literal('attendance'), Type.Literal('post_game_record'),
 ])
