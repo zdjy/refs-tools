@@ -220,7 +220,7 @@
 
 ### 7.4 认证状态与申诉
 
-最小状态包括：`draft`、`submitted`、`under_review`、`approved`、`rejected`、`suspended`、`revoked`、`appeal_pending`、`needs_more_information`。成员退出/被移除时，组织认证进入 `suspended`；重新加入同一组织后，未被撤销的记录可恢复。
+最小状态包括草稿、提交待审、批准、驳回、暂停、撤销、申诉待处理与补件。实现契约见 [FS-0030](0030-certification-api.md)：提交直接进入 `under_review`，申诉使用独立 `pending/decided` 状态，不覆盖原认证状态；`status` 保留人工决定，`effectiveStatus` 表示当前效力。成员退出/被移除或组织冻结时，已批准组织认证的当前效力为 `suspended`；重新加入同一组织或组织恢复后可恢复，人工暂停和撤销不得自动恢复。
 
 - 驳回和撤销均可申诉，申诉期间原认证状态不变。
 - 申诉由更高权限管理员或指定复核员处理；原审核员不得处理自己的申诉。

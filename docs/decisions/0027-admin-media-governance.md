@@ -1,6 +1,6 @@
 # ADR 0027：独立的平台媒体治理入口
 
-- 状态：已接受
+- 状态：已接受；认证原件的通用下载能力由 [ADR 0036](0036-certification-history-and-evidence-access.md) 收窄为对应申请范围授权，元数据治理与其他用途保持原决定。
 - 关联：[FS-0017](../specs/0017-admin-file-management.md)、[ADR 0021](0021-media-control-plane.md)、[ADR 0015](0015-casbin-authorization-engine.md)。
 
 ## 背景

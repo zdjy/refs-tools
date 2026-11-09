@@ -17,6 +17,7 @@ export const permissionRules = {
   'match.manage': { roles: ['owner', 'organizer'], targets: ['match'] },
   'match.operate': { roles: ['owner', 'organizer', 'head_referee'], targets: ['match'] },
   'organization.certification.review': { roles: ['certifier'], targets: ['organization'] },
+  'organization.certification.revoke': { roles: ['owner', 'certifier'], targets: ['organization'] },
   'platform.certification.review': { roles: ['platform_admin'], targets: ['platform'] },
   'content.edit': { roles: ['content_editor'], targets: ['platform'] },
   'content.unpublish': { roles: ['content_editor', 'platform_admin'], targets: ['platform'] },

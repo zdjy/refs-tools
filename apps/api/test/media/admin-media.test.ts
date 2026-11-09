@@ -13,6 +13,12 @@ describe('平台文件治理', () => {
     await expect(f.service.list(f.h.actor, {})).rejects.toMatchObject({ code: 'FORBIDDEN' })
     await expect(new MediaCompletionService(f.h.dependencies).read(f.admin, f.intent.mediaId)).rejects.toMatchObject({ code: 'NOT_FOUND' })
   })
+  it('认证原件不能通过全平台治理入口绕过申请范围授权', async () => {
+    const f = await adminFixture(); f.h.records.get(f.intent.mediaId)!.purpose = 'certification_evidence'
+    const sign = vi.spyOn(f.dependencies.storage, 'signRead')
+    await expect(f.service.read(f.admin, f.intent.mediaId, reason)).rejects.toMatchObject({ code: 'CERTIFICATION_ACCESS_REQUIRED' })
+    expect(sign).not.toHaveBeenCalled()
+  })
   it('非法筛选、空理由和敏感理由在存储调用前拒绝', async () => {
     const f = await adminFixture(), sign = vi.spyOn(f.dependencies.storage, 'signRead')
     await expect(f.service.list(f.admin, { page: '10001' })).rejects.toMatchObject({ code: 'INVALID_REQUEST' })

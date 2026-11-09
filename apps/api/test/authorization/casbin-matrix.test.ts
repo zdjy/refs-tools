@@ -15,7 +15,7 @@ const matrix: MatrixCase[] = [
   { role: 'grader', scopeType: 'platform', scopeId: null, allowed: { platform: ['grading.review'] } },
   { role: 'moderator', scopeType: 'platform', scopeId: null, allowed: { platform: ['moderation.manage'] } },
   { role: 'owner', scopeType: 'organization', scopeId: 'org-a', allowed: {
-    organization: ['organization.manage', 'organization.members.manage', 'role.manage', 'event.manage', 'audit.read'],
+    organization: ['organization.manage', 'organization.members.manage', 'role.manage', 'event.manage', 'audit.read', 'organization.certification.revoke'],
     event: ['role.delegate', 'event.manage'], match: ['role.delegate', 'match.manage', 'match.operate'],
   } },
   { role: 'organizer', scopeType: 'organization', scopeId: 'org-a', allowed: {
@@ -24,7 +24,7 @@ const matrix: MatrixCase[] = [
   { role: 'organizer', scopeType: 'event', scopeId: 'event-a', allowed: {
     event: ['role.delegate', 'event.manage'], match: ['role.delegate', 'match.manage', 'match.operate'],
   } },
-  { role: 'certifier', scopeType: 'organization', scopeId: 'org-a', allowed: { organization: ['organization.certification.review'] } },
+  { role: 'certifier', scopeType: 'organization', scopeId: 'org-a', allowed: { organization: ['organization.certification.review', 'organization.certification.revoke'] } },
   { role: 'head_referee', scopeType: 'event', scopeId: 'event-a', allowed: { match: ['match.operate'] } },
   { role: 'head_referee', scopeType: 'match', scopeId: 'match-a', allowed: { match: ['match.operate'] } },
 ]

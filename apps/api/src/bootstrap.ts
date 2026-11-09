@@ -1,4 +1,5 @@
 import { buildApp } from './app.js'
+import { buildCertificationServices } from './certifications-bootstrap.js'
 import { buildMediaService } from './media-bootstrap.js'
 import { createDatabasePool, databaseConfigFromEnvironment } from './infrastructure/database/pool.js'
 import { createTransactionRunner } from './infrastructure/database/transaction.js'
@@ -68,6 +69,7 @@ export async function buildProductionApp(env: NodeJS.ProcessEnv = process.env) {
         invitations: new OrganizationInvitationsService(memberDependencies) },
       platformInvites: { sessions: service, publicOrigin, service: new PlatformInvitesService(memberDependencies) },
       organizationOwnership: { sessions: service, publicOrigin, service: new OrganizationOwnershipService(memberDependencies) },
+      certifications: { ...buildCertificationServices(pool, permissions, media?.storage), sessions: service, publicOrigin },
       auth: { service, publicOrigin },
       profiles: { sessions: service, publicOrigin, service: new ProfilesService({
         transaction: createTransactionRunner(pool, (client) => ({

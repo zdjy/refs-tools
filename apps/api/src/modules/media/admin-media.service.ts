@@ -75,6 +75,9 @@ export class AdminMediaService {
   }
 
   private available(media: StoredMedia) {
+    if (media.purpose === 'certification_evidence') {
+      throw new DomainError('CERTIFICATION_ACCESS_REQUIRED', '认证原件须从对应认证申请或申诉入口访问', 403)
+    }
     if (media.status !== 'available') throw new DomainError('MEDIA_NOT_AVAILABLE', '文件尚不可下载', 409)
   }
 

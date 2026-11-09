@@ -4,7 +4,7 @@
 
 ## 迁移与后续表扩展
 
-执行 `pnpm --filter @refs-tools/api db:migrate` 应用 `0003`。它建立角色、审计，以及组织/成员/赛事/比赛的归属和状态骨架。Task 7/15 用新增迁移补齐业务字段，不改写本迁移、不重复建表。组织治理与成员/定向邀请已由 `0006`、`0007` 接续，成员码由 `0009` 接续（[FS-0027](../../../docs/specs/0027-referee-organizations.md)），平台邀请码与所有权移交由 `0010` 接续（[FS-0028](../../../docs/specs/0028-platform-invites-and-ownership-transfer.md)），见 [FS-0015](../../../docs/specs/0015-admin-organization-management.md) 与 [FS-0016](../../../docs/specs/0016-organization-membership.md)；部署本轮 API 前须应用全部迁移，并授予下述新表权限。赛事仍为归属骨架。
+执行 `pnpm --filter @refs-tools/api db:migrate` 应用 `0003`。它建立角色、审计，以及组织/成员/赛事/比赛的归属和状态骨架。Task 7/15 用新增迁移补齐业务字段，不改写本迁移、不重复建表。组织治理与成员/定向邀请已由 `0006`、`0007` 接续，成员码由 `0009` 接续（[FS-0027](../../../docs/specs/0027-referee-organizations.md)），平台邀请码与所有权移交由 `0010` 接续（[FS-0028](../../../docs/specs/0028-platform-invites-and-ownership-transfer.md)），见 [FS-0015](../../../docs/specs/0015-admin-organization-management.md) 与 [FS-0016](../../../docs/specs/0016-organization-membership.md)；部署本轮 API 前须应用全部迁移，并授予下述新表权限。认证记录、历史、证据引用和申诉由 `0011` 接续（[FS-0030](../../../docs/specs/0030-certification-api.md)）。赛事仍为归属骨架。
 
 `db:rollback` 的 down 会销毁本任务的数据和骨架，只适用于未投产环境或经批准的恢复流程；投产后需先按部署留存策略备份和审批，不能以回滚代替审计清理。
 
@@ -27,11 +27,13 @@ GRANT SELECT, INSERT, UPDATE ON app_schema.organizations, app_schema.organizatio
   app_schema.organization_invitations, app_schema.organization_join_codes,
   app_schema.platform_organization_invites, app_schema.organization_ownership_transfers TO api_runtime;
 GRANT SELECT, UPDATE ON app_schema.events, app_schema.matches TO api_runtime;
+GRANT SELECT, INSERT, UPDATE ON app_schema.certifications, app_schema.certification_appeals TO api_runtime;
+GRANT SELECT, INSERT ON app_schema.certification_history, app_schema.certification_media TO api_runtime;
 REVOKE ALL ON app_schema.audit_events FROM api_runtime;
 GRANT SELECT, INSERT ON app_schema.audit_events TO api_runtime;
 ```
 
-不要为方便使用 `GRANT ALL ON ALL TABLES`；不得向 API 账号授予审计 UPDATE/DELETE/TRUNCATE、表所有权或关闭触发器的权限。认证维护任务的清理账号与所需 DELETE 权限仍按[认证部署说明](AUTH_DEPLOYMENT.md)独立配置。本机 Compose 的数据库所有者账号仅用于开发，不是生产权限模板。
+不要为方便使用 `GRANT ALL ON ALL TABLES`；不得向 API 账号授予审计、认证历史及材料引用的 UPDATE/DELETE/TRUNCATE、表所有权或关闭触发器的权限。认证维护任务的清理账号与所需 DELETE 权限仍按[认证部署说明](AUTH_DEPLOYMENT.md)独立配置。本机 Compose 的数据库所有者账号仅用于开发，不是生产权限模板。
 
 ## 首个平台管理员
 

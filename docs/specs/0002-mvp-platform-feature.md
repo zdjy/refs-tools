@@ -501,7 +501,7 @@ export type AuditEvent = {
 | `GET /organizations/{orgId}/certifications/review-queue` | 回组织申请摘要。 | 该组织 `certifier`；本组织成员范围 |
 | `POST /organizations/{orgId}/certifications/{id}/decision` | `{decision:"approve"|"reject"|"needs_more_information",reason}`；回状态。 | 组织 `certifier`；不能自审；本组织有效成员 |
 | `POST /organizations/{orgId}/certifications/{id}/revoke` | `{reason}`；回 `{status:"revoked"}`。 | 组织 owner 或授权 certifier；只可撤销本组织认证；审计 |
-| `POST /certifications/{id}/appeals` | `{reason,evidenceMediaIds?}`；回 `appeal_pending`。 | 申请人/认证持有人；适用驳回或撤销结果 |
+| `POST /certifications/{id}/appeals` | `{expectedVersion,reason,evidenceMediaIds}`；回独立 `pending` 申诉，原认证状态不变（FS-0030）。 | 申请人/认证持有人；适用驳回或撤销结果 |
 | `GET /organizations/{orgId}/audit-events` | 查询 `{resourceType?,resourceId?,cursor?}`；回本组织业务审计摘要。 | 组织 owner；仅该组织范围 |
 
 ### 3.8 赛事、选派、签到和赛后记录 Beta
@@ -674,20 +674,21 @@ export type AuditEvent = {
 
 ### Task 7：组织、邀请、成员关系与平台审核
 
-- **状态**：后端、迁移、管理端与裁判端界面已实现并通过自动化验证；实际迁移为 `0006`、`0007`、`0009`、`0010`（下方文件清单中的 `0005`/`0006` 编号已过期）。平台邀请码与所有权移交见 [FS-0028](0028-platform-invites-and-ownership-transfer.md)。**浏览器实测尚未完成**，组织解散不在本任务已交付范围内。
+- **状态**：后端、迁移、管理端与裁判端界面已实现并通过自动化验证；实际迁移为 `0006`、`0007`、`0009`、`0010`。平台邀请码与所有权移交见 [FS-0028](0028-platform-invites-and-ownership-transfer.md)。主路径已浏览器实测，拒绝/取消移交、弱网、键盘及部分窄屏路径仍待覆盖（详见 FS-0027/0028）；组织解散不在本任务已交付范围内。本轮组织相关真实 PostgreSQL 回归 38 项通过，并修复「我的组织」角色顺序不稳定。
 
-- **迁移接续**：Task 4 已建立组织/成员最小归属与状态骨架；本任务以 `0005` 扩展现有表并补齐业务字段/约束，不重复建表。
+- **迁移接续**：Task 4 已建立组织/成员最小归属与状态骨架；本任务以 `0006`、`0007`、`0009`、`0010` 扩展现有表并补齐业务字段/约束，不重复建表。
 - **依赖**：Task 3、Task 4。
 - **实现**：组织申请、平台审核、一次性创建邀请码、成员邀请接受/拒绝/申请/成员码、角色授予/撤销、组织冻结/所有权变更审计。
-- **文件**：`apps/api/db/migrations/0005_organizations.sql`、`apps/api/src/modules/organizations/*`、`packages/contracts/src/organizations.ts`。
+- **文件**：`apps/api/db/migrations/0006_organizations.sql`、`apps/api/src/modules/organizations/*`、`packages/contracts/src/organizations.ts`。
 - **测试**：`apps/api/test/organizations/review-gating.test.ts`、`membership-flows.test.ts`、`invitation-response.test.ts`、`invite-usage.test.ts`、`freeze.test.ts`；覆盖未审核组织零权限、邀请码并发消费和不同用途 token 隔离。
 
 ### Task 8：认证记录、私有证据和申诉
 
+- **状态**：后端已实现并通过单测、HTTP 门禁与真实 PostgreSQL 验证，见 [FS-0030](0030-certification-api.md) 与 [ADR 0036](../decisions/0036-certification-history-and-evidence-access.md)。认证状态与当前效力分离，申诉为独立 pending/decided；前端页面、真实存储端到端与浏览器验收待完成。
 - **依赖**：Task 5、Task 7。
 - **实现**：平台/组织认证数据、scope 检查、当前成员校验、审核队列、撤销/暂停/申诉、原件短时访问审计。
-- **文件**：`apps/api/db/migrations/0006_certifications.sql`、`apps/api/src/modules/certifications/*`、`packages/contracts/src/certifications.ts`。
-- **测试**：`apps/api/test/certifications/organization-scope.test.ts`、`platform-prerequisite.test.ts`、`self-review-denial.test.ts`、`appeal-reviewer-separation.test.ts`、`membership-suspension.test.ts`。
+- **文件**：`apps/api/db/migrations/0011_certifications.sql`、`apps/api/src/modules/certifications/*`、`packages/contracts/src/certifications.ts`。
+- **测试**：`packages/domain/test/certification.test.ts`、`apps/api/test/certifications/workflows.test.ts`、`http.test.ts`、`certifications.integration.test.ts`。
 
 ### Task 9：学习分类、内容版本与媒体发布
 

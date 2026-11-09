@@ -14,6 +14,14 @@ describe('我的组织投影', () => {
     const [item] = (await f.self.mine(f.actor)).items
     expect(item).toMatchObject({ isOwner: true, ownerUserId: f.actor, roles: ['owner'], canManage: true, canGrantRoles: true, governanceReason: '说明' })
   })
+  it('角色按 owner、organizer、certifier 固定投影，不受随机绑定顺序影响', async () => {
+    const f = accessFixture(); vi.mocked(f.r.self.mine).mockResolvedValue(paged([row(f)]))
+    const [binding] = await f.r.authorization.findBindings(f.actor)
+    vi.mocked(f.r.authorization.findBindings).mockResolvedValue(['certifier', 'organizer', 'owner'].map(role => ({
+      ...binding!, role: role as 'certifier' | 'organizer' | 'owner',
+    })))
+    expect((await f.self.mine(f.actor)).items[0]!.roles).toEqual(['owner', 'organizer', 'certifier'])
+  })
   it('普通成员没有管理能力，也看不到治理说明', async () => {
     const f = accessFixture(); vi.mocked(f.r.self.mine).mockResolvedValue(paged([row(f, { ownerUserId: randomUUID() })]))
     vi.mocked(f.r.authorization.findBindings).mockResolvedValue([])

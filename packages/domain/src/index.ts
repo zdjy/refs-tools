@@ -8,6 +8,7 @@ export {
   normalizeProfileText, validateProfile,
 } from './profile.js'
 export type { ProfileFields, ProfileValidationError } from './profile.js'
+export { certificationStatusAfter, effectiveCertificationStatus } from './certification.js'
 export { membershipStatusAfter } from './membership-state.js'
 export { joinCodeStatus } from './join-code.js'
 export { platformInviteStatus } from './platform-invite.js'

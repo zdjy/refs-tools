@@ -13,7 +13,7 @@ export type PermissionContext = {
 export const permissions = [
   'self.read', 'self.write', 'platform.manage', 'organization.manage', 'organization.members.manage', 'role.manage', 'role.delegate',
   'event.manage', 'match.manage', 'match.operate', 'organization.certification.review',
-  'platform.certification.review', 'content.edit', 'content.unpublish', 'grading.review',
+  'platform.certification.review', 'organization.certification.revoke', 'content.edit', 'content.unpublish', 'grading.review',
   'results.override', 'moderation.manage', 'audit.read', 'media.manage',
 ] as const
 export type Permission = typeof permissions[number]

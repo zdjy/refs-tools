@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./certifications": {
+      "types": "./src/certifications.ts",
+      "development": "./src/certifications.ts",
+      "import": "./dist/certifications.js"
+    },
     "./organization-members": {
       "types": "./src/organization-members.ts",
       "development": "./src/organization-members.ts",

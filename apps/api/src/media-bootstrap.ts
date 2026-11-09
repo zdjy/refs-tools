@@ -26,5 +26,5 @@ export function buildMediaService(env: NodeJS.ProcessEnv, pool: Pool, permission
     })), storage, bucket, permissions, now: () => new Date(),
   }
   const service = new MediaCompletionService(dependencies)
-  return { service, adminService: new AdminMediaService(dependencies), secret, now: () => new Date() }
+  return { service, storage, adminService: new AdminMediaService(dependencies), secret, now: () => new Date() }
 }

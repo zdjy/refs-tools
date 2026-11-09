@@ -6,6 +6,8 @@
 
 ## 决策索引
 
+- [ADR 0036：认证历史、实时效力与原件范围授权](./0036-certification-history-and-evidence-access.md) — 不可变材料版本、派生效力、独立申诉、同事务审核和审计；认证原件收窄为申请范围专用入口。
+
 - [ADR 0035：成员联系方式的按用途投影](./0035-member-contact-projection.md) — 独立按需接口、最小联络字段、组织成员管理权限与读取审计，不复用本人档案或成员列表。
 
 - [ADR 0034：平台创建组织邀请码与所有权移交](./0034-platform-invites-and-ownership-transfer.md) — 邀请码分表、前缀隔离、一次性条件 UPDATE 消费；移交含平台直接与负责人发起、接收人确认两条路径，同事务换手并审计。

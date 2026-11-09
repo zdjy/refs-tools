@@ -25,7 +25,7 @@ function project(row: MineRow, actor: string, bindings: readonly ScopedRoleBindi
     && binding.scopeId === row.id && organizationRoles.includes(binding.role) && isRoleBindingActive(binding, context)).map(binding => binding.role) : []
   const isOwner = row.ownerUserId === actor
   return { id: row.id, name: row.name, region: row.region, purpose: row.purpose, status: row.status, createdAt: row.createdAt, version: row.version,
-    isOwner, ownerUserId: row.ownerUserId, membership: row.membership, roles: [...new Set(roles)],
+    isOwner, ownerUserId: row.ownerUserId, membership: row.membership, roles: organizationRoles.filter(role => roles.includes(role)),
     canManage: d.permissions.isPermitted('organization.members.manage', context),
     canGrantRoles: d.permissions.isPermitted('role.manage', context),
     governanceReason: isOwner ? row.governanceReason : null }
