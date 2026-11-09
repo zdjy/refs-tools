@@ -21,6 +21,20 @@ export class OrganizationMembersService {
     })
   }
 
+  /** 成员联系方式只对当前组织的成员管理者开放；读取审计与返回同事务。 */
+  async contact(actor: string, id: string, recordId: string) {
+    const now = this.d.now()
+    return this.d.transaction.run(async r => {
+      await memberAccess(r, this.d, actor, id, now, 'manage')
+      const contact = await r.members.memberContact(id, recordId)
+      if (!contact) throw new DomainError('NOT_FOUND', '成员记录不存在', 404)
+      await appendAudit(r.audit, { actorUserId: actor, action: 'membership.contact_viewed', resourceType: 'membership',
+        resourceId: recordId, scopeType: 'organization', scopeId: id, organizationId: id,
+        before: null, after: null, reason: null }, now)
+      return contact
+    })
+  }
+
   async request(actor: string, id: string) {
     const now = this.d.now()
     return this.d.transaction.run(async r => {

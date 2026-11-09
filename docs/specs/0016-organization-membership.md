@@ -8,7 +8,7 @@
 
 ## 行为
 
-- 成员与邀请仅投影 ID、用户 ID、昵称、状态、版本和时间；不返回邮箱、实名、联系方式或凭据。分页默认 20、最大 100。成员名单额外接受可选 `keyword`（≤100 字符，按昵称子串匹配），过滤在 SQL 中完成，因此 `total` 与页数都是筛选后的结果；邀请列表不接受关键词。裁判端的使用方式见 [FS-0027](0027-referee-organizations.md) §13。
+- 成员列表与邀请列表仅投影 ID、用户 ID、昵称、状态、版本和时间，不返回邮箱、实名、联系方式或凭据。成员管理者查看联络资料时使用单独的按用途投影接口（[FS-0029](0029-member-contact-projection.md)），不复用列表响应。分页默认 20、最大 100。成员名单额外接受可选 `keyword`（≤100 字符，按昵称子串匹配），过滤在 SQL 中完成，因此 `total` 与页数都是筛选后的结果；邀请列表不接受关键词。裁判端的使用方式见 [FS-0027](0027-referee-organizations.md) §13。
 - 定向邀请输入已有用户 ID，有效期 1–30 天（默认 7 天）；目标必须账号有效、邮箱已验证，且不是当前正式成员。同一组织/用户只有一个待回应邀请；已过期邀请可被新的邀请取代，旧记录保留。
 - 邀请有 pending/accepted/declined/revoked/expired 状态，过期时刻即失效。邀请不包含角色，也不自动成为成员。用户通过本人邀请列表和接受/拒绝 API 回应，其他用户不可读取或回应。
 - 接受邀请激活当前 pending 成员关系或建立新 active 关系；重复接受/拒绝同一结果幂等，不重复变更/审计；反向回应、撤销、过期返回 409。接受时重新核验组织及账号。邀请接受不恢复历史撤销的角色。
@@ -30,6 +30,7 @@
 - `POST /organizations/:id/membership-requests`：本人申请。
 - `POST /organizations/:id/memberships/:recordId/decision`：组织成员管理权限，`{action:approve|reject|remove,expectedVersion,reason}`。
 - `POST /organizations/:id/memberships/:recordId/leave`：成员本人，`{expectedVersion,reason}`。
+- `GET /organizations/:id/memberships/:recordId/contact`：组织成员管理权限，返回昵称、头像媒体 ID、真实姓名、手机号与地区的联络投影；每次读取写 `membership.contact_viewed` 审计，不返回邮箱、详细地址或出生日期。
 
 ## 验收记录
 
@@ -65,3 +66,8 @@
 20. 自有布局使用管理端现有 Tailwind 3 例外，无新增整页 CSS。
 21. 静态工具类，无硬编码主题色、important 或深层穿透。
 22. 构建包含成员组件与布局类，产物体积已记录；不将未完成的浏览器验收标为通过。
+
+## 成员联系方式投影修订（FS-0029）
+
+- 变更：成员列表保持原投影不变；新增按用途读取的 `GET /organizations/:id/memberships/:recordId/contact`，只对 `organization.members.manage` 开放，平台管理员不隐含该权限。返回 `nickname/legalName/phone/regionLabel/avatarMediaId`，不返回邮箱、详细地址、出生日期或凭据。
+- 审计与边界：每次成功读取追加 `membership.contact_viewed`，快照为空；审计失败不返回数据。历史成员关系（退出/移除/驳回）仍可读取，跨组织或无权统一 `404`。详细契约、页面行为与未覆盖项见 [FS-0029](0029-member-contact-projection.md)。

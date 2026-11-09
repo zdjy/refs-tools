@@ -13,6 +13,16 @@ export const OrganizationInvitationSchema = Type.Object({
   status: Type.Union((['pending', 'accepted', 'declined', 'revoked', 'expired'] as const).map(value => Type.Literal(value))),
   version: Type.Integer({ minimum: 1 }), createdAt: Time, expiresAt: Time,
 }, { additionalProperties: false })
+/**
+ * 成员联系方式投影：仅供当前组织的成员管理者按联络用途读取。
+ * 不复用本人档案响应，也不包含邮箱、详细地址、出生日期或任何凭据。
+ */
+export const MemberContactSchema = Type.Object({
+  nickname: Type.String(), legalName: Type.Union([Type.String(), Type.Null()]),
+  phone: Type.Union([Type.String(), Type.Null()]), regionLabel: Type.Union([Type.String(), Type.Null()]),
+  avatarMediaId: Type.Union([Uuid, Type.Null()]),
+}, { additionalProperties: false })
+export const MemberContactResponseSchema = Type.Object({ data: MemberContactSchema })
 /** 成员/邀请列表分页；沿用通用页大小枚举，默认由 Repository 解析为 20。 */
 export const MemberPageQuerySchema = PageQuerySchema
 /**
@@ -39,6 +49,7 @@ export const InvitationResponseSchema = Type.Object({ data: OrganizationInvitati
 export const MembershipListResponseSchema = pagedResponseSchema(MembershipSchema, { canManage: Type.Boolean() })
 export const InvitationListResponseSchema = pagedResponseSchema(OrganizationInvitationSchema, { canManage: Type.Boolean() })
 export type Membership = Static<typeof MembershipSchema>
+export type MemberContact = Static<typeof MemberContactSchema>
 export type OrganizationInvitation = Static<typeof OrganizationInvitationSchema>
 export type MemberPageQuery = Static<typeof MemberPageQuerySchema>
 export type MemberListQuery = Static<typeof MemberListQuerySchema>

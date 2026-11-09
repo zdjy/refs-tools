@@ -47,9 +47,11 @@ describe('组织网关路径与方法', () => {
     const client = platform(), api = createOrganizationsApi(client)
     await api.members('o', { page: '2', pageSize: '20', keyword: '张 三' })
     await api.members('o', { keyword: '' })
+    await api.memberContact('o', 'm')
     await api.updateProfile('o', { purpose: '新简介', expectedVersion: 3 })
     expect(client.get).toHaveBeenNthCalledWith(1, '/organizations/o/memberships?page=2&pageSize=20&keyword=%E5%BC%A0+%E4%B8%89')
     expect(client.get).toHaveBeenNthCalledWith(2, '/organizations/o/memberships')
+    expect(client.get).toHaveBeenNthCalledWith(3, '/organizations/o/memberships/m/contact')
     expect(client.patch).toHaveBeenCalledWith('/organizations/o/profile', { purpose: '新简介', expectedVersion: 3 })
   })
 

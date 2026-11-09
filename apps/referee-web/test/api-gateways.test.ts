@@ -57,6 +57,9 @@ describe('媒体网关', () => {
     expect(client.post).toHaveBeenNthCalledWith(1, '/media/upload-intents', { fileName: 'a' }, { 'Idempotency-Key': 'key-1' })
     expect(client.post).toHaveBeenNthCalledWith(2, '/media/a%2Fb/upload-authorization')
     expect(client.post).toHaveBeenNthCalledWith(3, '/media/a%2Fb/complete', {})
+    vi.mocked(client.get).mockResolvedValue({ url: 'https://signed.test/a', expiresAt: '2026-11-02T12:05:00Z' })
+    await api.readUrl('a/b')
+    expect(client.get).toHaveBeenCalledWith('/media/a%2Fb/read-url')
   })
 
   it('平台错误翻译为 MediaApiError', async () => {

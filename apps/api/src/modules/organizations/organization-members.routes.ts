@@ -21,6 +21,10 @@ export function organizationMembersRoutes({ members, invitations, sessions, publ
       const { user } = await sessions.requireVerifiedSession(sessionToken(request))
       return apiResponse(await members.list(user.id, request.params.id, request.query))
     })
+    app.get<{ Params: MemberRecordParams }>('/organizations/:id/memberships/:recordId/contact', { schema: schemas.memberContactSchema }, async request => {
+      const { user } = await sessions.requireVerifiedSession(sessionToken(request))
+      return apiResponse(await members.contact(user.id, request.params.id, request.params.recordId))
+    })
     app.get<{ Params: MemberOrganizationParams; Querystring: MemberPageQuery }>('/organizations/:id/invitations', { schema: schemas.invitationListSchema }, async request => {
       const { user } = await sessions.requireVerifiedSession(sessionToken(request))
       return apiResponse(await invitations.list(user.id, request.params.id, request.query))

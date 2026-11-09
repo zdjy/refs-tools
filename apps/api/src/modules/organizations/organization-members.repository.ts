@@ -1,10 +1,12 @@
 import type { PoolClient } from 'pg'
-import type { MemberListQuery, MemberPageQuery, Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members'
+import type { MemberContact, MemberListQuery, MemberPageQuery, Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members'
 import type { OrganizationMembersRepository } from './organization-members.types.js'
 
 type MemberRow = { id: string; organization_id: string; user_id: string; display_name: string;
   status: Membership['status']; version: number; created_at: Date }
 type InviteRow = Omit<MemberRow, 'status'> & { status: OrganizationInvitation['status']; organization_name: string; expires_at: Date }
+type ContactRow = { display_name: string; legal_name: string | null; phone_e164: string | null;
+  region_label: string | null; avatar_media_id: string | null }
 const memberColumns = 'm.id,m.organization_id,m.user_id,u.display_name,m.status,m.version,m.created_at'
 const inviteColumns = `i.id,i.organization_id,i.user_id,u.display_name,i.version,i.created_at,i.expires_at,o.name AS organization_name,
   CASE WHEN i.status='pending' AND i.expires_at <= $1 THEN 'expired' ELSE i.status END AS status`
@@ -44,6 +46,17 @@ export class PgOrganizationMembersRepository implements OrganizationMembersRepos
     const rows = await this.connection.query<MemberRow>(`SELECT ${memberColumns} FROM organization_memberships m JOIN users u ON u.id=m.user_id
       WHERE m.organization_id=$1 AND m.id=$2 FOR UPDATE OF m`, [organizationId, id])
     return rows.rows[0] ? mapMember(rows.rows[0]) : null
+  }
+
+  async memberContact(organizationId: string, id: string) {
+    // 跨模块只读投影 users 与 referee_profiles：档案写入仍归 profiles 模块，这里只取联络用途所需字段。
+    const rows = await this.connection.query<ContactRow>(`SELECT u.display_name,p.legal_name,p.phone_e164,p.region_label,p.avatar_media_id
+      FROM organization_memberships m JOIN users u ON u.id=m.user_id
+      LEFT JOIN referee_profiles p ON p.user_id=m.user_id
+      WHERE m.organization_id=$1 AND m.id=$2`, [organizationId, id])
+    const row = rows.rows[0]
+    return row ? { nickname: row.display_name, legalName: row.legal_name, phone: row.phone_e164,
+      regionLabel: row.region_label, avatarMediaId: row.avatar_media_id } : null
   }
 
   async current(organizationId: string, userId: string) {

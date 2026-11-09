@@ -2,7 +2,7 @@ import type {
   CandidateList, CreateJoinCode, GrantRole, JoinCode, JoinCodeList, OrganizationRole, OrganizationRoleList,
 } from '@refs-tools/contracts/organization-access'
 import type {
-  InvitationList, MemberChange, MemberListQuery, MemberPageQuery, Membership, MembershipDecision, MembershipList, OrganizationInvitation,
+  InvitationList, MemberChange, MemberContact, MemberListQuery, MemberPageQuery, Membership, MembershipDecision, MembershipList, OrganizationInvitation,
 } from '@refs-tools/contracts/organization-members'
 import type {
   DirectoryList, DirectoryQuery, MyOrganization, MyOrganizationList, OrganizationApplication, OrganizationProfileUpdate, OrganizationProfileUpdated,
@@ -50,6 +50,8 @@ export function createOrganizationsApi(client: PlatformClient) {
     leave: (orgId: string, recordId: string, body: MemberChange) =>
       call(client.post<Membership>(`/organizations/${id(orgId)}/memberships/${id(recordId)}/leave`, body)),
     members: (orgId: string, value: MemberListQuery = {}) => call(client.get<MembershipList>(`/organizations/${id(orgId)}/memberships${query({ ...value })}`)),
+    memberContact: (orgId: string, recordId: string) =>
+      call(client.get<MemberContact>(`/organizations/${id(orgId)}/memberships/${id(recordId)}/contact`)),
     decideMember: (orgId: string, recordId: string, body: MembershipDecision) =>
       call(client.post<Membership>(`/organizations/${id(orgId)}/memberships/${id(recordId)}/decision`, body)),
     invitations: (orgId: string, value: MemberPageQuery = {}) => call(client.get<InvitationList>(`/organizations/${id(orgId)}/invitations${page(value)}`)),

@@ -5,15 +5,19 @@ import { Search } from '@lucide/vue'
 import type { Membership } from '@refs-tools/contracts/organization-members'
 import UiLoadingRegion from '../../../components/ui/UiLoadingRegion.vue'
 import { useUiFeedback } from '../../../components/ui/useUiFeedback'
-import { formatDate, memberStatusLabels } from '../organizations.presentation'
+import type { MemberDecision } from '../organizations.presentation'
 import { useConfirmReason } from '../useConfirmReason'
+import { useMemberContact } from '../useMemberContact'
 import { useMemberManagement } from '../useMemberManagement'
+import MemberDetailDialog from './MemberDetailDialog.vue'
+import MemberRoster from './MemberRoster.vue'
 import PagerBar from './PagerBar.vue'
 import ReasonDialog from './ReasonDialog.vue'
 
 const props = defineProps<{ organizationId: string; ownerUserId?: string }>()
 const members = useMemberManagement(ref(props.organizationId))
-const confirm = useConfirmReason<{ member: Membership; decision: 'approve' | 'reject' | 'remove' }>()
+const detail = useMemberContact(ref(props.organizationId))
+const confirm = useConfirmReason<{ member: Membership; decision: MemberDecision }>()
 useUiFeedback(members.action.done)
 onMounted(() => { void members.load() })
 
@@ -31,9 +35,10 @@ async function submit() {
 <template>
   <section aria-labelledby="members-title" class="grid gap-4">
     <h2 id="members-title" class="m-0 text-lg text-ink">成员与入会申请</h2>
-    <form class="grid gap-2 compact:grid-cols-[minmax(0,1fr)_auto]" role="search" @submit.prevent="members.search()">
+    <form role="search" class="grid gap-2 compact:grid-cols-[minmax(0,1fr)_auto]" @submit.prevent="members.search()">
       <label for="member-keyword" class="sr-only">按成员昵称搜索，留空显示全部</label>
-      <n-input id="member-keyword" v-model:value="members.keyword.value" placeholder="输入昵称搜索成员，留空显示全部" clearable :input-props="{ autocomplete: 'off' }" />
+      <n-input id="member-keyword" v-model:value="members.keyword.value" placeholder="输入昵称搜索成员，留空显示全部" clearable
+        :input-props="{ autocomplete: 'off', 'aria-controls': 'member-list' }" />
       <n-button type="primary" attr-type="submit" :loading="members.list.loading.value"><template #icon><Search class="size-4" aria-hidden="true" /></template>搜索</n-button>
     </form>
     <p v-if="members.stale.value" role="status" class="m-0 border-0 border-l border-solid border-ink py-0.5 pl-3 text-[13px] leading-relaxed">
@@ -46,25 +51,20 @@ async function submit() {
       <div><n-button type="primary" @click="members.load()">重新读取</n-button></div>
     </div>
     <template v-else-if="members.list.data.value">
-      <p role="status" class="m-0 text-[13px] text-body">{{ members.filtering.value ? `匹配 ${members.total.value} 位成员` : `共 ${members.total.value} 位成员` }}</p>
-      <ul class="m-0 grid list-none gap-0 overflow-hidden rounded-xl border border-solid border-line p-0">
-        <li v-for="member in members.items.value" :key="member.id" class="grid gap-2 border-0 border-b border-solid border-line p-4 last:border-b-0 compact:grid-cols-[minmax(0,1fr)_auto] compact:items-center">
-          <div class="grid min-w-0 gap-0.5">
-            <span class="text-base font-semibold text-ink wrap-anywhere">{{ member.displayName }}<span v-if="member.userId === ownerUserId" class="ml-2 text-xs font-normal text-body">负责人</span></span>
-            <span class="text-[13px] text-body">{{ memberStatusLabels[member.status] }} · {{ formatDate(member.createdAt) }}</span>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <template v-if="member.status === 'pending'">
-              <n-button secondary :disabled="members.action.busy.value" :aria-label="`驳回${member.displayName}的申请`" @click="confirm.open({ member, decision: 'reject' })">驳回</n-button>
-              <n-button type="primary" :disabled="members.action.busy.value" :aria-label="`批准${member.displayName}加入`" @click="confirm.open({ member, decision: 'approve' })">批准</n-button>
-            </template>
-            <n-button v-else-if="member.status === 'active' && member.userId !== ownerUserId" secondary :disabled="members.action.busy.value" :aria-label="`移除${member.displayName}`" @click="confirm.open({ member, decision: 'remove' })">移除</n-button>
-          </div>
-        </li>
-      </ul>
-      <p v-if="!members.items.value.length" class="m-0 text-sm text-body">{{ members.filtering.value ? '没有匹配的成员。' : '还没有成员记录。' }}</p>
+      <p role="status" class="m-0 text-[13px] text-body">
+        {{ members.filtering.value ? `匹配 ${members.total.value} 位成员` : `共 ${members.total.value} 位成员` }}
+      </p>
+      <MemberRoster v-if="members.items.value.length" :items="members.items.value" :owner-user-id="ownerUserId ?? ''"
+        :busy="members.list.loading.value || members.action.busy.value" :aria-busy="members.list.loading.value || members.action.busy.value"
+        @open="detail.open" @decide="(member, decision) => confirm.open({ member, decision })" />
+      <p v-else class="m-0 border-0 border-y border-solid border-line px-4 py-6 text-sm leading-relaxed text-body">
+        {{ members.filtering.value ? '没有匹配的成员。换一个昵称，或清空关键词查看全部。' : '还没有成员记录。' }}
+      </p>
       <PagerBar :page="members.page.value" :page-count="members.pageCount.value" :busy="members.list.loading.value" label="成员分页" @go="members.go" />
     </template>
+    <MemberDetailDialog :show="detail.visible.value" :member="detail.target.value" :contact="detail.data.value"
+      :avatar-url="detail.avatarUrl.value" :loading="detail.loading.value" :error="detail.error.value"
+      @update:show="!$event && detail.close()" @retry="detail.retry" />
     <ReasonDialog :show="confirm.visible.value" v-model:reason="confirm.reason.value" :title="confirm.target.value ? labels[confirm.target.value.decision].title : ''"
       :description="confirm.target.value ? `${confirm.target.value.member.displayName}：${labels[confirm.target.value.decision].text}` : ''"
       :confirm-label="confirm.target.value ? labels[confirm.target.value.decision].confirm : ''" :busy="members.action.busy.value"

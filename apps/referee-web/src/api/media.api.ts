@@ -1,4 +1,4 @@
-import type { MediaObject, UploadIntentBody, UploadIntentResult } from '@refs-tools/contracts/media'
+import type { MediaObject, ReadAuthorization, UploadIntentBody, UploadIntentResult } from '@refs-tools/contracts/media'
 import { HttpError } from './http/errors'
 import { createObjectStorageClient, type ObjectStorageClient } from './http/object-storage-client'
 import { createPlatformClient, type PlatformClient } from './http/platform-client'
@@ -26,6 +26,9 @@ export function createMediaApi(platform: PlatformClient, storage: ObjectStorageC
       call(platform.post<UploadIntentResult>(`/media/${encodeURIComponent(id)}/upload-authorization`)),
     complete: (id: string) =>
       call(platform.post<MediaObject>(`/media/${encodeURIComponent(id)}/complete`, {})),
+    /** 只申请短时读取授权；签名 URL 不写入日志、错误或缓存，由调用方在内存中使用。 */
+    readUrl: (id: string) =>
+      call(platform.get<ReadAuthorization>(`/media/${encodeURIComponent(id)}/read-url`)),
     /** 媒体字节直接发往存储；不读取或持久化签名 URL，也不携带平台 Cookie 和 Referer。 */
     async put(file: File, intent: UploadIntentResult, signal: AbortSignal): Promise<void> {
       if (new URL(intent.upload.url).protocol !== 'https:') throw new MediaApiError('INVALID_UPLOAD_URL', 0)

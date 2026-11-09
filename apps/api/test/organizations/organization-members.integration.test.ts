@@ -40,6 +40,25 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('组织成员与邀请 Postgr
     expect(await members.list(seed.ids.owner, seed.ids.orgA, { keyword: '王' })).toMatchObject({ total: 0, items: [] })
     expect(await members.list(seed.ids.admin, seed.ids.orgB, { keyword: '张' })).toMatchObject({ total: 0, items: [] })
   })
+  it('成员联系方式按联络用途投影，历史关系仍可读且每次读取写审计', async () => {
+    await db.pool.query(`INSERT INTO referee_profiles(user_id,legal_name,phone_e164,region_code,region_label,address_detail,birth_date)
+      VALUES($1,'王裁判','+8613800138000','330106','浙江省/杭州市/西湖区','西湖区某路 1 号','1990-01-01')`, [seed.ids.actor])
+    const target = (await members.list(seed.ids.owner, seed.ids.orgA, {})).items.find(m => m.userId === seed.ids.actor)!
+    const contact = await members.contact(seed.ids.owner, seed.ids.orgA, target.id)
+    expect(contact).toEqual({ nickname: '裁判', legalName: '王裁判', phone: '+8613800138000',
+      regionLabel: '浙江省/杭州市/西湖区', avatarMediaId: null })
+    expect(JSON.stringify(contact)).not.toContain('@example.com')
+    expect(JSON.stringify(contact)).not.toContain('西湖区某路')
+    expect(JSON.stringify(contact)).not.toContain('1990-01-01')
+    await expect(members.contact(seed.ids.actor, seed.ids.orgA, target.id)).rejects.toMatchObject({ statusCode: 404 })
+    await expect(members.contact(seed.ids.owner, seed.ids.orgB, target.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    const historicalId = randomUUID(), historicalUser = randomUUID()
+    await db.pool.query("INSERT INTO users(id,email,display_name,email_verified_at) VALUES($1,$2,'历史成员',now())", [historicalUser, `${historicalUser}@example.com`])
+    await db.pool.query("INSERT INTO organization_memberships(id,organization_id,user_id,status) VALUES($1,$2,$3,'removed')", [historicalId, seed.ids.orgA, historicalUser])
+    expect(await members.contact(seed.ids.owner, seed.ids.orgA, historicalId)).toMatchObject({ nickname: '历史成员', legalName: null, phone: null })
+    const event = (await db.pool.query("SELECT action,resource_type,resource_id,scope_type,scope_id FROM audit_events WHERE action='membership.contact_viewed'")).rows[0]
+    expect(event).toMatchObject({ resource_type: 'membership', resource_id: target.id, scope_type: 'organization', scope_id: seed.ids.orgA })
+  })
   it('邀请、本人收件箱、确认与重放真实落库，不授角色且投影不泄露邮箱', async () => {
     const invite = await create()
     expect((await invites.inbox(seed.ids.outsider, {})).items.map(i => i.id)).toEqual([invite.id])

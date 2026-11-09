@@ -26,6 +26,12 @@ export const rosterFilterOptions = [
 export const memberStatusLabels: Record<Membership['status'], string> = {
   pending: '待审核', active: '正式成员', rejected: '已驳回', left: '已退出', removed: '已移除',
 }
+export type MemberDecision = 'approve' | 'reject' | 'remove'
+/** 操作列规则：待审核可驳回/批准；正式成员可移除，但负责人不能被移除。 */
+export function memberDecisions(member: Membership, ownerUserId: string): MemberDecision[] {
+  if (member.status === 'pending') return ['reject', 'approve']
+  return member.status === 'active' && member.userId !== ownerUserId ? ['remove'] : []
+}
 export const invitationStatusLabels: Record<OrganizationInvitation['status'], string> = {
   pending: '待回应', accepted: '已接受', declined: '已拒绝', revoked: '已撤销', expired: '已过期',
 }
@@ -46,6 +52,11 @@ export function maskJoinCode(token: string): string {
 }
 export function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+/** 手机号默认遮蔽：保留前 4 位（含国家码）与后 4 位，中间按位替换为 `*`。 */
+export function maskPhone(phone: string): string {
+  const value = phone.trim()
+  return value.length <= 8 ? '*'.repeat(value.length) : `${value.slice(0, 4)}${'*'.repeat(value.length - 8)}${value.slice(-4)}`
 }
 
 const writeNotice = ' 输入已保留。'
@@ -97,6 +108,16 @@ export function organizationsLoadErrorMessage(error: unknown): string {
   if (code === 'UNAUTHENTICATED') return '登录已失效，请重新登录后再查看。'
   if (code === 'NOT_FOUND') return '没有找到这个组织，或你没有权限查看。'
   return '暂时无法读取，请稍后重试。若持续失败，请联系平台管理员。'
+}
+/** 成员详情是组织上下文内的独立读取，不复用组织列表的 NOT_FOUND 文案。 */
+export function memberContactErrorMessage(error: unknown): string {
+  const code = error instanceof OrganizationsApiError ? error.code : ''
+  if (code === 'OFFLINE') return '当前处于离线状态，无法读取成员联系方式。恢复网络后请重新读取。'
+  if (code === 'NETWORK_ERROR') return '连接较慢或已中断，已自动重试仍未成功，请检查网络后重新读取。'
+  if (code === 'UNAUTHENTICATED') return '登录已失效，请重新登录后再查看。'
+  if (code === 'NOT_FOUND') return '成员记录不存在，或你已没有查看权限。请刷新成员名单后重试。'
+  if (code === 'FORBIDDEN') return '你没有权限查看该成员的联系方式。'
+  return '暂时无法读取成员联系方式，请稍后重试。'
 }
 
 /** 链接按钮样式：与 Naive 胶囊按钮同形，用于 <a> 导航，也可用于原生 <button>（未启用 Preflight，故显式声明边框）。类名保持完整静态字符串以便 Tailwind 扫描。 */

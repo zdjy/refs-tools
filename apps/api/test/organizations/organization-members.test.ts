@@ -7,6 +7,16 @@ describe('组织成员用例', () => {
     await f.members.list(f.actor, f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' })
     expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '2', pageSize: '20', keyword: ' 裁判 ' })
   })
+  it('成员管理者读取联系方式投影，读取审计与返回同事务；平台账号不能读取', async () => {
+    const f = memberFixture()
+    expect(await f.members.contact(f.actor, f.id, f.member.id)).toEqual(f.contact)
+    expect(f.r.members.memberContact).toHaveBeenCalledWith(f.id, f.member.id)
+    expect(f.r.audit.append).toHaveBeenCalledWith(expect.objectContaining({ action: 'membership.contact_viewed',
+      resourceType: 'membership', resourceId: f.member.id, organizationId: f.id }))
+    await expect(f.members.contact(f.user, f.id, f.member.id)).rejects.toMatchObject({ statusCode: 404 })
+    vi.mocked(f.r.members.memberContact).mockResolvedValueOnce(null)
+    await expect(f.members.contact(f.actor, f.id, f.member.id)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
   it('平台只有只读治理能力，不能隐式邀请或审核成员', async () => {
     const f = memberFixture()
     expect((await f.members.list(f.user, f.id, {})).canManage).toBe(false)
@@ -61,5 +71,6 @@ describe('组织成员用例', () => {
     vi.mocked(f.r.audit.append).mockRejectedValue(new Error('audit failed'))
     await expect(f.members.list(f.actor, f.id, {})).rejects.toThrow('audit failed')
     await expect(f.invitations.inbox(f.user, {})).rejects.toThrow('audit failed')
+    await expect(f.members.contact(f.actor, f.id, f.member.id)).rejects.toThrow('audit failed')
   })
 })

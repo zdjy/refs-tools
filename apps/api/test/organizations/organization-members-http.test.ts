@@ -19,6 +19,7 @@ describe('组织成员 HTTP 边界', () => {
     try {
       const anonymous = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships` })
       expect(anonymous.statusCode).toBe(401); expect(anonymous.headers['cache-control']).toBe('no-store')
+      expect((await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships/${f.member.id}/contact` })).statusCode).toBe(401)
       expect((await f.app.inject({ method: 'POST', url: `/api/v1/organizations/${f.id}/invitations`, headers: { ...f.headers, origin: 'https://evil.example.com' },
         payload: { userId: f.user, validDays: 7 } })).statusCode).toBe(403)
       expect(f.r.members.createInvitation).not.toHaveBeenCalled()
@@ -30,6 +31,9 @@ describe('组织成员 HTTP 边界', () => {
       const response = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships?page=1&pageSize=20&keyword=%E6%88%90`, headers: f.headers })
       expect(response.statusCode).toBe(200); expect(response.json().data).toMatchObject({ canManage: true, total: 1 })
       expect(f.r.members.members).toHaveBeenCalledWith(f.id, { page: '1', pageSize: '20', keyword: '成' })
+      const contact = await f.app.inject({ url: `/api/v1/organizations/${f.id}/memberships/${f.member.id}/contact`, headers: f.headers })
+      expect(contact.statusCode).toBe(200); expect(contact.json().data).toEqual(f.contact)
+      expect(contact.body).not.toContain('@example.com'); expect(contact.body).not.toContain('详细地址')
       const created = await f.app.inject({ method: 'POST', url: `/api/v1/organizations/${f.id}/invitations`, headers: f.headers, payload: { userId: f.user } })
       expect(created.statusCode).toBe(201)
       expect(f.r.members.createInvitation).toHaveBeenCalledWith(expect.any(String), f.id, f.user, f.actor, f.now, new Date(f.now.getTime() + 7 * 86400000))
@@ -42,7 +46,8 @@ describe('组织成员 HTTP 边界', () => {
     const f = await fixture()
     try {
       for (const url of [`/api/v1/organizations/invalid/memberships`, `/api/v1/organizations/${f.id}/invitations?pageSize=500`,
-        `/api/v1/organizations/${f.id}/memberships?keyword=${'长'.repeat(101)}`, `/api/v1/organizations/${f.id}/memberships?keyword=x&role=owner`]) {
+        `/api/v1/organizations/${f.id}/memberships?keyword=${'长'.repeat(101)}`, `/api/v1/organizations/${f.id}/memberships?keyword=x&role=owner`,
+        `/api/v1/organizations/${f.id}/memberships/invalid/contact`]) {
         expect((await f.app.inject({ url, headers: f.headers })).statusCode).toBe(400)
       }
       for (const payload of [{ userId: f.user, validDays: 0 }, { userId: f.user, validDays: 31 }, { userId: f.user, validDays: 7, role: 'owner' }]) {

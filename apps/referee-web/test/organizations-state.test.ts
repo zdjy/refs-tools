@@ -10,12 +10,14 @@ import { useMyOrganizations } from '../src/views/organizations/useMyOrganization
 import { useOrganizationDirectory } from '../src/views/organizations/useOrganizationDirectory'
 import { useApplicantProfile } from '../src/views/organizations/useApplicantProfile'
 import { useOrganizationApplication } from '../src/views/organizations/useOrganizationApplication'
-import { maskJoinCode } from '../src/views/organizations/organizations.presentation'
+import { maskJoinCode, maskPhone, memberDecisions } from '../src/views/organizations/organizations.presentation'
+import { useMemberContact } from '../src/views/organizations/useMemberContact'
 import { useMemberManagement } from '../src/views/organizations/useMemberManagement'
 import { useOrganizationProfile } from '../src/views/organizations/useOrganizationProfile'
 import { useOrganizationWorkspace } from '../src/views/organizations/useOrganizationWorkspace'
 import type { MyOrganization } from '@refs-tools/contracts/organization-self'
-import type { Membership } from '@refs-tools/contracts/organization-members'
+import type { MemberContact, Membership } from '@refs-tools/contracts/organization-members'
+import type { MediaApi } from '../src/api/media.api'
 
 const api = (patch: Record<string, unknown> = {}) => ({ mine: vi.fn(async () => ({ items: [] })), inbox: vi.fn(async () => ({ items: [] })),
   acceptInvitation: vi.fn(async () => ({})), declineInvitation: vi.fn(async () => ({})), ...patch }) as unknown as OrganizationsApi
@@ -181,6 +183,12 @@ describe('成员名单检索与分页', () => {
     expect(state.page.value).toBe(1); expect(state.items.value.map(item => item.id)).toEqual(['m3'])
     expect(state.stale.value).toBe('')
   })
+  it('表格操作列按状态与负责人身份投影，负责人不会被移除', () => {
+    expect(memberDecisions(member({ status: 'pending' }), 'u')).toEqual(['reject', 'approve'])
+    expect(memberDecisions(member(), 'owner')).toEqual(['remove'])
+    expect(memberDecisions(member(), 'u')).toEqual([])
+    expect(memberDecisions(member({ status: 'rejected' }), 'owner')).toEqual([])
+  })
   it('移除成功但刷新失败时保留成功事实并只提示重新读取', async () => {
     const members = vi.fn().mockResolvedValueOnce({ items: [member()], total: 1, page: 1, pageSize: 20 })
       .mockRejectedValueOnce(new OrganizationsApiError('NETWORK_ERROR', 0))
@@ -196,6 +204,65 @@ const organization = (patch: Partial<MyOrganization> = {}): MyOrganization => ({
   id: 'o', name: '协会', region: '浙江省/杭州市/西湖区', purpose: '原简介', status: 'active', createdAt: '2024-01-01T00:00:00.000Z',
   version: 2, isOwner: true, ownerUserId: 'u1', membership: { id: 'm', status: 'active', version: 1 }, roles: ['owner'],
   canManage: true, canGrantRoles: true, governanceReason: null, ...patch,
+})
+
+describe('成员联系方式详情', () => {
+  const contact: MemberContact = { nickname: '张三', legalName: '张三', phone: '+8613800138000',
+    regionLabel: '浙江省/杭州市/西湖区', avatarMediaId: 'avatar-1' }
+  const contactState = (memberContact: ReturnType<typeof vi.fn>, readUrl = vi.fn(async () => ({ url: 'https://signed.test/a', expiresAt: '2026-11-02T12:05:00Z' }))) =>
+    useMemberContact(ref('o'), { memberContact } as unknown as OrganizationsApi, { readUrl } as unknown as Pick<MediaApi, 'readUrl'>)
+
+  it('手机号默认遮蔽，保留前 4 位与后 4 位便于核对', () => {
+    expect(maskPhone('+8613800138000')).toBe('+861******8000')
+    expect(maskPhone('12345678')).toBe('********')
+    expect(maskPhone('')).toBe('')
+  })
+  it('打开后读取联系方式与头像签名，关闭清空私有状态', async () => {
+    const memberContact = vi.fn(async () => ({ ...contact })), state = contactState(memberContact)
+    state.open(member({ userId: 'u', displayName: '张三' }))
+    expect(state.visible.value).toBe(true)
+    await vi.waitFor(() => expect(state.loading.value).toBe(false))
+    await vi.waitFor(() => expect(state.avatarUrl.value).toBe('https://signed.test/a'))
+    expect(state.data.value).toEqual(contact)
+    expect(memberContact).toHaveBeenCalledWith('o', 'm')
+    state.close()
+    expect(state.visible.value).toBe(false); expect(state.target.value).toBeNull()
+    expect(state.data.value).toBeNull(); expect(state.avatarUrl.value).toBe(''); expect(state.error.value).toBe('')
+  })
+  it('头像签名失败只降级为首字，不影响联系方式读取', async () => {
+    const state = contactState(vi.fn(async () => ({ ...contact })), vi.fn(async () => { throw new Error('signed') }))
+    state.open(member())
+    await vi.waitFor(() => expect(state.loading.value).toBe(false))
+    await Promise.resolve()
+    expect(state.data.value).toEqual(contact); expect(state.avatarUrl.value).toBe(''); expect(state.error.value).toBe('')
+  })
+  it('成员记录不存在或无权限时使用成员详情文案，不复用组织列表文案', async () => {
+    const state = contactState(vi.fn().mockRejectedValueOnce(new OrganizationsApiError('NOT_FOUND', 404)))
+    state.open(member())
+    await vi.waitFor(() => expect(state.error.value).toContain('成员记录不存在'))
+    expect(state.error.value).not.toContain('组织')
+  })
+  it('读取失败保留重试入口，不把错误当成空资料；旧响应不覆盖新成员', async () => {
+    const memberContact = vi.fn().mockRejectedValueOnce(new OrganizationsApiError('NETWORK_ERROR', 0))
+      .mockResolvedValueOnce({ ...contact, nickname: '李四', avatarMediaId: null })
+    const state = contactState(memberContact)
+    state.open(member({ displayName: '张三' }))
+    await vi.waitFor(() => expect(state.error.value).toContain('连接较慢'))
+    expect(state.data.value).toBeNull(); expect(state.loading.value).toBe(false)
+    state.retry()
+    await vi.waitFor(() => expect(state.data.value?.nickname).toBe('李四'))
+    expect(state.avatarUrl.value).toBe('')
+
+    let release!: (value: MemberContact) => void
+    const stale = vi.fn().mockImplementationOnce(() => new Promise<MemberContact>(resolve => { release = resolve }))
+      .mockResolvedValueOnce({ ...contact, nickname: '新成员' })
+    const second = contactState(stale)
+    second.open(member({ id: 'old' })); second.open(member({ id: 'new' }))
+    await vi.waitFor(() => expect(second.data.value?.nickname).toBe('新成员'))
+    release({ ...contact, nickname: '旧成员' })
+    await Promise.resolve(); await Promise.resolve()
+    expect(second.data.value?.nickname).toBe('新成员'); expect(second.target.value?.id).toBe('new')
+  })
 })
 
 describe('负责人编辑组织简介', () => {
