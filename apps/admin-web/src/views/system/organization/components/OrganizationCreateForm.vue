@@ -67,12 +67,20 @@
           :online="online"
           @update:value="update('ownerUserId', $event)"
         />
+        <!-- autosize 只能给 textarea：带上它会加 `n-input--autosize`，单行输入框会收缩到内容宽度。 -->
+        <NInput
+          v-else-if="field.key === 'purpose'"
+          :value="form[field.key]"
+          :maxlength="field.max"
+          type="textarea"
+          :autosize="{ minRows: 3, maxRows: 6 }"
+          :input-props="{ 'aria-label': field.label }"
+          @update:value="update(field.key, $event)"
+        />
         <NInput
           v-else
           :value="form[field.key]"
           :maxlength="field.max"
-          :type="field.key === 'purpose' ? 'textarea' : 'text'"
-          :autosize="{ minRows: 3, maxRows: 6 }"
           :input-props="{ 'aria-label': field.label }"
           @update:value="update(field.key, $event)"
         />
