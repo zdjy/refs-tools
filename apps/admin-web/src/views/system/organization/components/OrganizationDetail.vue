@@ -1,59 +1,129 @@
 <script setup lang="ts">
-  import { NAlert, NButton, NForm, NFormItem, NInput, NSpace } from 'naive-ui';
+  /**
+   * 组织详情主体：资料字段、只读字段与治理操作选择。
+   *
+   * 只负责呈现与输入；提交按钮由页面放进弹窗页脚，
+   * 破坏性治理动作在页脚就地确认（FS-0010 v2 §5.2）。
+   */
+  import { NButton, NForm, NFormItem, NInput } from 'naive-ui';
   import type { OrganizationDecision, OrganizationDetail, UpdateOrganization } from '@refs-tools/contracts/organizations';
-  import { actionDescriptions, actionLabels, actionOptions, actionTypes } from '../organizations.presentation';
+  import { actionDescriptions, actionOptions, actionTypes } from '../organizations.presentation';
   import OrganizationProfileFields from './OrganizationProfileFields.vue';
   import OrganizationReadonlyFields from './OrganizationReadonlyFields.vue';
 
   type Profile = Pick<UpdateOrganization, 'name' | 'region' | 'purpose' | 'contact'>;
-  defineProps<{
-    organization: OrganizationDetail; action: OrganizationDecision['action'] | null; reason: string; busy: boolean; saving: boolean;
-    online: boolean; profile: Profile; profileEditable: boolean; profileDirty: boolean;
+  const props = defineProps<{
+    organization: OrganizationDetail;
+    action: OrganizationDecision['action'] | null;
+    reason: string;
+    busy: boolean;
+    profile: Profile;
+    profileEditable: boolean;
   }>();
   const emit = defineEmits<{
-    'update:profile': [value: Profile]; 'update:action': [value: OrganizationDecision['action'] | null];
-    'update:reason': [value: string]; 'save-profile': []; 'reset-profile': []; request: []; close: [];
+    'update:profile': [value: Profile];
+    'update:action': [value: OrganizationDecision['action'] | null];
+    'update:reason': [value: string];
   }>();
 
-  function submitProfile(editable: boolean, dirty: boolean) {
-    if (editable && dirty) emit('save-profile');
-  }
+  const options = () => actionOptions[props.organization.status];
 </script>
 
 <template>
-  <NForm size="large" @submit.prevent="submitProfile(profileEditable, profileDirty)">
-    <OrganizationProfileFields :profile="profile" :disabled="!profileEditable" :busy="busy"
-      @update:profile="emit('update:profile', $event)" />
-    <p v-if="!profileEditable" class="mb-4 mt-0 text-sm">
-      当前状态的组织资料不可直接修改；如需更正，请通过后续治理流程处理。
-    </p>
-    <OrganizationReadonlyFields :organization="organization" />
-  </NForm>
-  <div v-if="actionOptions[organization.status].length" class="mt-6">
-    <NFormItem label="治理操作">
-      <NSpace>
-        <NButton v-for="option in actionOptions[organization.status]" :key="option.value" size="large"
-          :type="actionTypes[option.value]" :secondary="action !== option.value"
-          :aria-pressed="action === option.value" :disabled="busy"
-          @click="emit('update:action', option.value)">{{ option.label }}</NButton>
-      </NSpace>
-    </NFormItem>
-    <template v-if="action">
-      <NAlert type="warning" class="mb-4">{{ actionDescriptions[action] }}</NAlert>
-      <NFormItem label="操作理由（必填）">
-        <NInput :value="reason" type="textarea" :maxlength="500" show-count :disabled="busy" size="large"
-          :input-props="{ 'aria-label': '操作理由' }" placeholder="说明本次决定的依据，请勿填写密码、凭据或 URL"
-          @update:value="emit('update:reason', $event)" />
-      </NFormItem>
-    </template>
+  <div class="detail">
+    <section class="detail-section" aria-labelledby="organization-profile-title">
+      <h3 id="organization-profile-title" class="detail-heading">组织资料</h3>
+      <NForm
+        :disabled="!profileEditable || busy"
+        label-placement="top"
+        @submit.prevent="profileEditable && $emit('update:profile', profile)"
+      >
+        <OrganizationProfileFields
+          :profile="profile"
+          :disabled="!profileEditable"
+          :busy="busy"
+          @update:profile="emit('update:profile', $event)"
+        />
+      </NForm>
+      <p v-if="!profileEditable" class="detail-hint">
+        当前状态的组织资料不可直接修改；如需更正，请通过后续治理流程处理。
+      </p>
+    </section>
+
+    <section v-if="options().length" class="detail-section" aria-labelledby="organization-governance-title">
+      <h3 id="organization-governance-title" class="detail-heading">治理操作</h3>
+      <div class="detail-actions" role="group" aria-label="治理操作">
+        <NButton
+          v-for="option in options()"
+          :key="option.value"
+          :type="action === option.value ? actionTypes[option.value] : 'default'"
+          :aria-pressed="action === option.value"
+          :disabled="busy"
+          @click="emit('update:action', action === option.value ? null : option.value)"
+        >
+          {{ option.label }}
+        </NButton>
+      </div>
+      <template v-if="action">
+        <p class="detail-hint is-warning">{{ actionDescriptions[action] }}</p>
+        <NFormItem label="操作理由（必填）">
+          <NInput
+            :value="reason"
+            type="textarea"
+            :maxlength="500"
+            show-count
+            :autosize="{ minRows: 3, maxRows: 5 }"
+            :disabled="busy"
+            :input-props="{ 'aria-label': '操作理由' }"
+            placeholder="说明本次决定的依据，请勿填写密码、凭据或 URL"
+            @update:value="emit('update:reason', $event)"
+          />
+        </NFormItem>
+      </template>
+    </section>
+
+    <section class="detail-section" aria-labelledby="organization-meta-title">
+      <h3 id="organization-meta-title" class="detail-heading">只读字段</h3>
+      <OrganizationReadonlyFields :organization="organization" />
+    </section>
   </div>
-  <NSpace justify="end" class="mt-4">
-    <NButton size="large" :disabled="busy" @click="emit('close')">关闭</NButton>
-    <NButton v-if="profileEditable && profileDirty" size="large" :disabled="busy" @click="emit('reset-profile')">撤销修改</NButton>
-    <NButton v-if="profileEditable" size="large" type="primary" :loading="saving" :disabled="busy || !online || !profileDirty"
-      @click="emit('save-profile')">保存资料</NButton>
-    <NButton v-if="action" size="large" :type="actionTypes[action]" :disabled="busy || !online" @click="emit('request')">
-      {{ actionLabels[action] }}
-    </NButton>
-  </NSpace>
 </template>
+
+<style scoped>
+  .detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-space-xxl);
+    min-width: 0;
+  }
+
+  .detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-space-md);
+    min-width: 0;
+  }
+
+  .detail-heading {
+    font-size: var(--admin-text-section-title-size);
+    line-height: var(--admin-text-section-title-leading);
+    font-weight: var(--admin-text-section-title-weight);
+    color: var(--admin-ink);
+  }
+
+  .detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--admin-space-md);
+  }
+
+  .detail-hint {
+    font-size: var(--admin-text-meta-size);
+    line-height: var(--admin-text-meta-leading);
+    color: var(--admin-muted);
+  }
+
+  .detail-hint.is-warning {
+    color: var(--admin-warning);
+  }
+</style>

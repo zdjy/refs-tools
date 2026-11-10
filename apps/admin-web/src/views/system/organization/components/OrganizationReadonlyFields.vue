@@ -9,7 +9,7 @@
 
 <template>
   <!-- 只读字段同样用表单控件承载：禁用状态明确表达「平台不可改写」，并保留可复制的原值。 -->
-  <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+  <div class="readonly-grid">
     <NFormItem label="当前状态">
       <NInput :value="`${statusLabels[organization.status]}（版本 ${organization.version}）`" disabled aria-label="当前状态" />
     </NFormItem>
@@ -28,12 +28,30 @@
     <NFormItem label="审核时间">
       <NInput :value="time(organization.reviewedAt)" disabled aria-label="审核时间" />
     </NFormItem>
-    <NFormItem v-if="organization.reviewedBy" label="审核人用户 ID" class="sm:col-span-2">
+    <NFormItem v-if="organization.reviewedBy" label="审核人用户 ID" class="span-2">
       <NInput :value="organization.reviewedBy" disabled aria-label="审核人用户 ID" />
     </NFormItem>
-    <NFormItem v-if="organization.governanceReason" label="最近治理理由" class="sm:col-span-2">
+    <NFormItem v-if="organization.governanceReason" label="最近治理理由" class="span-2">
       <NInput :value="organization.governanceReason" type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" disabled
         aria-label="最近治理理由" />
     </NFormItem>
   </div>
 </template>
+
+<style scoped>
+  .readonly-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: var(--admin-space-lg);
+  }
+
+  @media (min-width: 768px) {
+    .readonly-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .span-2 {
+      grid-column: span 2;
+    }
+  }
+</style>

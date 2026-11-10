@@ -29,7 +29,7 @@
 
     <main class="flex min-w-0 flex-[1_1_55%] items-center justify-center px-4 py-12 sm:px-6">
       <div
-        class="box-border w-full max-w-[472px] rounded-2xl border border-solid border-[var(--login-border)] bg-[var(--login-surface)] px-6 pb-8 pt-10 sm:px-9"
+        class="box-border w-full max-w-[472px] rounded-lg border border-solid border-[var(--login-border)] bg-[var(--login-surface)] px-6 pb-8 pt-10 sm:px-9"
       >
         <h2 class="mb-2 mt-0 text-2xl font-semibold">{{ t('login.title') }}</h2>
         <p class="mb-8 mt-0 text-sm text-[var(--login-text-secondary)]">{{

@@ -1,12 +1,260 @@
 @import url('./transition/index.less');
 
-// 管理页与 Naive UI 弹窗沿用框架动效；系统要求减弱动态时关闭这些容器的过渡。
+// 管理端全局基线：只放 reset、焦点环、滚动条、密度与动效基线。
+// 颜色与尺度 token 由 `src/settings/uiPalette.ts`、`uiScale.ts` 在运行时注入。
+
+:root {
+  --admin-topbar-height: 56px;
+  --admin-sider-width: 232px;
+  --admin-sider-collapsed-width: 56px;
+  --admin-content-max: 1440px;
+  --admin-focus-ring: 0 0 0 2px var(--admin-canvas), 0 0 0 4px var(--admin-accent);
+
+  // 密度变量只能在这里与下方媒体查询中取值，不用内联样式注入，
+  // 否则会盖过触屏 44px 放大（见 FS-0010 v2 §3.4）。
+  --admin-row-height: 36px;
+  --admin-head-height: 32px;
+  --admin-control-height: 32px;
+  --admin-icon-button: 28px;
+  --admin-nav-item: 32px;
+}
+
+// 舒适密度：界面设置抽屉切换，只影响表格行高与表头。
+html[data-density='comfortable'] {
+  --admin-row-height: 44px;
+  --admin-head-height: 36px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--admin-canvas);
+  color: var(--admin-body);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'HarmonyOS Sans SC', 'Noto Sans SC', 'Microsoft YaHei UI', system-ui, sans-serif;
+  font-size: var(--admin-text-body-size, 13px);
+  line-height: var(--admin-text-body-leading, 20px);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--admin-motion-fast, 120ms) ease-out,
+    color var(--admin-motion-fast, 120ms) ease-out;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+// 键盘焦点：所有可交互元素统一 2px accent 环，不用 outline 以免被组件库覆盖。
+:focus-visible {
+  outline: none;
+  box-shadow: var(--admin-focus-ring);
+}
+
+// 滚动条：细、中性，不抢视线。
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--admin-line-strong);
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-muted);
+  background-clip: content-box;
+}
+
+// 数字、编码、计数使用等宽并启用表格数字对齐。
+.font-mono,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+// 触屏与窄屏统一放大可点区域到 44px（规范 §3.4）。
+@media (pointer: coarse), (max-width: 767px) {
+  :root {
+    --admin-control-height: 44px;
+    --admin-row-height: 44px;
+    --admin-head-height: 40px;
+    --admin-icon-button: 44px;
+    --admin-nav-item: 44px;
+  }
+
+  .admin-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+// 减弱动态：过渡、动画与延迟一律归零，骨架不闪烁。
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
   :root .main-view,
   :root .n-modal,
   :root .n-modal-mask,
   :root .n-base-wave {
     animation: none;
     transition: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 表格行内交互（跨页面复用，放全局避免每个页面各写一份 scoped 规则）
+// ---------------------------------------------------------------------------
+
+// 主标识单元格：可点击进入详情，键盘可达。
+.admin-cell-link {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--admin-ink);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-cell-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-cell-link:focus-visible {
+  border-radius: var(--admin-radius-sm);
+}
+
+// 数字、时间与编码列使用等宽并右对齐语义。
+.admin-cell-meta {
+  font-size: var(--admin-text-meta-size);
+  color: var(--admin-muted);
+}
+
+.admin-cell-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--admin-text-meta-size);
+  color: var(--admin-body);
+  font-variant-numeric: tabular-nums;
+}
+
+// 行内操作：默认隐藏，行悬停、行聚焦或当前行时显现，但始终在 Tab 顺序内。
+.admin-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--admin-motion-fast) var(--admin-motion-ease-out);
+}
+
+// 弹窗内的行内操作没有悬停余地，常显（FS-0010 v2 §5.2 弹窗内同一规则）。
+.admin-row-actions-static,
+.n-data-table-tr:hover .admin-row-actions,
+.n-data-table-tr:focus-within .admin-row-actions,
+.n-data-table-tr.is-selected .admin-row-actions {
+  opacity: 1;
+}
+
+.admin-row-action {
+  --n-height: 24px !important;
+  --n-width: 24px !important;
+  --n-border-radius: var(--admin-radius-sm) !important;
+}
+
+.admin-row-action svg {
+  display: block;
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  // 触屏无法悬停，行内操作常显并放大命中区。
+  .admin-row-actions {
+    opacity: 1;
+  }
+
+  .admin-row-action {
+    --n-height: 44px !important;
+    --n-width: 44px !important;
+  }
+}
+
+// 表格元数据列在中等宽度收起，避免横向滚动。
+@media (max-width: 1099px) {
+  .admin-col-meta {
+    display: none;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 触屏控件放大：Naive UI 组件高度走 JS 常量，无法消费密度变量，
+// 在触屏/窄屏媒体查询里按组件树强制 44px 命中高度。
+// ---------------------------------------------------------------------------
+@media (pointer: coarse), (max-width: 767px) {
+  .n-input,
+  .n-base-selection {
+    --n-height: 44px !important;
+    --n-border-radius: var(--admin-radius-md) !important;
+  }
+
+  .n-button {
+    --n-height: 44px !important;
+    --n-padding: 0 16px !important;
+  }
+
+  .n-pagination .n-pagination-item {
+    --n-item-size: 44px !important;
+  }
+
+  // 抽屉与弹窗在窄屏占满宽度，操作按钮纵向排布。
+  .n-drawer {
+    --n-body-padding: 16px !important;
+  }
+
+  .admin-dialog-foot {
+    flex-wrap: wrap;
   }
 }

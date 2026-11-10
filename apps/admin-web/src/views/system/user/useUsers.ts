@@ -1,4 +1,4 @@
-import { getCurrentInstance, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { getCurrentInstance, onBeforeUnmount, onMounted, reactive, ref, computed } from 'vue';
 import type { AdminUser } from '@refs-tools/contracts/admin-users';
 import { adminUsersApi } from '../../../api/system/admin-users';
 
@@ -11,8 +11,11 @@ export function useUsers(api = adminUsersApi) {
   const online = ref(typeof navigator === 'undefined' || navigator.onLine);
   const selected = ref<AdminUser | null>(null);
   const mode = ref<'create' | 'edit' | 'detail' | null>(null);
-  const confirm = ref<'disable' | 'delete' | null>(null);
   const form = reactive({ email: '', displayName: '', password: '', status: 'active' as AdminUser['status'] });
+  /** 停用是破坏性操作：弹窗内用就地确认，未确认不提交（FS-0010 v2 §5.2）。 */
+  const needsDisableConfirm = computed(
+    () => mode.value === 'edit' && form.status === 'disabled' && selected.value?.status === 'active'
+  );
   let listSequence = 0, detailSequence = 0;
   const message = (e: unknown) => e instanceof Error ? e.message : '操作失败，请重试';
 
@@ -50,15 +53,13 @@ export function useUsers(api = adminUsersApi) {
 
   function close() {
     if (busy.value) return;
-    detailSequence++; mode.value = null; confirm.value = null; form.password = ''; detailLoading.value = false;
+    detailSequence++; mode.value = null; form.password = ''; detailLoading.value = false;
   }
 
   async function save(confirmed = false) {
     if (busy.value || detailLoading.value || !detailReady.value || !online.value ||
       (mode.value !== 'create' && (mode.value !== 'edit' || !selected.value))) return;
-    if (mode.value === 'edit' && form.status === 'disabled' && selected.value?.status === 'active' && !confirmed) {
-      confirm.value = 'disable'; return;
-    }
+    if (needsDisableConfirm.value && !confirmed) return;
     const creating = mode.value === 'create';
     busy.value = true; formError.value = ''; notice.value = '';
     try {
@@ -66,9 +67,9 @@ export function useUsers(api = adminUsersApi) {
       else if (selected.value) await api.update(selected.value.id, {
         displayName: form.displayName.trim(), status: form.status, version: selected.value.version,
       });
-      form.password = ''; mode.value = null; confirm.value = null; notice.value = creating ? '用户已创建' : '用户修改已保存';
+      form.password = ''; mode.value = null; notice.value = creating ? '用户已创建' : '用户修改已保存';
       await load(creating ? 1 : page.value);
-    } catch (e) { formError.value = message(e); confirm.value = null; }
+    } catch (e) { formError.value = message(e); }
     finally { busy.value = false; }
   }
 
@@ -77,9 +78,9 @@ export function useUsers(api = adminUsersApi) {
     busy.value = true; formError.value = ''; notice.value = '';
     try {
       await api.remove(selected.value.id, selected.value.version);
-      mode.value = null; confirm.value = null; notice.value = '用户已删除，历史记录保留';
+      mode.value = null; notice.value = '用户已删除，历史记录保留';
       await load(items.value.length === 1 && page.value > 1 ? page.value - 1 : page.value);
-    } catch (e) { formError.value = message(e); confirm.value = null; }
+    } catch (e) { formError.value = message(e); }
     finally { busy.value = false; }
   }
 
@@ -94,5 +95,5 @@ export function useUsers(api = adminUsersApi) {
     });
   }
   return { items, total, page, keyword, status, loading, busy, detailLoading, error, formError, notice, online,
-    selected, mode, confirm, form, detailReady, load, create, open, close, save, remove };
+    selected, mode, needsDisableConfirm, form, detailReady, load, create, open, close, save, remove };
 }

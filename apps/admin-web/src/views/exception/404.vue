@@ -1,17 +1,15 @@
 <template>
-  <section
-    class="mx-auto flex min-h-[60vh] max-w-[520px] flex-col items-start justify-center gap-4 px-4 py-12"
-    aria-labelledby="not-found-title"
-  >
-    <p class="m-0 text-6xl font-semibold leading-none tabular-nums text-admin-primary" aria-hidden="true">404</p>
-    <h1 id="not-found-title" class="m-0 text-2xl font-semibold text-admin-ink">页面不存在</h1>
-    <p class="m-0 text-sm leading-relaxed text-admin-body">
+  <section class="exception" aria-labelledby="not-found-title">
+    <p class="exception-code" aria-hidden="true">404</p>
+    <h1 id="not-found-title" class="exception-title">页面不存在</h1>
+    <p class="exception-desc">
       没有找到
-      <code class="break-all rounded bg-admin-surface-muted px-1.5 py-0.5 text-admin-ink">{{ route.fullPath }}</code>。地址可能输入有误，或该页面已下线。
+      <code class="exception-path">{{ route.fullPath }}</code>
+      。地址可能输入有误，或该页面已下线。
     </p>
-    <div class="mt-2 flex flex-wrap gap-3">
-      <n-button type="primary" size="large" @click="goHome">回到首页</n-button>
-      <n-button size="large" @click="goBack">返回上一页</n-button>
+    <div class="exception-actions">
+      <n-button type="primary" @click="goHome">回到首页</n-button>
+      <n-button quaternary @click="goBack">返回上一页</n-button>
     </div>
   </section>
 </template>
@@ -32,3 +30,57 @@
     else goHome();
   }
 </script>
+
+<style scoped>
+  .exception {
+    display: flex;
+    min-height: 60vh;
+    max-width: 520px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--admin-space-lg);
+    margin: 0 auto;
+    padding: var(--admin-space-4xl) var(--admin-space-md);
+  }
+
+  .exception-code {
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--admin-accent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .exception-title {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--admin-ink);
+  }
+
+  .exception-desc {
+    font-size: var(--admin-text-body-size);
+    line-height: var(--admin-text-body-leading);
+    color: var(--admin-body);
+  }
+
+  .exception-path {
+    padding: 2px var(--admin-space-sm);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface-muted);
+    color: var(--admin-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: var(--admin-text-meta-size);
+    overflow-wrap: anywhere;
+  }
+
+  .exception-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--admin-space-md);
+    margin-top: var(--admin-space-md);
+  }
+</style>

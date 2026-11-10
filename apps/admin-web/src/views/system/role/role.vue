@@ -1,10 +1,11 @@
 <template>
-  <div>
-    <div class="n-layout-page-header">
-      <n-card :bordered="false" title="角色权限管理">
-        页面数据为 Mock 示例数据，非真实数据。
-      </n-card>
-    </div>
+  <section class="page" aria-label="角色权限管理">
+    <AdminPage title="角色权限管理">
+      <template #badge>
+        <AdminBadge tone="mock">Mock 数据</AdminBadge>
+      </template>
+    </AdminPage>
+    <p class="mock-note">页面数据为 Mock 示例数据，非真实数据；权限模型接入后端后重做本页。</p>
     <n-card :bordered="false" class="mt-4 proCard">
       <BasicTable
         :columns="columns"
@@ -31,37 +32,18 @@
       </BasicTable>
     </n-card>
 
-    <n-modal v-model:show="showModal" :show-icon="false" preset="dialog" :title="editRoleTitle">
-      <div class="py-3 menu-list">
-        <n-tree
-          block-line
-          cascade
-          checkable
-          :virtual-scroll="true"
-          :data="treeData"
-          :expandedKeys="expandedKeys"
-          :checked-keys="checkedKeys"
-          style="max-height: 950px; overflow: hidden"
-          @update:checked-keys="checkedTree"
-          @update:expanded-keys="onExpandedKeys"
-        />
-      </div>
-      <template #action>
-        <n-space>
-          <n-button type="info" ghost icon-placement="left" @click="packHandle">
-            全部{{ expandedKeys.length ? '收起' : '展开' }}
-          </n-button>
-
-          <n-button type="info" ghost icon-placement="left" @click="checkedAllHandle">
-            全部{{ checkedAll ? '取消' : '选择' }}
-          </n-button>
-          <n-button type="primary" :loading="formBtnLoading" @click="confirmForm">提交</n-button>
-        </n-space>
-      </template>
-    </n-modal>
+    <RoleMenuAuthModal
+      :show="showModal"
+      :title="editRoleTitle"
+      :tree="treeData"
+      :initial-keys="checkedKeys"
+      :busy="formBtnLoading"
+      @update:show="showModal = $event"
+      @submit="submitMenuAuth"
+    />
     <CreateModal ref="createModalRef" />
     <EditModal ref="editModalRef" />
-  </div>
+  </section>
 </template>
 
 <script lang="ts" setup>
@@ -72,9 +54,11 @@
   import { getMenuList } from '@/api/system/menu';
   import { columns } from './columns';
   import { PlusOutlined } from '@vicons/antd';
-  import { getTreeAll } from '@/utils';
+  import AdminPage from '@/components/admin-shell/AdminPage.vue';
+  import AdminBadge from '@/components/admin-shell/AdminBadge.vue';
   import CreateModal from './CreateModal.vue';
   import EditModal from './EditModal.vue';
+  import RoleMenuAuthModal from './components/RoleMenuAuthModal.vue';
   import type { ListDate } from '@/api/system/menu';
 
   const message = useMessage();
@@ -83,10 +67,8 @@
   const editModalRef = ref();
   const showModal = ref(false);
   const formBtnLoading = ref(false);
-  const checkedAll = ref(false);
   const editRoleTitle = ref('');
   const treeData = ref<ListDate[]>([]);
-  const expandedKeys = ref<string[]>([]);
   const checkedKeys = ref<string[]>(['console', 'step-form']);
 
   const params = reactive({
@@ -155,17 +137,6 @@
     actionRef.value.reload();
   }
 
-  function confirmForm(e: any) {
-    e.preventDefault();
-    formBtnLoading.value = true;
-    setTimeout(() => {
-      showModal.value = false;
-      message.success('提交成功');
-      reloadTable();
-      formBtnLoading.value = false;
-    }, 200);
-  }
-
   function handleEdit(record: Recordable) {
     console.log('点击了编辑', record);
     // router.push({ name: 'basic-info', params: { id: record.id } });
@@ -183,37 +154,32 @@
     showModal.value = true;
   }
 
-  function checkedTree(keys) {
-    checkedKeys.value = [checkedKeys.value, ...keys];
-  }
-
-  function onExpandedKeys(keys) {
-    expandedKeys.value = keys;
-  }
-
-  function packHandle() {
-    if (expandedKeys.value.length) {
-      expandedKeys.value = [];
-    } else {
-      expandedKeys.value = treeData.value.map((item: any) => item.key) as [];
-    }
-  }
-
-  function checkedAllHandle() {
-    if (!checkedAll.value) {
-      checkedKeys.value = getTreeAll(treeData.value);
-      checkedAll.value = true;
-    } else {
-      checkedKeys.value = [];
-      checkedAll.value = false;
-    }
+  /** 菜单权限提交：Mock 页只演示确认反馈，真实权限由后端接入后重做。 */
+  function submitMenuAuth(keys: string[]) {
+    checkedKeys.value = keys;
+    formBtnLoading.value = true;
+    showModal.value = false;
+    message.success('菜单权限已提交');
+    reloadTable();
+    formBtnLoading.value = false;
   }
 
   onMounted(async () => {
     const treeMenuList = await getMenuList();
-    expandedKeys.value = treeMenuList?.list.map((item) => item.key);
     treeData.value = treeMenuList?.list;
   });
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .mock-note {
+    margin-bottom: var(--admin-space-lg);
+    font-size: var(--admin-text-meta-size);
+    color: var(--admin-muted);
+  }
+</style>

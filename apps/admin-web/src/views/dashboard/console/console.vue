@@ -286,7 +286,7 @@
       icon: UsergroupAddOutlined,
       size: '32',
       title: '用户',
-      color: dashboardPalette.value.primary,
+      color: dashboardPalette.value.accent,
       eventObject: {
         click: () => {},
       },
@@ -295,7 +295,7 @@
       icon: BarChartOutlined,
       size: '32',
       title: '分析',
-      color: dashboardPalette.value.primary,
+      color: dashboardPalette.value.accent,
       eventObject: {
         click: () => {},
       },
@@ -304,7 +304,7 @@
       icon: ShoppingCartOutlined,
       size: '32',
       title: '商品',
-      color: dashboardPalette.value.primaryHover,
+      color: dashboardPalette.value.solidHover,
       eventObject: {
         click: () => {},
       },
@@ -349,7 +349,7 @@
       icon: SettingOutlined,
       size: '32',
       title: '配置',
-      color: dashboardPalette.value.sandDeep,
+      color: dashboardPalette.value.surfaceMuted,
       eventObject: {
         click: () => {},
       },

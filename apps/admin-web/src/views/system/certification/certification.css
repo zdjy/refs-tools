@@ -1,0 +1,191 @@
+/**
+ * 认证审核页局部样式（FS-0010 v2）：左右分栏的队列/详情工作区。
+ *
+ * 这是 [样式规约](../../../../../docs/agents/coding-standards/styles.md) 允许的
+ * `views/<feature>/<feature>.css` 例外：分栏与队列列表无法用共享组件的类表达。
+ * 命名统一 `cert-` 前缀，避免跨页面污染。
+ */
+
+.cert-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cert-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--admin-space-md);
+  margin-bottom: var(--admin-space-lg);
+}
+
+.cert-tab {
+  height: var(--admin-control-height);
+  padding: 0 var(--admin-space-lg);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  color: var(--admin-body);
+  font-size: var(--admin-text-body-size);
+  font-weight: var(--admin-text-body-strong-weight);
+  cursor: pointer;
+  transition: background-color var(--admin-motion-fast) var(--admin-motion-ease-out),
+    color var(--admin-motion-fast) var(--admin-motion-ease-out),
+    border-color var(--admin-motion-fast) var(--admin-motion-ease-out);
+}
+
+.cert-tab:hover:not(:disabled) {
+  background: var(--admin-surface-muted);
+  color: var(--admin-ink);
+}
+
+.cert-tab.is-active {
+  background: var(--admin-solid);
+  border-color: var(--admin-solid);
+  color: var(--admin-on-solid);
+}
+
+.cert-tab:disabled {
+  color: var(--admin-muted);
+  cursor: not-allowed;
+}
+
+/*
+ * 移动端分栏：默认单栏切换，靠 `is-detail` 显式状态决定显示队列还是详情。
+ * 早期版本用 `:has(.detail:not(:empty))` 回退，但 `.detail` 始终有子节点，
+ * 结果窄屏永远显示详情、队列无法返回，已按显式状态类修正。
+ */
+.cert-split {
+  display: grid;
+  min-width: 0;
+  gap: var(--admin-space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cert-queue,
+.cert-detail {
+  min-width: 0;
+}
+
+.cert-detail {
+  display: none;
+}
+
+.cert-split.is-detail .cert-detail {
+  display: block;
+}
+
+.cert-split.is-detail .cert-queue {
+  display: none;
+}
+
+.cert-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-space-lg);
+  min-width: 0;
+  padding: var(--admin-space-xl);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  box-shadow: var(--admin-shadow);
+}
+
+.cert-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--admin-space-md);
+}
+
+.cert-filters :deep(.n-select) {
+  min-width: 180px;
+}
+
+.cert-queue-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cert-queue-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: var(--admin-space-md) var(--admin-space-sm);
+  border: 0;
+  border-radius: var(--admin-radius-md);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--admin-motion-fast) var(--admin-motion-ease-out);
+}
+
+.cert-queue-item:hover:not(:disabled) {
+  background: var(--admin-surface-muted);
+}
+
+.cert-queue-item.is-selected {
+  background: var(--admin-accent-soft);
+  box-shadow: inset 2px 0 0 var(--admin-accent);
+}
+
+.cert-queue-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.cert-queue-name {
+  font-size: var(--admin-text-body-size);
+  line-height: var(--admin-text-body-leading);
+  font-weight: var(--admin-text-body-strong-weight);
+  color: var(--admin-ink);
+  overflow-wrap: anywhere;
+}
+
+.cert-queue-meta {
+  font-size: var(--admin-text-meta-size);
+  line-height: var(--admin-text-meta-leading);
+  color: var(--admin-body);
+}
+
+.cert-queue-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--admin-text-meta-size);
+  line-height: var(--admin-text-meta-leading);
+  color: var(--admin-muted);
+  overflow-wrap: anywhere;
+}
+
+.cert-empty {
+  font-size: var(--admin-text-body-size);
+  line-height: var(--admin-text-body-leading);
+  color: var(--admin-body);
+}
+
+.cert-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--admin-space-md);
+}
+
+@media (min-width: 1100px) {
+  .cert-split,
+  .cert-split.is-detail,
+  .cert-split.is-queue {
+    grid-template-columns: 320px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .cert-split .cert-detail,
+  .cert-split.is-detail .cert-detail,
+  .cert-split.is-queue .cert-detail {
+    display: block;
+  }
+
+  .cert-split .cert-queue,
+  .cert-split.is-detail .cert-queue {
+    display: block;
+  }
+}

@@ -1,82 +1,59 @@
 import { defineStore } from 'pinia';
 import projectSetting from '@/settings/projectSetting';
-import type { IHeaderSetting, IMenuSetting, IMultiTabsSetting, ICrumbsSetting } from '/#/config';
+import type { ICrumbsSetting, IHeaderSetting, IMenuSetting } from '/#/config';
 
-const {
-  navMode,
-  isMobile,
-  headerSetting,
-  showFooter,
-  menuSetting,
-  multiTabsSetting,
-  crumbsSetting,
-  permissionMode,
-  isPageAnimate,
-  pageAnimateType,
-} = projectSetting;
+const { isMobile, headerSetting, menuSetting, crumbsSetting, permissionMode } = projectSetting;
 
 interface ProjectSettingState {
-  navMode: string; //导航模式
-  headerSetting: IHeaderSetting; //顶部设置
-  showFooter: boolean; //页脚
-  menuSetting: IMenuSetting; //多标签
-  multiTabsSetting: IMultiTabsSetting; //多标签
-  crumbsSetting: ICrumbsSetting; //面包屑
-  permissionMode: string; //权限模式
-  isPageAnimate: boolean; //是否开启路由动画
-  pageAnimateType: string; //路由动画类型
-  isMobile: boolean; // 是否处于移动端模式
+  isMobile: boolean;
+  headerSetting: IHeaderSetting;
+  menuSetting: IMenuSetting;
+  crumbsSetting: ICrumbsSetting;
+  permissionMode: string;
 }
 
+/**
+ * 管理端固定为左侧菜单布局，因此不再保存导航模式、多标签栏、页脚与路由动画配置。
+ * 主题、密度与侧栏默认收起由 `designSetting` store 持有并持久化。
+ */
 export const useProjectSettingStore = defineStore({
   id: 'app-project-setting',
   state: (): ProjectSettingState => ({
-    navMode: navMode,
     isMobile,
     headerSetting,
-    showFooter,
     menuSetting,
-    multiTabsSetting,
     crumbsSetting,
     permissionMode,
-    isPageAnimate,
-    pageAnimateType,
   }),
   getters: {
-    getNavMode(): string {
-      return this.navMode;
-    },
     getIsMobile(): boolean {
       return this.isMobile;
     },
-    getHeaderSetting(): object {
+    getHeaderSetting(): IHeaderSetting {
       return this.headerSetting;
     },
-    getShowFooter(): boolean {
-      return this.showFooter;
-    },
-    getMenuSetting(): object {
+    getMenuSetting(): IMenuSetting {
       return this.menuSetting;
     },
-    getMultiTabsSetting(): object {
-      return this.multiTabsSetting;
-    },
-    getCrumbsSetting(): object {
+    getCrumbsSetting(): ICrumbsSetting {
       return this.crumbsSetting;
     },
     getPermissionMode(): string {
       return this.permissionMode;
     },
-    getIsPageAnimate(): boolean {
-      return this.isPageAnimate;
-    },
-    getPageAnimateType(): string {
-      return this.pageAnimateType;
-    },
   },
   actions: {
     setIsMobile(value: boolean): void {
       this.isMobile = value;
+    },
+    setHeaderSetting(value: Partial<IHeaderSetting>): void {
+      this.headerSetting = { ...this.headerSetting, ...value };
+    },
+    setMenuSetting(value: Partial<IMenuSetting>): void {
+      this.menuSetting = { ...this.menuSetting, ...value };
+    },
+    setCrumbsSetting(value: Partial<ICrumbsSetting>): void {
+      this.crumbsSetting = { ...this.crumbsSetting, ...value };
     },
   },
 });

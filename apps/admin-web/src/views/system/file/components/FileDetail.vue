@@ -1,39 +1,140 @@
 <script setup lang="ts">
-  import { NAlert, NButton, NDescriptions, NDescriptionsItem, NFormItem, NInput, NSpace } from 'naive-ui';
+  /**
+   * 文件详情字段区：只负责呈现与理由输入，操作按钮由页面放进弹窗页脚，
+   * 破坏性操作在页脚用就地确认（FS-0010 v2 §5.2）。
+   */
+  import { NFormItem, NInput } from 'naive-ui';
   import type { AdminMedia } from '@refs-tools/contracts/admin-media';
   import { formatBytes, formatTime, purposeLabel, retained, statusLabel } from '../files.presentation';
-  import UiSubmitHint from '../../../../components/ui/UiSubmitHint.vue';
-  defineProps<{ file: AdminMedia; reason: string; busy: boolean; online: boolean }>();
-  defineEmits<{ 'update:reason': [value: string]; download: []; remove: []; close: [] }>();
+
+  defineProps<{ file: AdminMedia; reason: string; busy: boolean }>();
+  defineEmits<{ 'update:reason': [value: string] }>();
+
+  const rows = (file: AdminMedia) => [
+    { label: '文件名', value: file.fileName ?? '未命名文件' },
+    { label: '文件 ID', value: file.id },
+    { label: '所属用户 ID', value: file.ownerUserId },
+    { label: '用途 / 状态', value: `${purposeLabel(file.purpose)} / ${statusLabel(file.status)}` },
+    { label: '关联目标', value: `${file.target.type} / ${file.target.id ?? '平台'}` },
+    { label: '类型', value: file.contentType },
+    { label: '声明大小', value: `${formatBytes(file.expectedSizeBytes)}（${file.expectedSizeBytes} 字节）` },
+    {
+      label: '核验大小',
+      value:
+        file.verifiedSizeBytes === null
+          ? formatBytes(null)
+          : `${formatBytes(file.verifiedSizeBytes)}（${file.verifiedSizeBytes} 字节）`,
+    },
+    { label: '创建 / 上传意图到期', value: `${formatTime(file.createdAt)} / ${formatTime(file.expiresAt)}` },
+    { label: '核验 / 逻辑删除', value: `${formatTime(file.verifiedAt)} / ${formatTime(file.deletedAt)}` },
+    { label: '维护清理记录', value: `${formatTime(file.cleanedAt)}（无记录不表示对象仍存在）` },
+  ];
 </script>
 
 <template>
-  <div class="space-y-4">
-    <NDescriptions :column="1" bordered size="small" label-placement="left" :label-style="{ width: '108px' }">
-      <NDescriptionsItem label="文件名"><span class="break-all">{{ file.fileName ?? '未命名文件' }}</span></NDescriptionsItem>
-      <NDescriptionsItem label="文件 ID"><span class="break-all">{{ file.id }}</span></NDescriptionsItem>
-      <NDescriptionsItem label="所属用户 ID"><span class="break-all">{{ file.ownerUserId }}</span></NDescriptionsItem>
-      <NDescriptionsItem label="用途 / 状态">{{ purposeLabel(file.purpose) }} / {{ statusLabel(file.status) }}</NDescriptionsItem>
-      <NDescriptionsItem label="关联目标"><span class="break-all">{{ file.target.type }} / {{ file.target.id ?? '平台' }}</span></NDescriptionsItem>
-      <NDescriptionsItem label="类型">{{ file.contentType }}</NDescriptionsItem>
-      <NDescriptionsItem label="声明大小">{{ formatBytes(file.expectedSizeBytes) }}（{{ file.expectedSizeBytes }} 字节）</NDescriptionsItem>
-      <NDescriptionsItem label="核验大小">{{ formatBytes(file.verifiedSizeBytes) }}<span v-if="file.verifiedSizeBytes !== null">（{{ file.verifiedSizeBytes }} 字节）</span></NDescriptionsItem>
-      <NDescriptionsItem label="创建 / 上传意图到期">{{ formatTime(file.createdAt) }} / {{ formatTime(file.expiresAt) }}</NDescriptionsItem>
-      <NDescriptionsItem label="核验 / 逻辑删除">{{ formatTime(file.verifiedAt) }} / {{ formatTime(file.deletedAt) }}</NDescriptionsItem>
-      <NDescriptionsItem label="维护清理记录">{{ formatTime(file.cleanedAt) }}（无记录不表示对象仍存在）</NDescriptionsItem>
-    </NDescriptions>
-    <NAlert v-if="retained(file)" type="warning">已核验的证据须按所属业务审批留存，不能在此通用删除。</NAlert>
-    <NAlert v-if="file.status === 'deleted'" type="info">文件访问已撤销。若上次对象删除失败，可填写理由后重试删除。</NAlert>
+  <div class="detail">
+    <section class="detail-note" aria-label="留存要求">
+      <p v-if="retained(file)" class="detail-line is-warning">
+        已核验的证据须按所属业务审批留存，不能在此通用删除。
+      </p>
+      <p v-if="file.status === 'deleted'" class="detail-line is-info">
+        文件访问已撤销。若上次对象删除失败，可填写理由后重试删除。
+      </p>
+    </section>
+
+    <dl class="detail-grid">
+      <div v-for="row in rows(file)" :key="row.label" class="detail-field">
+        <dt>{{ row.label }}</dt>
+        <dd class="detail-value">{{ row.value }}</dd>
+      </div>
+    </dl>
+
     <NFormItem label="下载 / 删除理由" required>
-      <NInput :value="reason" type="textarea" :maxlength="500" show-count :disabled="busy" :input-props="{ 'aria-label': '文件操作理由' }"
-        placeholder="说明本次管理操作的必要性，请勿填写凭据或 URL" @update:value="$emit('update:reason', $event)" />
+      <NInput
+        :value="reason"
+        type="textarea"
+        :maxlength="500"
+        show-count
+        :disabled="busy"
+        :input-props="{ 'aria-label': '文件操作理由' }"
+        placeholder="说明本次管理操作的必要性，请勿填写凭据或 URL"
+        @update:value="$emit('update:reason', $event)"
+      />
     </NFormItem>
-    <p class="text-admin-body">下载链接仅短时有效，文件由浏览器直接从对象存储下载，不进行在线预览。下载内容可能含私有资料，请妥善保管。</p>
-    <UiSubmitHint :busy="busy" class="mb-3" />
-    <NSpace>
-      <NButton type="primary" size="large" :loading="busy" :disabled="busy || !online || file.status !== 'available'" @click="$emit('download')">授权下载</NButton>
-      <NButton type="error" size="large" :disabled="busy || !online || retained(file)" @click="$emit('remove')">{{ file.status === 'deleted' ? '重试对象删除' : '删除文件' }}</NButton>
-      <NButton size="large" :disabled="busy" @click="$emit('close')">关闭</NButton>
-    </NSpace>
+
+    <p class="detail-hint">
+      下载链接仅短时有效，文件由浏览器直接从对象存储下载，不进行在线预览。下载内容可能含私有资料，请妥善保管。
+    </p>
   </div>
 </template>
+
+<style scoped>
+  .detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-space-lg);
+    min-width: 0;
+  }
+
+  .detail-note:empty {
+    display: none;
+  }
+
+  .detail-line {
+    padding: var(--admin-space-md) var(--admin-space-lg);
+    border-radius: var(--admin-radius-md);
+    font-size: var(--admin-text-body-size);
+    line-height: var(--admin-text-body-leading);
+  }
+
+  .detail-line.is-warning {
+    background: var(--admin-status-warning);
+    color: var(--admin-warning);
+  }
+
+  .detail-line.is-info {
+    background: var(--admin-surface-muted);
+    color: var(--admin-body);
+  }
+
+  /* 只读字段：12px muted 标签在上、13px ink 值在下，不用分隔线堆叠（§5.2）。 */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--admin-space-lg) var(--admin-space-xl);
+    min-width: 0;
+  }
+
+  .detail-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  dt {
+    font-size: var(--admin-text-meta-size);
+    line-height: var(--admin-text-meta-leading);
+    color: var(--admin-muted);
+  }
+
+  .detail-value {
+    min-width: 0;
+    font-size: var(--admin-text-body-size);
+    line-height: var(--admin-text-body-leading);
+    color: var(--admin-ink);
+    overflow-wrap: anywhere;
+  }
+
+  .detail-hint {
+    font-size: var(--admin-text-meta-size);
+    line-height: var(--admin-text-meta-leading);
+    color: var(--admin-muted);
+  }
+
+  @media (min-width: 768px) {
+    .detail-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

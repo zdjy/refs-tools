@@ -84,7 +84,7 @@
             >
               <div class="flex">
                 <span>
-                  <n-icon size="30" color="var(--admin-primary)">
+                  <n-icon size="30" color="var(--admin-accent)">
                     <Html5Outlined />
                   </n-icon>
                 </span>
@@ -251,7 +251,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="var(--admin-primary)">
+                  <n-icon size="30" color="var(--admin-accent)">
                     <FileProtectOutlined />
                   </n-icon>
                 </span>
@@ -261,7 +261,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="var(--admin-primary-hover)">
+                  <n-icon size="30" color="var(--admin-accent-hover)">
                     <ApartmentOutlined />
                   </n-icon>
                 </span>
@@ -271,7 +271,7 @@
             <n-card size="small" class="cursor-pointer project-card-item" hoverable>
               <div class="flex flex-col justify-center text-gray-500">
                 <span class="text-center">
-                  <n-icon size="30" color="var(--admin-sand-deep)">
+                  <n-icon size="30" color="var(--admin-surface-muted)">
                     <SettingOutlined />
                   </n-icon>
                 </span>

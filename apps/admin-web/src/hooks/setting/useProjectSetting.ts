@@ -1,29 +1,22 @@
 import { computed } from 'vue';
 import { useProjectSettingStore } from '@/store/modules/projectSetting';
 
+/**
+ * 布局相关配置。管理端固定左侧菜单，因此不导出导航模式、多标签栏与页脚配置。
+ */
 export function useProjectSetting() {
   const projectStore = useProjectSettingStore();
-  const navMode = computed(() => projectStore.navMode);
   const isMobile = computed(() => projectStore.isMobile);
   const headerSetting = computed(() => projectStore.headerSetting);
-  const multiTabsSetting = computed(() => projectStore.multiTabsSetting);
   const menuSetting = computed(() => projectStore.menuSetting);
   const crumbsSetting = computed(() => projectStore.crumbsSetting);
   const permissionMode = computed(() => projectStore.permissionMode);
-  const showFooter = computed(() => projectStore.showFooter);
-  const isPageAnimate = computed(() => projectStore.isPageAnimate);
-  const pageAnimateType = computed(() => projectStore.pageAnimateType);
 
   return {
-    navMode,
     isMobile,
     headerSetting,
-    multiTabsSetting,
     menuSetting,
     crumbsSetting,
     permissionMode,
-    showFooter,
-    isPageAnimate,
-    pageAnimateType,
   };
 }

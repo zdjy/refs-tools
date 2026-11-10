@@ -45,7 +45,7 @@ describe('用户 CRUD 页面状态', () => {
   });
   it('停用必须确认，版本冲突保留表单', async () => {
     const f = fixture(); await f.state.open(f.user, 'edit'); f.state.form.status = 'disabled';
-    await f.state.save(); expect(f.state.confirm.value).toBe('disable'); expect(f.api.update).not.toHaveBeenCalled();
+    await f.state.save(); expect(f.state.needsDisableConfirm.value).toBe(true); expect(f.api.update).not.toHaveBeenCalled();
     f.api.update.mockRejectedValueOnce(new Error('版本冲突')); await f.state.save(true);
     expect(f.state.formError.value).toBe('版本冲突'); expect(f.state.form.status).toBe('disabled');
   });

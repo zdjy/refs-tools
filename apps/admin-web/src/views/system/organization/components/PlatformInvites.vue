@@ -1,53 +1,140 @@
 <script setup lang="ts">
+  /**
+   * 平台组织邀请码工作台：生成、查看一次、撤销。
+   * 撤销在表格行内就地确认，不叠第二层弹窗（FS-0010 v2 §5.2）。
+   */
   import { computed } from 'vue';
-  import { NAlert, NButton, NDataTable, NForm, NFormItem, NInputNumber, NModal, NPagination } from 'naive-ui';
+  import { NButton, NForm, NFormItem, NInputNumber } from 'naive-ui';
+  import type { PlatformInvite } from '@refs-tools/contracts/platform-invites';
   import { useUiFeedback } from '../../../../components/ui/useUiFeedback';
   import { usePlatformInvites } from '../usePlatformInvites';
   import { inviteColumns } from '../platform-invites.presentation';
   import PlatformInviteReveal from './PlatformInviteReveal.vue';
+  import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
+  import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
+  import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
+  import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
 
   const state = usePlatformInvites();
-  const { items, total, page, open, loading, busy, ready, error, notice, staleNote, validDays, token, revoking, online, copyNotice,
-    load, show, close, dismissToken, copyToken, create, requestRevoke, cancelRevoke, revoke } = state;
+  const {
+    items, total, page, open, loading, busy, ready, error, notice, staleNote, validDays, token, online, copyNotice,
+    load, show, close, dismissToken, copyToken, create, requestRevoke, revoke,
+  } = state;
   useUiFeedback(notice);
+
   const enabled = computed(() => ready.value && online.value && !busy.value && !loading.value);
-  const columns = inviteColumns(() => enabled.value, requestRevoke);
+  const columns = inviteColumns(() => enabled.value, confirmRevoke);
+
+  /** 行内确认即最终确认：登记目标后立即执行撤销。 */
+  function confirmRevoke(invite: PlatformInvite) {
+    requestRevoke(invite);
+    void revoke();
+  }
+
   defineExpose({ show });
 </script>
 
 <template>
-  <NModal :show="open" preset="card" title="平台组织邀请码" :closable="false" :style="{ width: 'min(960px, calc(100vw - 32px))' }"
-    class="max-h-[calc(100dvh-32px)] overflow-y-auto" :mask-closable="!busy" :close-on-esc="!busy" @update:show="!$event && close()">
-    <div class="space-y-4">
-      <p class="m-0">邀请码一次性、短期有效。持码的已验证用户提交组织申请时可直接创建为正常运营，免平台审核；它与组织成员邀请码完全分离，不能互相使用。</p>
-      <NAlert v-if="!online" type="warning">当前离线，无法生成或撤销；数据可能已陈旧。</NAlert>
-      <NAlert v-if="error" type="error" title="操作未完成" role="alert">
-        {{ error }} <NButton size="large" :disabled="busy || loading || !online" @click="load()">重新读取</NButton>
-      </NAlert>
-      <NAlert v-if="staleNote" type="warning" role="alert">
-        写入已成功，但{{ staleNote }}。请只重新读取，不要重复操作。
-        <NButton size="large" :disabled="busy || loading || !online" @click="load()">重试读取</NButton>
-      </NAlert>
+  <AdminDialogShell
+    :show="open"
+    title="平台组织邀请码"
+    size="lg"
+    :busy="busy"
+    @update:show="!$event && close()"
+  >
+    <div class="invites">
+      <p class="hint">
+        邀请码一次性、短期有效。持码的已验证用户提交组织申请时可直接创建为正常运营，免平台审核；
+        它与组织成员邀请码完全分离，不能互相使用。
+      </p>
+      <AdminStateBanner v-if="!online" tone="warning" message="当前离线，无法生成或撤销；数据可能已陈旧。" />
+      <AdminStateBanner v-if="error" tone="danger" :message="error" action="重新读取" @action="load()" />
+      <AdminStateBanner
+        v-if="staleNote"
+        tone="warning"
+        :message="`写入已成功，但${staleNote}。请只重新读取，不要重复操作。`"
+        action="重试读取"
+        @action="load()"
+      />
       <PlatformInviteReveal v-if="token" :token="token" :notice="copyNotice" @copy="copyToken" @dismiss="dismissToken" />
+
       <NForm label-placement="top" @submit.prevent="create">
-        <div class="flex flex-wrap items-end gap-3">
-          <NFormItem label="有效期（天，1–7）" class="w-44">
-            <NInputNumber v-model:value="validDays" :min="1" :max="7" :precision="0" :disabled="!enabled" size="large" aria-label="邀请码有效天数" />
+        <div class="create-row">
+          <NFormItem label="有效期（天，1–7）" class="create-days">
+            <NInputNumber
+              v-model:value="validDays"
+              :min="1"
+              :max="7"
+              :precision="0"
+              :disabled="!enabled"
+              aria-label="邀请码有效天数"
+            />
           </NFormItem>
-          <NButton attr-type="submit" type="primary" size="large" class="mb-6" :loading="busy" :disabled="!enabled">生成邀请码</NButton>
+          <NButton attr-type="submit" type="primary" :loading="busy" :disabled="!enabled" class="create-submit">
+            生成邀请码
+          </NButton>
         </div>
       </NForm>
-      <div class="min-w-0 overflow-x-auto">
-        <NDataTable :columns="columns" :data="items" :row-key="row => row.id" :loading="loading" :scroll-x="1000" />
-      </div>
-      <NPagination v-model:page="page" :item-count="total" :page-size="20" :page-slot="3" size="large"
-        :disabled="busy || loading || !online" @update:page="load" />
-      <div class="flex justify-end"><NButton size="large" :disabled="busy" @click="close">关闭</NButton></div>
+
+      <AdminDataTable
+        :columns="columns"
+        :data="items"
+        :loading="loading"
+        :row-key="(row: any) => row.id"
+        empty-text="还没有生成过邀请码"
+        @retry="load()"
+      >
+        <template #footer>
+          <AdminPagination
+            :page="page"
+            :total="total"
+            :count-label="(value: number) => `共 ${value} 个邀请码`"
+            :disabled="busy || loading || !online"
+            @update:page="load"
+          />
+        </template>
+      </AdminDataTable>
     </div>
-  </NModal>
-  <NModal :show="!!revoking" preset="dialog" :closable="false" title="确认撤销邀请码"
-    :content="`撤销以「${revoking?.hint ?? ''}」结尾的邀请码后立即失效，已创建的组织不受影响。`" positive-text="确认撤销" negative-text="取消"
-    :loading="busy" :mask-closable="!busy" :close-on-esc="!busy" :positive-button-props="{ size: 'large', type: 'error', disabled: !enabled }"
-    :negative-button-props="{ size: 'large', disabled: busy }" @positive-click="revoke" @negative-click="cancelRevoke"
-    @update:show="!busy && cancelRevoke()" />
+
+    <template #footer>
+      <NButton :disabled="busy" @click="close">关闭</NButton>
+    </template>
+  </AdminDialogShell>
 </template>
+
+<style scoped>
+  .invites {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-space-lg);
+    min-width: 0;
+  }
+
+  .hint {
+    font-size: var(--admin-text-meta-size);
+    line-height: var(--admin-text-meta-leading);
+    color: var(--admin-muted);
+  }
+
+  .create-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--admin-space-lg);
+  }
+
+  .create-days {
+    flex: 0 0 176px;
+  }
+
+  .create-submit {
+    margin-bottom: var(--admin-space-lg);
+  }
+
+  @media (max-width: 767px) {
+    .create-days,
+    .create-submit {
+      flex: 1 1 100%;
+    }
+  }
+</style>

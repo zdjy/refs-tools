@@ -28,7 +28,8 @@
   import { naiveLocales } from '@/locales';
   import { DEFAULT_LOCALE } from '@/locales/types';
   import { getColorTheme, getLoginColorTheme } from '@/settings/colorTheme';
-  import { getAdminPalette, getLoginPalette, getPaletteCssVariables } from '@/settings/uiPalette';
+  import { getAdminPalette, getLoginPalette, getPaletteCssVariables, getStatusCssVariables } from '@/settings/uiPalette';
+  import { getScaleCssVariables } from '@/settings/uiScale';
   import { PageEnum } from '@/enums/pageEnum';
 
   const route = useRoute();
@@ -51,9 +52,22 @@
   );
 
   watchEffect(() => {
-    for (const [name, value] of Object.entries(getPaletteCssVariables(palette.value))) {
+    const isLogin = route.name === PageEnum.BASE_LOGIN_NAME;
+    const cssVariables = {
+      ...getPaletteCssVariables(palette.value),
+      ...getStatusCssVariables(designStore.darkTheme),
+      ...getScaleCssVariables(),
+    };
+    for (const [name, value] of Object.entries(cssVariables)) {
       document.documentElement.style.setProperty(name, value);
     }
+    // 密度变量不内联注入：内联样式会盖过媒体查询里的触屏 44px 放大，
+    // 由 uiScale 输出 data-density 的 CSS 取值规则（见 index.less）。
+    document.documentElement.dataset.density = designStore.density;
+    // 供原生控件（滚动条、输入框）跟随主题
+    document.documentElement.style.colorScheme = designStore.darkTheme ? 'dark' : 'light';
+    document.documentElement.dataset.theme = designStore.darkTheme ? 'dark' : 'light';
+    document.documentElement.dataset.surface = isLogin ? 'login' : 'admin';
   });
 
   const getThemeOverrides = computed(() =>

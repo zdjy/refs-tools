@@ -1,83 +1,228 @@
 <script setup lang="ts">
-  import { computed } from 'vue';
-  import { NAlert, NButton, NDataTable, NForm, NFormItem, NInput, NInputNumber, NModal, NPagination, NSpace, NTabPane, NTabs } from 'naive-ui';
+  /**
+   * 成员管理工作台：成员与邀请两张表 + 邀请表单 + 治理动作。
+   *
+   * 治理动作在表格行内就地确认，不在弹窗上再叠确认弹窗（FS-0010 v2 §5.2）。
+   */
+  import { computed, ref } from 'vue';
+  import { NButton, NForm, NFormItem, NInput, NInputNumber, NTabs, NTabPane } from 'naive-ui';
   import { useUiFeedback } from '../../../../components/ui/useUiFeedback';
   import { useUserStore } from '../../../../store/modules/user';
   import { useOrganizationMembers } from '../useOrganizationMembers';
   import { invitationColumns, memberActionLabels, memberColumns } from '../members.presentation';
+  import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
+  import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
+  import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
+  import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
+  import AdminConfirmButton from '@/components/admin-shell/AdminConfirmButton.vue';
 
   const state = useOrganizationMembers();
-  const { organization, members, invitations, memberPage, invitePage, memberTotal, inviteTotal, loading, busy, ready, canManage,
-    error, notice, userId, validDays, action, reason, confirming, online, load, open, close, invite, select, requestConfirm, commit } = state;
+  const {
+    organization, members, invitations, memberPage, invitePage, memberTotal, inviteTotal, loading, busy, ready, canManage,
+    error, notice, userId, validDays, action, reason, online, load, open, close, invite, select, requestConfirm, commit,
+  } = state;
   useUiFeedback(notice);
   const user = useUserStore();
+  const tab = ref<'members' | 'invitations'>('members');
+  const reasonRef = ref<InstanceType<typeof NInput> | null>(null);
+
   const enabled = computed(() => ready.value && canManage.value && online.value && !busy.value && !loading.value);
-  const memberTable = memberColumns(() => enabled.value, select, () => organization.value?.ownerUserId ?? '', () => user.info.id ?? '');
+  const memberTable = memberColumns(
+    () => enabled.value,
+    select,
+    () => organization.value?.ownerUserId ?? '',
+    () => user.info.id ?? ''
+  );
   const invitationTable = invitationColumns(() => enabled.value, select);
-  function reload() { action.value = null; confirming.value = false; void load(); }
+
+  function reload() {
+    action.value = null;
+    void load();
+  }
+
   defineExpose({ open });
+
+  const confirmLabel = computed(() => (action.value ? `${memberActionLabels[action.value.kind]}：${action.value.name}` : ''));
 </script>
 
 <template>
-  <NModal :show="!!organization" preset="card" :title="`${organization?.name ?? ''} · 成员管理`" :closable="false"
-    :style="{ width: 'min(1100px, calc(100vw - 32px))' }" class="max-h-[calc(100dvh-32px)] overflow-y-auto"
-    :mask-closable="!busy" :close-on-esc="!busy" @update:show="!$event && close()">
-    <div class="space-y-4">
-      <NAlert v-if="!online" type="warning">当前离线，数据可能已陈旧；恢复连接后请重新读取。</NAlert>
-      <NAlert v-if="error" type="error" title="操作未完成，数据可能已陈旧" role="alert">
-        {{ error }} <NButton size="large" :disabled="busy || loading || !online" @click="reload">重新读取</NButton>
-      </NAlert>
-      <p v-if="notice" role="status" class="rounded border border-admin-line bg-admin-surface p-4 text-admin-success">{{ notice }}</p>
-      <NAlert v-if="ready && !canManage" type="info">当前为平台治理只读视图。邀请、入会审核和移除操作需要该组织的所有者或组织者权限。</NAlert>
+  <AdminDialogShell
+    :show="!!organization"
+    :title="`${organization?.name ?? ''} · 成员管理`"
+    size="lg"
+    :busy="busy"
+    @update:show="!$event && close()"
+  >
+    <div class="panels">
+      <AdminStateBanner v-if="!online" tone="warning" message="当前离线，数据可能已陈旧；恢复连接后请重新读取。" />
+      <AdminStateBanner
+        v-if="error"
+        tone="danger"
+        :message="`操作未完成，数据可能已陈旧：${error}`"
+        action="重新读取"
+        @action="reload"
+      />
+      <AdminStateBanner v-if="notice" tone="success" :message="notice" />
+      <AdminStateBanner
+        v-if="ready && !canManage"
+        tone="info"
+        message="当前为平台治理只读视图。邀请、入会审核和移除操作需要该组织的所有者或组织者权限。"
+      />
+
       <NForm v-if="canManage" label-placement="top" @submit.prevent="invite">
-        <div class="flex flex-wrap items-end gap-3">
-          <NFormItem label="受邀用户 ID" class="min-w-0 flex-1 basis-64">
-            <NInput v-model:value="userId" :disabled="!enabled" :maxlength="36" placeholder="输入已有用户的 UUID"
-              :input-props="{ 'aria-label': '受邀用户 ID' }" size="large" />
+        <div class="invite-row">
+          <NFormItem label="受邀用户 ID" class="invite-field">
+            <NInput
+              v-model:value="userId"
+              :disabled="!enabled"
+              :maxlength="36"
+              placeholder="输入已有用户的 UUID"
+              :input-props="{ 'aria-label': '受邀用户 ID' }"
+            />
           </NFormItem>
-          <NFormItem label="有效期（天）" class="w-36">
-            <NInputNumber v-model:value="validDays" :min="1" :max="30" :precision="0" :disabled="!enabled" aria-label="邀请有效天数" size="large" />
+          <NFormItem label="有效期（天）" class="invite-days">
+            <NInputNumber
+              v-model:value="validDays"
+              :min="1"
+              :max="30"
+              :precision="0"
+              :disabled="!enabled"
+              aria-label="邀请有效天数"
+            />
           </NFormItem>
-          <NButton attr-type="submit" type="primary" size="large" class="mb-6" :loading="busy" :disabled="!enabled">邀请成员</NButton>
+          <NButton attr-type="submit" type="primary" :loading="busy" :disabled="!enabled" class="invite-submit">
+            邀请成员
+          </NButton>
         </div>
-        <p class="mt-0">邀请将在对方接受后生效，不授予任何组织角色。</p>
+        <p class="hint">邀请将在对方接受后生效，不授予任何组织角色。</p>
       </NForm>
-      <NTabs type="line" animated>
+
+      <NTabs v-model:value="tab" type="line" animated>
         <NTabPane name="members" :tab="`成员与入会申请（${memberTotal}）`">
-          <div class="min-w-0 overflow-x-auto">
-            <NDataTable :columns="memberTable" :data="members" :row-key="row => row.id" :loading="loading" :scroll-x="960" />
-          </div>
-          <NPagination v-model:page="memberPage" class="mt-4" :item-count="memberTotal" :page-size="20" :page-slot="3" size="large"
-            :disabled="busy || loading || !online" @update:page="reload" />
+          <AdminDataTable
+            :columns="memberTable"
+            :data="members"
+            :loading="loading"
+            :row-key="(row: any) => row.id"
+            empty-text="没有成员或入会申请"
+            @retry="load()"
+          >
+            <template #footer>
+              <AdminPagination
+                :page="memberPage"
+                :total="memberTotal"
+                :count-label="(value: number) => `共 ${value} 位成员`"
+                :disabled="busy || loading || !online"
+                @update:page="load"
+              />
+            </template>
+          </AdminDataTable>
         </NTabPane>
         <NTabPane name="invitations" :tab="`定向邀请（${inviteTotal}）`">
-          <div class="min-w-0 overflow-x-auto">
-            <NDataTable :columns="invitationTable" :data="invitations" :row-key="row => row.id" :loading="loading" :scroll-x="870" />
-          </div>
-          <NPagination v-model:page="invitePage" class="mt-4" :item-count="inviteTotal" :page-size="20" :page-slot="3" size="large"
-            :disabled="busy || loading || !online" @update:page="reload" />
+          <AdminDataTable
+            :columns="invitationTable"
+            :data="invitations"
+            :loading="loading"
+            :row-key="(row: any) => row.id"
+            empty-text="没有定向邀请记录"
+            @retry="load()"
+          >
+            <template #footer>
+              <AdminPagination
+                :page="invitePage"
+                :total="inviteTotal"
+                :count-label="(value: number) => `共 ${value} 条邀请`"
+                :disabled="busy || loading || !online"
+                @update:page="load"
+              />
+            </template>
+          </AdminDataTable>
         </NTabPane>
       </NTabs>
+
       <NForm v-if="action" label-placement="top" @submit.prevent="requestConfirm">
-        <h3>{{ memberActionLabels[action.kind] }}：{{ action.name }}</h3>
-        <p v-if="action.kind === 'remove'">成员关系将结束，当前组织及下属赛事、比赛角色将撤销；历史业务记录保留。</p>
+        <h3 class="action-title">{{ confirmLabel }}</h3>
+        <p v-if="action.kind === 'remove'" class="hint">
+          成员关系将结束，当前组织及下属赛事、比赛角色将撤销；历史业务记录保留。
+        </p>
         <NFormItem label="操作理由（不得含凭据或 URL）">
-          <NInput v-model:value="reason" type="textarea" :maxlength="500" :disabled="busy" :input-props="{ 'aria-label': '成员操作理由' }" />
+          <NInput
+            ref="reasonRef"
+            v-model:value="reason"
+            type="textarea"
+            :maxlength="500"
+            :autosize="{ minRows: 3, maxRows: 5 }"
+            :disabled="busy"
+            :input-props="{ 'aria-label': '成员操作理由' }"
+          />
         </NFormItem>
-        <NSpace>
-          <NButton attr-type="submit" type="primary" size="large" :disabled="!enabled">继续确认</NButton>
-          <NButton size="large" :disabled="busy" @click="action = null">取消操作</NButton>
-        </NSpace>
+        <p class="hint">填写理由后，用页脚按钮确认；确认后就地完成，不再弹第二层窗口。</p>
       </NForm>
-      <div class="flex flex-wrap justify-end gap-3">
-        <NButton size="large" :disabled="busy || loading || !online" @click="reload">刷新成员数据</NButton>
-        <NButton size="large" :disabled="busy" @click="close">关闭</NButton>
-      </div>
     </div>
-  </NModal>
-  <NModal :show="confirming" preset="dialog" :closable="false" :title="action ? `确认${memberActionLabels[action.kind]}` : '确认操作'"
-    :content="`${action?.name ?? ''}：${reason}`" positive-text="确认操作" negative-text="取消" :loading="busy"
-    :mask-closable="!busy" :close-on-esc="!busy" :positive-button-props="{ size: 'large', disabled: !enabled }"
-    :negative-button-props="{ size: 'large', disabled: busy }" @positive-click="commit" @negative-click="confirming = false"
-    @update:show="!busy && (confirming = false)" />
+
+    <template #footer>
+      <NButton :disabled="busy || loading || !online" @click="reload">刷新成员数据</NButton>
+      <NButton :disabled="busy" @click="close">关闭</NButton>
+      <AdminConfirmButton
+        v-if="action"
+        tone="danger"
+        :label="memberActionLabels[action.kind]"
+        :message="`${action.name}：${reason.trim() || '（未填写理由）'}`"
+        :confirm-label="`确认${memberActionLabels[action.kind]}`"
+        :loading="busy"
+        :disabled="!enabled || !reason.trim()"
+        @update:open="(value: boolean) => value && requestConfirm()"
+        @confirm="commit"
+      />
+    </template>
+  </AdminDialogShell>
 </template>
+
+<style scoped>
+  .panels {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-space-lg);
+    min-width: 0;
+  }
+
+  .invite-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--admin-space-lg);
+  }
+
+  .invite-field {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  .invite-days {
+    flex: 0 0 132px;
+  }
+
+  .invite-submit {
+    margin-bottom: var(--admin-space-lg);
+  }
+
+  .hint {
+    font-size: var(--admin-text-meta-size);
+    line-height: var(--admin-text-meta-leading);
+    color: var(--admin-muted);
+  }
+
+  .action-title {
+    font-size: var(--admin-text-section-title-size);
+    line-height: var(--admin-text-section-title-leading);
+    font-weight: var(--admin-text-section-title-weight);
+    color: var(--admin-ink);
+  }
+
+  @media (max-width: 767px) {
+    .invite-days,
+    .invite-submit {
+      flex: 1 1 100%;
+    }
+  }
+</style>

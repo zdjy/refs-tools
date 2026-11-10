@@ -58,7 +58,7 @@
       },
       series: [
         {
-          itemStyle: { color: palette.value.primary },
+          itemStyle: { color: palette.value.accent },
           data: [3000, 2000, 3333, 5000, 3200, 4200, 3200, 2100, 3000, 5100, 6000, 3200, 4800],
           type: 'bar',
           barMaxWidth: 80,

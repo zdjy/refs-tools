@@ -1,36 +1,15 @@
-export interface ProjectSettingState {
-  //导航模式
-  navMode: string;
-  //顶部设置
-  headerSetting: object;
-  //页脚
-  showFooter: boolean;
-  //菜单设置
-  menuSetting: object;
-  //多标签
-  multiTabsSetting: object;
-  //面包屑
-  crumbsSetting: object;
-  //权限模式
-  permissionMode: string;
-}
-
 export interface IBodySetting {
   fixed: boolean;
 }
 
 export interface IHeaderSetting {
-  bgColor: string;
   fixed: boolean;
-  isReload: boolean;
 }
 
 export interface IMenuSetting {
   minMenuWidth: number;
   menuWidth: number;
   fixed: boolean;
-  mixMenu: boolean;
-  collapsed: boolean;
   mobileWidth: number;
 }
 
@@ -39,11 +18,6 @@ export interface ICrumbsSetting {
   showIcon: boolean;
 }
 
-export interface IMultiTabsSetting {
-  bgColor: string;
-  fixed: boolean;
-  show: boolean;
-}
 export interface GlobConfig {
   title: string;
   apiUrl: string;

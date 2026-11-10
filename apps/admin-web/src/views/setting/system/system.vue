@@ -71,15 +71,15 @@
   }
 
   .thing-cell-on {
-    background: var(--admin-sand);
-    color: var(--admin-primary);
+    background: var(--admin-surface-muted);
+    color: var(--admin-accent);
 
     ::v-deep(.n-thing-main .n-thing-header .n-thing-header__title) {
-      color: var(--admin-primary);
+      color: var(--admin-accent);
     }
 
     &:hover {
-      background: var(--admin-sand-deep);
+      background: var(--admin-surface-muted);
     }
   }
 </style>

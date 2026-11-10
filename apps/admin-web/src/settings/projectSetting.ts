@@ -1,55 +1,29 @@
+import type { AdminDensity } from '@/settings/uiScale';
+
 const setting = {
-  //导航模式 vertical 左侧菜单模式 horizontal 顶部菜单模式
-  navMode: 'vertical',
-  // 是否处于移动端模式
+  // 导航固定为左侧菜单模式，不提供顶部或混合菜单。
   isMobile: false,
-  //顶部
   headerSetting: {
-    //背景色
-    bgColor: 'var(--admin-surface)',
-    //固定顶部
-    fixed: true,
-    //显示重载按钮
-    isReload: true,
-  },
-  //页脚
-  showFooter: true,
-  //多标签
-  multiTabsSetting: {
-    //背景色
-    bgColor: 'var(--admin-surface)',
-    //是否显示
-    show: true,
-    //固定多标签
     fixed: true,
   },
-  //菜单
   menuSetting: {
-    //最小宽度
-    minMenuWidth: 64,
-    //菜单宽度
-    menuWidth: 200,
-    //固定菜单
+    minMenuWidth: 56,
+    menuWidth: 232,
     fixed: true,
-    //分割菜单
-    mixMenu: false,
-    //触发移动端侧边栏的宽度
-    mobileWidth: 800,
-    // 折叠菜单
-    collapsed: false,
+    // 触发移动端抽屉式侧栏的宽度
+    mobileWidth: 768,
   },
-  //面包屑
+  // 面包屑只在出现三级路由时启用；当前导航只有一层，默认关闭。
   crumbsSetting: {
-    //是否显示
-    show: true,
-    //显示图标
+    show: false,
     showIcon: false,
   },
-  //菜单权限模式 FIXED 前端固定路由  BACK 动态获取
+  // 权限模式 FIXED 前端固定路由 / BACK 动态获取
   permissionMode: 'FIXED',
-  //是否开启路由动画
-  isPageAnimate: true,
-  //路由动画类型
-  pageAnimateType: 'zoom-fade',
+  // 默认主题与密度，可在界面设置抽屉中修改并持久化。
+  darkTheme: false,
+  density: 'compact' as AdminDensity,
+  siderCollapsedByDefault: false,
 };
+
 export default setting;

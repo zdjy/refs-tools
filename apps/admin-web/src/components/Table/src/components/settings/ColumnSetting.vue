@@ -55,7 +55,7 @@
                         <template #trigger>
                           <n-icon
                             size="18"
-                            :color="element.fixed === 'left' ? 'var(--admin-primary)' : undefined"
+                            :color="element.fixed === 'left' ? 'var(--admin-accent)' : undefined"
                             class="cursor-pointer"
                             @click="fixedColumn(element, 'left')"
                           >
@@ -69,7 +69,7 @@
                         <template #trigger>
                           <n-icon
                             size="18"
-                            :color="element.fixed === 'right' ? 'var(--admin-primary)' : undefined"
+                            :color="element.fixed === 'right' ? 'var(--admin-accent)' : undefined"
                             class="cursor-pointer"
                             @click="fixedColumn(element, 'right')"
                           >
@@ -274,7 +274,7 @@
         cursor: pointer;
 
         :hover {
-          color: var(--admin-primary);
+          color: var(--admin-accent);
         }
       }
     }
@@ -287,7 +287,7 @@
       padding: 10px 14px;
 
       &:hover {
-        background: var(--admin-sand);
+        background: var(--admin-surface-muted);
       }
 
       .drag-icon {
@@ -312,7 +312,7 @@
         flex: 1;
 
         &:hover {
-          color: var(--admin-primary) !important;
+          color: var(--admin-accent) !important;
         }
       }
     }

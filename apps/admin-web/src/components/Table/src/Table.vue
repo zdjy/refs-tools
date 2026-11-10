@@ -301,7 +301,7 @@
         color: var(--admin-body);
 
         :hover {
-          color: var(--admin-primary);
+          color: var(--admin-accent);
         }
       }
     }

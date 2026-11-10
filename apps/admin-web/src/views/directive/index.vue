@@ -50,7 +50,7 @@
     .box {
       width: 100px;
       height: 100px;
-      background-color: var(--admin-primary);
+      background-color: var(--admin-accent);
       position: absolute;
       z-index: 10000000;
       border-radius: 10px;

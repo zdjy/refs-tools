@@ -95,7 +95,7 @@
           type: 'line',
           areaStyle: {},
           itemStyle: {
-            color: palette.value.primary,
+            color: palette.value.accent,
           },
         },
         {
