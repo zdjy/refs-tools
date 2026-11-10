@@ -30,7 +30,7 @@ describe('文件治理 HTTP', () => {
     try {
       expect((await f.app.inject({ url: '/api/v1/admin/media', headers: { token: 'fake' } })).statusCode).toBe(401)
       expect((await f.app.inject({ method: 'DELETE', url: path, headers: { ...f.headers, origin: 'https://evil.example' }, payload: { reason: 'test' } })).statusCode).toBe(403)
-      for (const url of ['/api/v1/admin/media?page=0', '/api/v1/admin/media?ownerUserId=invalid', '/api/v1/admin/media?status=unknown', '/api/v1/admin/media?objectKey=private', '/api/v1/admin/media/not-uuid']) {
+      for (const url of ['/api/v1/admin/media?page=0', `/api/v1/admin/media?ownerUserId=${f.admin}`, `/api/v1/admin/media?ownerKeyword=${'x'.repeat(101)}`, '/api/v1/admin/media?status=unknown', '/api/v1/admin/media?objectKey=private', '/api/v1/admin/media/not-uuid']) {
         expect((await f.app.inject({ url, headers: f.headers })).statusCode).toBe(400)
       }
       expect((await f.app.inject({ method: 'DELETE', url: path, headers: f.headers, payload: { reason: 'test', ownerUserId: f.admin } })).statusCode).toBe(400)

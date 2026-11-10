@@ -19,7 +19,7 @@ export async function adminFixture() {
   h.upload(intent.mediaId); await media.complete(h.actor, intent.mediaId)
   const detail = async (id: string): Promise<AdminMedia | null> => {
     const m = h.records.get(id)
-    return m ? { id: m.id, ownerUserId: m.ownerUserId, purpose: m.purpose, status: m.status, contentType: m.contentType,
+    return m ? { id: m.id, ownerUserId: m.ownerUserId, ownerDisplayName: '裁判甲', purpose: m.purpose, status: m.status, contentType: m.contentType,
       expectedSizeBytes: m.expectedSizeBytes, verifiedSizeBytes: m.verifiedSizeBytes, expiresAt: m.expiresAt,
       target: m.target, createdAt: m.createdAt, fileName: '测试.jpg', verifiedAt: m.createdAt, deletedAt: null, cleanedAt: null } : null
   }

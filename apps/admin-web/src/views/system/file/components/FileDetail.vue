@@ -1,11 +1,11 @@
 <script setup lang="ts">
   /**
-   * 文件详情字段区：只负责呈现与理由输入，操作按钮由页面放进弹窗页脚，
-   * 破坏性操作在页脚用就地确认（FS-0010 v2 §5.2）。
+   * 文件详情字段区：只负责呈现与下载理由输入。
+   * 删除需要理由与审计，入口在列表行并打开独立的删除弹窗（FS-0034）。
    */
   import { NFormItem, NInput } from 'naive-ui';
   import type { AdminMedia } from '@refs-tools/contracts/admin-media';
-  import { formatBytes, formatTime, purposeLabel, retained, statusLabel } from '../files.presentation';
+  import { formatBytes, formatTime, ownerLabel, purposeLabel, retained, statusLabel } from '../files.presentation';
 
   defineProps<{ file: AdminMedia; reason: string; busy: boolean }>();
   defineEmits<{ 'update:reason': [value: string] }>();
@@ -13,6 +13,7 @@
   const rows = (file: AdminMedia) => [
     { label: '文件名', value: file.fileName ?? '未命名文件' },
     { label: '文件 ID', value: file.id },
+    { label: '所属用户', value: ownerLabel(file) },
     { label: '所属用户 ID', value: file.ownerUserId },
     { label: '用途 / 状态', value: `${purposeLabel(file.purpose)} / ${statusLabel(file.status)}` },
     { label: '关联目标', value: `${file.target.type} / ${file.target.id ?? '平台'}` },
@@ -38,7 +39,7 @@
         已核验的证据须按所属业务审批留存，不能在此通用删除。
       </p>
       <p v-if="file.status === 'deleted'" class="detail-line is-info">
-        文件访问已撤销。若上次对象删除失败，可填写理由后重试删除。
+        文件访问已撤销。若上次对象删除失败，可在列表行再次触发删除并填写理由重试。
       </p>
     </section>
 
@@ -49,7 +50,7 @@
       </div>
     </dl>
 
-    <NFormItem label="下载 / 删除理由" required>
+    <NFormItem label="下载理由" required>
       <NInput
         :value="reason"
         type="textarea"

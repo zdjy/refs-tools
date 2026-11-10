@@ -16,7 +16,8 @@
   const designStore = useDesignSettingStore();
   const settingStore = useProjectSettingStore();
 
-  const collapsed = ref(designStore.siderCollapsedByDefault);
+  /** 折叠状态直接读写 store：顶栏、侧栏底部与界面设置抽屉共享同一状态并持久化。 */
+  const collapsed = computed(() => designStore.siderCollapsed);
   const mobileOpen = ref(false);
   const isMobile = ref(false);
 
@@ -24,7 +25,8 @@
 
   function syncMobileMode() {
     const width = document.body.clientWidth;
-    isMobile.value = width <= menuSetting.value.mobileWidth;
+    // 与样式表的 `max-width: 767px` 保持同一阈值，避免 768px 时 JS 与 CSS 判断相反。
+    isMobile.value = width < menuSetting.value.mobileWidth;
     if (!isMobile.value) mobileOpen.value = false;
   }
 
@@ -54,7 +56,7 @@
       mobileOpen.value = !mobileOpen.value;
       return;
     }
-    collapsed.value = !collapsed.value;
+    designStore.toggleSiderCollapsed();
   }
 </script>
 
@@ -71,6 +73,7 @@
         :collapsed="collapsed"
         :mobile-open="mobileOpen"
         @navigate="mobileOpen = false"
+        @toggle-collapse="toggleSider"
       />
 
       <button

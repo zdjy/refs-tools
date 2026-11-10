@@ -14,6 +14,7 @@
   import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
   import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
   import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
+  import { useCompactViewport } from '@/components/admin-shell/useCompactViewport';
 
   const state = usePlatformInvites();
   const {
@@ -22,8 +23,9 @@
   } = state;
   useUiFeedback(notice);
 
+  const compact = useCompactViewport();
   const enabled = computed(() => ready.value && online.value && !busy.value && !loading.value);
-  const columns = inviteColumns(() => enabled.value, confirmRevoke);
+  const columns = computed(() => inviteColumns(() => enabled.value, confirmRevoke, compact.value));
 
   /** 行内确认即最终确认：登记目标后立即执行撤销。 */
   function confirmRevoke(invite: PlatformInvite) {

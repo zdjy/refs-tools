@@ -2,7 +2,7 @@
   <section class="page" aria-label="角色权限管理">
     <AdminPage title="角色权限管理">
       <template #badge>
-        <AdminBadge tone="mock">Mock 数据</AdminBadge>
+        <AdminBadge tone="neutral" variant="outline">Mock 数据</AdminBadge>
       </template>
     </AdminPage>
     <p class="mock-note">页面数据为 Mock 示例数据，非真实数据；权限模型接入后端后重做本页。</p>

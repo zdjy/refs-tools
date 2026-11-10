@@ -182,12 +182,12 @@ ol {
   font-variant-numeric: tabular-nums;
 }
 
-// 行内操作：默认隐藏，行悬停、行聚焦或当前行时显现，但始终在 Tab 顺序内。
+// 行内操作按钮：PC 显示图标 + 文字，触屏/窄屏只保留图标（节省列宽，命中区仍 44px）。
 .admin-row-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
+  gap: 4px;
   opacity: 0;
   transition: opacity var(--admin-motion-fast) var(--admin-motion-ease-out);
 }
@@ -200,14 +200,26 @@ ol {
   opacity: 1;
 }
 
-.admin-row-action {
+.admin-row-action-button {
   --n-height: 24px !important;
-  --n-width: 24px !important;
+  --n-padding: 0 6px !important;
   --n-border-radius: var(--admin-radius-sm) !important;
 }
 
-.admin-row-action svg {
+.admin-row-action-button svg {
   display: block;
+  flex: none;
+}
+
+// 破坏性行内动作：图标与文字都用危险色，且始终保留文字，不只靠颜色区分。
+.admin-row-action-button.is-danger {
+  color: var(--admin-danger-hover);
+}
+
+.admin-row-action-label {
+  font-size: var(--admin-text-meta-size);
+  line-height: var(--admin-text-meta-leading);
+  white-space: nowrap;
 }
 
 @media (pointer: coarse), (max-width: 767px) {
@@ -216,9 +228,15 @@ ol {
     opacity: 1;
   }
 
-  .admin-row-action {
+  // 窄屏只保留图标，文字由 aria-label 承担可访问名称。
+  .admin-row-action-label {
+    display: none;
+  }
+
+  .admin-row-action-button {
     --n-height: 44px !important;
     --n-width: 44px !important;
+    --n-padding: 0 !important;
   }
 }
 

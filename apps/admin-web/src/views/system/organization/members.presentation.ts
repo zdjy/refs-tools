@@ -1,7 +1,9 @@
 import { h } from 'vue';
-import { NTag, type DataTableColumns } from 'naive-ui';
+import type { DataTableColumns } from 'naive-ui';
 import type { Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members';
-import AdminConfirmButton from '@/components/admin-shell/AdminConfirmButton.vue';
+import { actionColumnWidth, rowConfirm, rowActions } from '@/components/admin-shell/row-actions';
+import { statusBadge } from '@/components/admin-shell/status-badge';
+import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 import type { MemberAction } from './useOrganizationMembers';
 
 export const memberActionLabels = { approve: '批准入会', reject: '驳回申请', remove: '移除成员', revoke: '撤销邀请' };
@@ -26,24 +28,35 @@ const labels: Record<string, string> = {
   expired: '已过期',
 };
 
-const status = (value: string) =>
-  h(
-    NTag,
-    { bordered: false, type: value === 'active' || value === 'accepted' ? 'success' : value === 'pending' ? 'warning' : 'default' },
-    { default: () => labels[value] }
-  );
+/** 关系状态语义：生效绿、待办黄、终态虚线；文字始终保留。 */
+const tones: Record<string, { tone: BadgeTone; variant?: BadgeVariant }> = {
+  active: { tone: 'success' },
+  accepted: { tone: 'success' },
+  pending: { tone: 'warning' },
+  rejected: { tone: 'danger' },
+  declined: { tone: 'danger', variant: 'outline' },
+  removed: { tone: 'neutral' },
+  left: { tone: 'neutral', variant: 'outline' },
+  revoked: { tone: 'neutral', variant: 'outline' },
+  expired: { tone: 'neutral', variant: 'outline' },
+};
+
+const status = (value: string) => {
+  const state = tones[value] ?? { tone: 'neutral' as const };
+  return statusBadge(labels[value] ?? value, state.tone, state.variant);
+};
 const date = (value: string) => new Date(value).toLocaleString('zh-CN', { hour12: false });
 
-/** 行内动作：24px 图标按钮，破坏性动作就地确认（FS-0010 v2 §5.1、§5.2）。 */
+/** 行内动作：PC 图标 + 文字，触屏/窄屏纯图标，破坏性动作就地确认（FS-0010 v2 §5.1、§5.2）。 */
 function actionCell(kind: MemberAction['kind'], enabled: () => boolean, select: (value: MemberAction) => void, row: { id: string; version: number; name: string }) {
   const hint = actionHints[kind];
-  return h(AdminConfirmButton, {
+  return rowConfirm({
     icon: hint.icon,
-    tone: hint.tone,
     label: memberActionLabels[kind],
     message: hint.message,
     confirmLabel: memberActionLabels[kind],
     disabled: !enabled(),
+    danger: hint.tone === 'danger',
     onConfirm: () => select({ kind, id: row.id, version: row.version, name: row.name }),
   });
 }
@@ -53,17 +66,18 @@ export function memberColumns(
   enabled: () => boolean,
   select: (value: MemberAction) => void,
   ownerId: () => string,
-  actorId: () => string
+  actorId: () => string,
+  compact: boolean
 ): DataTableColumns<Membership> {
   return [
     { title: '成员', key: 'displayName', minWidth: 120 },
     { title: '用户 ID', key: 'userId', minWidth: 260, render: (row) => h('span', { class: 'admin-cell-mono' }, row.userId) },
-    { title: '状态', key: 'status', width: 96, render: (row) => status(row.status) },
+    { title: '状态', key: 'status', width: 104, render: (row) => status(row.status) },
     { title: '加入 / 申请时间', key: 'createdAt', width: 168, render: (row) => date(row.createdAt) },
     {
       title: '操作',
       key: 'actions',
-      width: 92,
+      width: actionColumnWidth([memberActionLabels.approve, memberActionLabels.reject], compact),
       align: 'right',
       render: (row) => {
         const kinds: MemberAction['kind'][] =
@@ -72,9 +86,7 @@ export function memberColumns(
             : row.status === 'active' && row.userId !== ownerId() && row.userId !== actorId()
               ? ['remove']
               : [];
-        return h(
-          'div',
-          { class: 'admin-row-actions admin-row-actions-static' },
+        return rowActions(
           kinds.map((kind) => actionCell(kind, enabled, select, { id: row.id, version: row.version, name: row.displayName }))
         );
       },
@@ -83,24 +95,24 @@ export function memberColumns(
 }
 
 /** 邀请历史始终保留，只有待回应记录显示撤销入口。 */
-export function invitationColumns(enabled: () => boolean, select: (value: MemberAction) => void): DataTableColumns<OrganizationInvitation> {
+export function invitationColumns(
+  enabled: () => boolean,
+  select: (value: MemberAction) => void,
+  compact: boolean
+): DataTableColumns<OrganizationInvitation> {
   return [
     { title: '受邀人', key: 'displayName', minWidth: 120 },
     { title: '用户 ID', key: 'userId', minWidth: 260, render: (row) => h('span', { class: 'admin-cell-mono' }, row.userId) },
-    { title: '状态', key: 'status', width: 96, render: (row) => status(row.status) },
+    { title: '状态', key: 'status', width: 104, render: (row) => status(row.status) },
     { title: '过期时间', key: 'expiresAt', width: 168, render: (row) => date(row.expiresAt) },
     {
       title: '操作',
       key: 'actions',
-      width: 92,
+      width: actionColumnWidth([memberActionLabels.revoke], compact),
       align: 'right',
       render: (row) =>
         row.status === 'pending'
-          ? h(
-              'div',
-              { class: 'admin-row-actions admin-row-actions-static' },
-              [actionCell('revoke', enabled, select, { id: row.id, version: row.version, name: row.displayName })]
-            )
+          ? rowActions([actionCell('revoke', enabled, select, { id: row.id, version: row.version, name: row.displayName })])
           : h('span', { class: 'admin-cell-meta' }, '—'),
     },
   ];

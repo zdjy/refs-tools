@@ -21,6 +21,7 @@
   .admin-filter-bar {
     display: flex;
     align-items: flex-end;
+    align-content: flex-start;
     gap: var(--admin-space-lg);
     flex-wrap: wrap;
     margin-bottom: var(--admin-space-lg);

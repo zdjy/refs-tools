@@ -10,7 +10,7 @@ function errorText(e: unknown) {
     INVITATION_PENDING: '已有待回应邀请，请等待回应或先撤销', VERSION_CONFLICT: '记录已更新，请重新读取后操作',
     INVALID_MEMBER_STATE: '成员状态已变化，请重新读取', INVALID_INVITATION_STATE: '邀请已回应、撤销或过期，请重新读取',
     PROTECTED_MEMBER: '不能移除组织所有者或通过管理操作移除自己', ORGANIZATION_INACTIVE: '组织当前不接受成员变更',
-    INVALID_REQUEST: '请检查用户 ID、有效期及输入格式', REASON_REQUIRED: '请填写操作理由', INVALID_AUDIT_EVENT: '理由不得包含凭据或 URL',
+    INVALID_REQUEST: '请检查受邀用户、有效期及输入格式', REASON_REQUIRED: '请填写操作理由', INVALID_AUDIT_EVENT: '理由不得包含凭据或 URL',
   };
   return e instanceof OrganizationMembersApiError ? messages[e.code] ?? '操作失败，请稍后重试' : '操作失败，请稍后重试';
 }
@@ -49,8 +49,8 @@ export function useOrganizationMembers(api = organizationMembersApi) {
   const writable = () => !!organization.value && ready.value && canManage.value && online.value && !busy.value;
   async function invite() {
     if (!writable()) return;
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId.value.trim()) || !Number.isInteger(validDays.value) || validDays.value! < 1 || validDays.value! > 30) {
-      error.value = '请输入有效的用户 ID 和 1–30 天有效期'; return;
+    if (!userId.value.trim() || !Number.isInteger(validDays.value) || validDays.value! < 1 || validDays.value! > 30) {
+      error.value = '请从检索结果中选择受邀用户，并填写 1–30 天有效期'; return;
     }
     busy.value = true; error.value = ''; notice.value = '';
     try {

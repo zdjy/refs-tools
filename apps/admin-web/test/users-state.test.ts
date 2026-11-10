@@ -49,10 +49,28 @@ describe('用户 CRUD 页面状态', () => {
     f.api.update.mockRejectedValueOnce(new Error('版本冲突')); await f.state.save(true);
     expect(f.state.formError.value).toBe('版本冲突'); expect(f.state.form.status).toBe('disabled');
   });
-  it('详情读取失败不能保存或删除', async () => {
+  it('详情读取失败不能保存', async () => {
     const f = fixture(); f.api.detail.mockRejectedValue(new Error('读取失败')); await f.state.open(f.user, 'edit');
-    await f.state.save(); await f.state.remove();
-    expect(f.api.update).not.toHaveBeenCalled(); expect(f.api.remove).not.toHaveBeenCalled();
+    await f.state.save();
+    expect(f.api.update).not.toHaveBeenCalled();
+  });
+  it('行内删除不依赖打开的弹窗，失败写页面横幅且不报成功', async () => {
+    const f = fixture(); await f.state.load();
+    f.api.remove.mockRejectedValueOnce(new Error('版本冲突')); await f.state.remove(f.user);
+    expect(f.state.notice.value).toBe(''); expect(f.state.actionError.value).toBe('版本冲突');
+    f.state.online.value = false; await f.state.remove(f.user); expect(f.api.remove).toHaveBeenCalledTimes(1);
+    f.state.online.value = true; await f.state.remove(f.user);
+    expect(f.state.actionError.value).toBe(''); expect(f.state.notice.value).toBe('用户已删除，历史记录保留');
+    expect(f.api.list).toHaveBeenCalled();
+  });
+  it('行内删除与弹窗互斥，进行中不重复提交', async () => {
+    const f = fixture(); await f.state.open(f.user, 'detail');
+    let resolve!: (value: { deleted: true }) => void;
+    f.api.remove.mockImplementationOnce(() => new Promise((r) => { resolve = r; }));
+    const first = f.state.remove(f.user);
+    await f.state.remove(f.user); f.state.create(); await f.state.open(f.user, 'edit');
+    expect(f.api.remove).toHaveBeenCalledTimes(1); expect(f.state.mode.value).toBe('detail');
+    resolve({ deleted: true }); await first;
   });
   it('离线不伪报成功，提交互斥', async () => {
     const f = fixture(); await f.state.open(f.user, 'edit'); f.state.online.value = false;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref } from 'vue';
+  import { computed, ref } from 'vue';
   import { NButton, NInput, NSelect } from 'naive-ui';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
   import { useOrganizations } from './useOrganizations';
@@ -17,6 +17,7 @@
   import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
   import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
   import AdminConfirmButton from '@/components/admin-shell/AdminConfirmButton.vue';
+  import { useCompactViewport } from '@/components/admin-shell/useCompactViewport';
 
   const {
     items, total, page, keyword, status, selected, selectedId, loading, detailLoading, ready, busy, error, formError,
@@ -26,6 +27,7 @@
 
   useUiFeedback(notice);
 
+  const compact = useCompactViewport();
   const memberPanel = ref<InstanceType<typeof OrganizationMembers> | null>(null);
   const transferPanel = ref<InstanceType<typeof OwnershipTransfer> | null>(null);
   const invitePanel = ref<InstanceType<typeof PlatformInvites> | null>(null);
@@ -36,10 +38,8 @@
     if (detail) await transferPanel.value?.open(detail);
   }
 
-  const columns = organizationColumns(
-    open,
-    (organization) => void memberPanel.value?.open(organization),
-    startTransfer
+  const columns = computed(() =>
+    organizationColumns({ open, members: (o) => void memberPanel.value?.open(o), transfer: startTransfer, compact: compact.value })
   );
 
   function updateForm(value: typeof form) {

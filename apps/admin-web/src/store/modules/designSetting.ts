@@ -11,8 +11,8 @@ const SIDER_COLLAPSED_KEY = 'UI-SIDER-COLLAPSED';
 interface DesignSettingState {
   darkTheme: boolean;
   density: AdminDensity;
-  /** 侧栏默认是否收起；只影响下次进入的初始态，不改变当前展开状态。 */
-  siderCollapsedByDefault: boolean;
+  /** 侧栏是否收起；用户切换后立即生效并持久化，与界面设置抽屉里的开关同源。 */
+  siderCollapsed: boolean;
 }
 
 function readTheme(fallback: boolean): boolean {
@@ -35,7 +35,7 @@ export const useDesignSettingStore = defineStore({
   state: (): DesignSettingState => ({
     darkTheme: readTheme(designSetting.darkTheme),
     density: readDensity(designSetting.density),
-    siderCollapsedByDefault: readSiderCollapsed(designSetting.siderCollapsedByDefault),
+    siderCollapsed: readSiderCollapsed(designSetting.siderCollapsedByDefault),
   }),
   getters: {
     getDarkTheme(): boolean {
@@ -44,8 +44,8 @@ export const useDesignSettingStore = defineStore({
     getDensity(): AdminDensity {
       return this.density;
     },
-    getSiderCollapsedByDefault(): boolean {
-      return this.siderCollapsedByDefault;
+    getSiderCollapsed(): boolean {
+      return this.siderCollapsed;
     },
   },
   actions: {
@@ -60,9 +60,12 @@ export const useDesignSettingStore = defineStore({
       this.density = value;
       storage.set(DENSITY_KEY, value);
     },
-    setSiderCollapsedByDefault(value: boolean): void {
-      this.siderCollapsedByDefault = value;
+    setSiderCollapsed(value: boolean): void {
+      this.siderCollapsed = value;
       storage.set(SIDER_COLLAPSED_KEY, value);
+    },
+    toggleSiderCollapsed(): void {
+      this.setSiderCollapsed(!this.siderCollapsed);
     },
   },
 });

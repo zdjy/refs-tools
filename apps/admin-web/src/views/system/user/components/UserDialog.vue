@@ -16,13 +16,11 @@
     ready: boolean;
     online: boolean;
     error: string;
-    actorId?: string;
     form: { email: string; displayName: string; password: string; status: AdminUser['status'] };
   }>();
   const emit = defineEmits<{
     close: [];
     save: [confirmed: boolean];
-    remove: [];
     retry: [];
     'update:form': [value: typeof props.form];
   }>();
@@ -169,15 +167,6 @@
 
     <template #footer>
       <UiSubmitHint :busy="busy" />
-      <AdminConfirmButton
-        v-if="mode === 'edit'"
-        class="footer-danger"
-        label="删除用户"
-        :message="`删除 ${selected?.email ?? '该用户'} 后将撤销全部会话，邮箱不释放，历史记录保留。`"
-        confirm-label="确认删除"
-        :disabled="busy || !ready || !online || selected?.id === actorId"
-        @confirm="emit('remove')"
-      />
       <NButton :disabled="busy" @click="emit('close')">关闭</NButton>
       <AdminConfirmButton
         v-if="mode !== 'detail' && needsDisableConfirm"
@@ -209,9 +198,5 @@
     font-size: var(--admin-text-meta-size);
     line-height: var(--admin-text-meta-leading);
     color: var(--admin-muted);
-  }
-
-  .footer-danger {
-    margin-right: auto;
   }
 </style>

@@ -10,11 +10,13 @@
   import { useUserStore } from '../../../../store/modules/user';
   import { useOrganizationMembers } from '../useOrganizationMembers';
   import { invitationColumns, memberActionLabels, memberColumns } from '../members.presentation';
+  import InviteCandidateSelect from './InviteCandidateSelect.vue';
   import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
   import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
   import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
   import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
   import AdminConfirmButton from '@/components/admin-shell/AdminConfirmButton.vue';
+  import { useCompactViewport } from '@/components/admin-shell/useCompactViewport';
 
   const state = useOrganizationMembers();
   const {
@@ -26,14 +28,12 @@
   const tab = ref<'members' | 'invitations'>('members');
   const reasonRef = ref<InstanceType<typeof NInput> | null>(null);
 
+  const compact = useCompactViewport();
   const enabled = computed(() => ready.value && canManage.value && online.value && !busy.value && !loading.value);
-  const memberTable = memberColumns(
-    () => enabled.value,
-    select,
-    () => organization.value?.ownerUserId ?? '',
-    () => user.info.id ?? ''
-  );
-  const invitationTable = invitationColumns(() => enabled.value, select);
+  const ownerId = () => organization.value?.ownerUserId ?? '';
+  const actorId = () => user.info.id ?? '';
+  const memberTable = computed(() => memberColumns(() => enabled.value, select, ownerId, actorId, compact.value));
+  const invitationTable = computed(() => invitationColumns(() => enabled.value, select, compact.value));
 
   function reload() {
     action.value = null;
@@ -69,15 +69,14 @@
         message="当前为平台治理只读视图。邀请、入会审核和移除操作需要该组织的所有者或组织者权限。"
       />
 
-      <NForm v-if="canManage" label-placement="top" @submit.prevent="invite">
+      <NForm v-if="canManage && organization" label-placement="top" @submit.prevent="invite">
         <div class="invite-row">
-          <NFormItem label="受邀用户 ID" class="invite-field">
-            <NInput
-              v-model:value="userId"
+          <NFormItem label="受邀用户" class="invite-field">
+            <InviteCandidateSelect
+              :value="userId"
+              :organization-id="organization.id"
               :disabled="!enabled"
-              :maxlength="36"
-              placeholder="输入已有用户的 UUID"
-              :input-props="{ 'aria-label': '受邀用户 ID' }"
+              @update:value="userId = $event"
             />
           </NFormItem>
           <NFormItem label="有效期（天）" class="invite-days">

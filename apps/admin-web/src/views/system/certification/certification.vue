@@ -8,7 +8,8 @@
   import CertificationDetail from './components/CertificationDetail.vue';
   import CertificationDecisionDialog from './components/CertificationDecisionDialog.vue';
   import { useCertifications } from './useCertifications';
-  import { levelLabels, statusLabels } from './certifications.presentation';
+  import { levelLabels, statusLabels, statusTones } from './certifications.presentation';
+  import AdminBadge from '@/components/admin-shell/AdminBadge.vue';
   import AdminPage from '@/components/admin-shell/AdminPage.vue';
   import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
   import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
@@ -125,7 +126,10 @@
                 @click="open(item)"
               >
                 <span class="cert-queue-name">{{ item.applicant.legalName || '未填写实名' }} · {{ item.applicant.nickname }}</span>
-                <span class="cert-queue-meta">{{ levelLabels[item.level] }} · {{ statusLabels[item.status] }}</span>
+                <span class="cert-queue-meta">
+                  {{ levelLabels[item.level] }} ·
+                  <AdminBadge v-bind="statusTones[item.status]">{{ statusLabels[item.status] }}</AdminBadge>
+                </span>
                 <span class="cert-queue-id">账号 {{ item.subjectUserId.slice(0, 8) }}</span>
               </button>
             </li>

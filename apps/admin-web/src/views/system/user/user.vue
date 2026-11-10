@@ -12,8 +12,10 @@
   import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
   import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
   import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
+  import { useCompactViewport } from '@/components/admin-shell/useCompactViewport';
 
   const actor = useUserStore();
+  const compact = useCompactViewport();
   const {
     items,
     total,
@@ -26,6 +28,7 @@
     detailReady,
     error,
     formError,
+    actionError,
     notice,
     online,
     selected,
@@ -41,7 +44,9 @@
 
   useUiFeedback(notice);
 
-  const columns = computed(() => userColumns(open, actor.info.id));
+  const columns = computed(() =>
+    userColumns({ open, remove, actorId: actor.info.id, compact: compact.value, busy: busy.value })
+  );
 
   function updateForm(value: typeof form) {
     Object.assign(form, value);
@@ -70,6 +75,13 @@
       message="当前离线，暂不能读取或提交，页面数据可能已陈旧。恢复连接后请刷新。"
     />
     <AdminStateBanner v-if="error" tone="danger" :message="error" action="重试" @action="load()" />
+    <AdminStateBanner
+      v-if="actionError"
+      tone="danger"
+      :message="`删除未完成：${actionError}`"
+      action="重试刷新列表"
+      @action="load()"
+    />
 
     <AdminFilterBar>
       <AdminField label="邮箱 / 显示名称" grow>
@@ -132,11 +144,9 @@
       :ready="detailReady"
       :online="online"
       :error="formError"
-      :actor-id="actor.info.id"
       @update:form="updateForm"
       @close="close"
       @save="save"
-      @remove="remove"
       @retry="selected && open(selected, mode === 'edit' ? 'edit' : 'detail')"
     />
   </section>

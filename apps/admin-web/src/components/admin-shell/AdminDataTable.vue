@@ -41,6 +41,19 @@
   }
 
   const rowHeight = computed(() => 'var(--admin-row-height)');
+
+  /**
+   * 未显式传入 `scrollX` 时按列宽求和推导：Naive UI 只有设置 `scroll-x` 才会真正固定
+   * 右侧操作列，否则窗口变窄时「操作」会被横向滚动推出视口。
+   */
+  const tableScrollX = computed(() => {
+    if (props.scrollX) return props.scrollX;
+    const total = props.columns.reduce(
+      (sum, column) => sum + (typeof column.width === 'number' ? column.width : 0),
+      0
+    );
+    return total || undefined;
+  });
 </script>
 
 <template>
@@ -53,7 +66,7 @@
         :data="data"
         :loading="loading"
         :row-key="rowKey"
-        :scroll-x="scrollX"
+        :scroll-x="tableScrollX"
         :bordered="false"
         :single-line="false"
         size="small"

@@ -6,17 +6,24 @@
    * 键盘可达性：气泡打开后焦点进入气泡并锁在气泡内（`internal-trap-focus`），
    * 因此「取消 / 确认」都能用 Tab + Enter 到达，不必依赖鼠标。
    * Esc 在捕获阶段拦下：先关气泡并把焦点交回触发按钮，不再继续冒泡去关掉底层弹窗。
+   *
+   * 触发形态 `variant`：`button` 文字按钮（弹窗页脚）、`icon` 纯图标（弹窗内行内动作）、
+   * `row` 表格行内动作（PC 图标 + 文字，触屏/窄屏只留图标）。
    */
-  import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
+  import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
   import { NButton, NPopconfirm } from 'naive-ui';
+  import AdminIcon from './AdminIcon.vue';
   import AdminIconButton from './AdminIconButton.vue';
   import type { AdminIconName } from './icons';
+
+  type Variant = 'button' | 'icon' | 'row';
 
   const props = withDefaults(
     defineProps<{
       label: string;
       message: string;
       icon?: AdminIconName;
+      variant?: Variant;
       confirmLabel?: string;
       cancelLabel?: string;
       tone?: 'danger' | 'primary' | 'default';
@@ -26,6 +33,7 @@
     }>(),
     {
       icon: undefined,
+      variant: undefined,
       confirmLabel: '确认',
       cancelLabel: '取消',
       tone: 'danger',
@@ -41,6 +49,11 @@
   const panelRef = ref<HTMLElement | null>(null);
 
   const buttonType = () => (props.tone === 'default' ? 'default' : props.tone === 'primary' ? 'primary' : 'error');
+
+  /** 未显式指定时按是否有图标推断：带图标的默认是弹窗内的纯图标动作。 */
+  const triggerVariant = computed<Variant>(() => props.variant ?? (props.icon ? 'icon' : 'button'));
+  /** 行内动作在表格右侧，气泡向右对齐展开，避免溢出列宽。 */
+  const placement = computed(() => (triggerVariant.value === 'row' ? 'bottom-end' : 'top-start'));
 
   function setOpen(value: boolean) {
     open.value = value;
@@ -87,12 +100,24 @@
       :negative-button-props="{ size: 'small' }"
       :disabled="disabled"
       :internal-trap-focus="true"
-      placement="top-start"
+      :placement="placement"
       @positive-click="emit('confirm')"
       @update:show="setOpen"
     >
       <template #trigger>
-        <AdminIconButton v-if="icon" :icon="icon" :label="label" :disabled="disabled" />
+        <AdminIconButton v-if="triggerVariant === 'icon' && icon" :icon="icon" :label="label" :disabled="disabled" />
+        <NButton
+          v-else-if="triggerVariant === 'row'"
+          ref="triggerRef"
+          size="small"
+          quaternary
+          :disabled="disabled"
+          :aria-label="label"
+          :class="['admin-row-action-button', tone === 'danger' ? 'is-danger' : '']"
+        >
+          <AdminIcon v-if="icon" :name="icon" :size="14" />
+          <span class="admin-row-action-label">{{ label }}</span>
+        </NButton>
         <NButton
           v-else
           ref="triggerRef"

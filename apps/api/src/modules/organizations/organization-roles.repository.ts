@@ -37,8 +37,8 @@ export class PgOrganizationRolesRepository implements OrganizationRolesRepositor
 
 /**
  * 邀请候选人检索，是对身份表的只读跨模块投影：仅返回有效且邮箱已验证账号的昵称与 ID 尾号。
- * 含 `@` 的关键词只做精确邮箱匹配；其余做昵称子串匹配。页大小固定为 10 条且只接受 page，
- * 使分页不会放大账号枚举面。
+ * 含 `@` 的关键词只做精确邮箱匹配；其余做昵称或实名子串匹配。实名只参与匹配，不进入响应或审计。
+ * 页大小固定为 10 条且只接受 page，使分页不会放大账号枚举面。
  */
 export class PgOrganizationCandidatesRepository implements OrganizationCandidatesRepository {
   constructor(private readonly connection: Pick<PoolClient, 'query'>) {}
@@ -46,7 +46,9 @@ export class PgOrganizationCandidatesRepository implements OrganizationCandidate
   async search(organizationId: string, actorId: string, keyword: string, page: number, now: Date): Promise<Paged<Candidate>> {
     // 同一个匹配条件要同时用于计数与取页，占位符编号随两条 SQL 的参数位置不同，故用函数生成。
     const match = (actor: string, word: string) => `u.status='active' AND u.deleted_at IS NULL AND u.email_verified_at IS NOT NULL AND u.id<>${actor}
-      AND (CASE WHEN strpos(${word},'@')>0 THEN u.email=${word} ELSE strpos(lower(u.display_name),${word})>0 END)`
+      AND (CASE WHEN strpos(${word},'@')>0 THEN u.email=${word}
+        ELSE strpos(lower(u.display_name),${word})>0
+          OR strpos(lower(COALESCE((SELECT p.legal_name FROM referee_profiles p WHERE p.user_id=u.id),'')),${word})>0 END)`
     const count = await this.connection.query<{ total: string }>(`SELECT count(*) AS total FROM users u WHERE ${match('$1', '$2')}`, [actorId, keyword])
     const rows = await this.connection.query<CandidateRow>(`SELECT u.id,u.display_name,
         CASE WHEN EXISTS (SELECT 1 FROM organization_memberships m WHERE m.organization_id=$1 AND m.user_id=u.id AND m.status='active') THEN 'active'

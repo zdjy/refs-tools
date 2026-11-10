@@ -2,7 +2,7 @@
   /**
    * 界面设置抽屉（FS-0010 v2 §4.6）。
    *
-   * 只保留仍然生效的选项：主题、表格密度、侧栏默认收起、关于。
+   * 只保留仍然生效的选项：主题、表格密度、侧栏收起、关于。
    * 导航模式、标签栏、动画类型、面包屑与页脚等已固定或移除的选项不再出现。
    */
   import { computed } from 'vue';
@@ -81,9 +81,9 @@
             <span class="setting-hint">{{ t('layout.setting.siderCollapsedHint') }}</span>
           </div>
           <AdminSwitch
-            :checked="designStore.siderCollapsedByDefault"
+            :checked="designStore.siderCollapsed"
             :label="t('layout.setting.siderCollapsed')"
-            @update:checked="designStore.setSiderCollapsedByDefault($event)"
+            @update:checked="designStore.setSiderCollapsed($event)"
           />
         </div>
       </section>

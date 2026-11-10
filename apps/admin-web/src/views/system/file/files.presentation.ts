@@ -1,7 +1,9 @@
 import { h } from 'vue';
-import { NButton, NDropdown, NTag, type DataTableColumns } from 'naive-ui';
+import type { DataTableColumns } from 'naive-ui';
 import type { AdminMedia } from '@refs-tools/contracts/admin-media';
-import { iconPaths } from '@/components/admin-shell/icons';
+import { actionColumnWidth, rowAction, rowActions } from '@/components/admin-shell/row-actions';
+import { statusBadge } from '@/components/admin-shell/status-badge';
+import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 
 export const purposeOptions = [
   { label: '学习资料', value: 'learning' },
@@ -20,12 +22,13 @@ export const statusOptions = [
   { label: '已删除', value: 'deleted' },
 ];
 
-const statusTones: Record<AdminMedia['status'], 'warning' | 'success' | 'danger' | 'neutral'> = {
-  pending_upload: 'warning',
-  available: 'success',
-  rejected: 'danger',
-  expired: 'neutral',
-  deleted: 'neutral',
+/** 媒体状态语义：待上传待办黄、可用绿、核验拒绝红，过期与删除为虚线终态。 */
+const statusTones: Record<AdminMedia['status'], { tone: BadgeTone; variant?: BadgeVariant }> = {
+  pending_upload: { tone: 'warning' },
+  available: { tone: 'success' },
+  rejected: { tone: 'danger' },
+  expired: { tone: 'warning', variant: 'outline' },
+  deleted: { tone: 'neutral', variant: 'outline' },
 };
 
 /** 大小以二进制单位显示，保留字节数供详情精确核对。 */
@@ -59,42 +62,23 @@ export function retained(media: AdminMedia) {
   );
 }
 
-function iconSvg(name: keyof typeof iconPaths) {
-  return h('svg', {
-    width: 14,
-    height: 14,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': 1.75,
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round',
-    'aria-hidden': 'true',
-    innerHTML: iconPaths[name],
-  });
+/** 归属账号以昵称 + UUID 尾号标识：昵称用于核对，尾号不扩散完整账号标识。 */
+export function ownerLabel(media: Pick<AdminMedia, 'ownerUserId' | 'ownerDisplayName'>) {
+  const tail = media.ownerUserId.slice(-4);
+  return media.ownerDisplayName ? `${media.ownerDisplayName} · 尾号 ${tail}` : `未命名账号 · 尾号 ${tail}`;
 }
 
-function rowIconButton(label: string, icon: keyof typeof iconPaths, onClick: () => void) {
-  return h(
-    NButton,
-    {
-      size: 'small',
-      quaternary: true,
-      circle: true,
-      'aria-label': label,
-      title: label,
-      class: 'admin-row-action',
-      onClick: (event: MouseEvent) => {
-        event.stopPropagation();
-        onClick();
-      },
-    },
-    { default: () => iconSvg(icon) }
-  );
+export interface FileColumnOptions {
+  open: (id: string) => void;
+  /** 删除需填写理由，因此进入独立的删除弹窗，不再放进详情弹窗。 */
+  remove: (media: AdminMedia) => void;
+  compact: boolean;
+  busy: boolean;
 }
 
 /** 表格渲染与组件库类型仅留在表现层。 */
-export function fileColumns(open: (id: string) => void): DataTableColumns<AdminMedia> {
+export function fileColumns(options: FileColumnOptions): DataTableColumns<AdminMedia> {
+  const { open, remove, compact, busy } = options;
   return [
     {
       title: '文件名',
@@ -120,13 +104,9 @@ export function fileColumns(open: (id: string) => void): DataTableColumns<AdminM
     {
       title: '状态',
       key: 'status',
-      width: 100,
+      width: 112,
       render: (row) =>
-        h(
-          NTag,
-          { bordered: false, size: 'medium', type: 'default', class: `admin-badge-cell admin-tone-${statusTones[row.status]}` },
-          { default: () => statusLabel(row.status) }
-        ),
+        statusBadge(statusLabel(row.status), statusTones[row.status].tone, statusTones[row.status].variant),
     },
     { title: '类型', key: 'contentType', width: 150 },
     {
@@ -135,7 +115,7 @@ export function fileColumns(open: (id: string) => void): DataTableColumns<AdminM
       width: 100,
       render: (row) => h('span', { class: 'admin-cell-mono' }, formatBytes(row.verifiedSizeBytes ?? row.expectedSizeBytes)),
     },
-    { title: '所属用户 ID', key: 'ownerUserId', width: 190, className: 'admin-col-meta', ellipsis: { tooltip: true } },
+    { title: '所属用户', key: 'ownerDisplayName', width: 190, className: 'admin-col-meta', ellipsis: { tooltip: true }, render: (row) => ownerLabel(row) },
     {
       title: '创建时间',
       key: 'createdAt',
@@ -146,22 +126,19 @@ export function fileColumns(open: (id: string) => void): DataTableColumns<AdminM
     {
       title: '操作',
       key: 'actions',
-      width: 64,
+      width: actionColumnWidth(['详情', '删除'], compact),
       fixed: 'right',
       align: 'right',
       render: (row) =>
-        h('div', { class: 'admin-row-actions' }, [
-          rowIconButton('管理文件', 'edit', () => open(row.id)),
-          h(
-            NDropdown,
-            {
-              trigger: 'click',
-              placement: 'bottom-end',
-              options: [{ label: '管理文件', key: 'manage' }],
-              onSelect: () => open(row.id),
-            },
-            { default: () => rowIconButton('更多操作', 'more', () => {}) }
-          ),
+        rowActions([
+          rowAction({ label: '详情', icon: 'eye', onClick: () => open(row.id) }),
+          rowAction({
+            label: '删除',
+            icon: 'trash',
+            danger: true,
+            disabled: busy || retained(row),
+            onClick: () => remove(row),
+          }),
         ]),
     },
   ];

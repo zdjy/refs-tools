@@ -11,6 +11,7 @@
   import { useAsyncRouteStore } from '@/store/modules/asyncRoute';
   import { useLocaleStore } from '@/store/modules/locale';
   import { generatorMenu } from '@/utils';
+  import AdminSiderCollapse from './AdminSiderCollapse.vue';
   import AdminSiderItem from './AdminSiderItem.vue';
   import type { AdminIconName } from './icons';
 
@@ -18,7 +19,7 @@
     collapsed: false,
     mobileOpen: false,
   });
-  const emit = defineEmits<{ navigate: [] }>();
+  const emit = defineEmits<{ navigate: []; 'toggle-collapse': [] }>();
 
   const route = useRoute();
   const router = useRouter();
@@ -87,6 +88,9 @@
   }
 
   const isCollapsed = computed(() => props.collapsed && !props.mobileOpen);
+  const collapseLabel = computed(() =>
+    isCollapsed.value ? t('layout.header.expandSider') : t('layout.header.collapseSider')
+  );
 </script>
 
 <template>
@@ -107,18 +111,30 @@
         @select="go(entry.key)"
       />
     </div>
+
+    <AdminSiderCollapse
+      :collapsed="isCollapsed"
+      :label="collapseLabel"
+      :open-label="isCollapsed ? t('layout.header.expandSider') : t('layout.header.collapseSider')"
+      @toggle="emit('toggle-collapse')"
+    />
   </nav>
 </template>
 
 <style scoped>
   .admin-sider {
+    position: sticky;
+    top: var(--admin-topbar-height);
     display: flex;
     flex-direction: column;
     width: var(--admin-sider-width);
+    height: calc(100dvh - var(--admin-topbar-height));
     flex: none;
+    align-self: flex-start;
     padding: var(--admin-space-md) var(--admin-space-md) var(--admin-space-xl);
     background: var(--admin-surface-sunken);
     border-right: 1px solid var(--admin-line);
+    overflow-x: hidden;
     overflow-y: auto;
     transition: width var(--admin-motion-base) var(--admin-motion-ease-out);
   }
@@ -127,6 +143,24 @@
     width: var(--admin-sider-collapsed-width);
     padding-left: var(--admin-space-sm);
     padding-right: var(--admin-space-sm);
+  }
+
+  .nav-group {
+    min-width: 0;
+  }
+
+  .nav-group + .nav-group {
+    margin-top: var(--admin-space-xxl);
+  }
+
+  .admin-sider.is-collapsed {
+    width: var(--admin-sider-collapsed-width);
+    padding-left: var(--admin-space-sm);
+    padding-right: var(--admin-space-sm);
+  }
+
+  .nav-group {
+    min-width: 0;
   }
 
   .nav-group + .nav-group {
@@ -142,10 +176,13 @@
     overflow: hidden;
   }
 
+  /* 收起时标签不占宽度：仅留 6px 分隔，避免 nowrap 文字把侧栏撑出横向滚动。 */
   .is-collapsed .nav-group-label {
+    width: 0;
     height: 6px;
     padding: 0;
     opacity: 0;
+    overflow: hidden;
   }
 
   @media (pointer: coarse), (max-width: 767px) {
@@ -154,6 +191,8 @@
       top: var(--admin-topbar-height);
       bottom: 0;
       left: 0;
+      height: auto;
+      align-self: auto;
       z-index: 40;
       width: var(--admin-sider-width);
       transform: translateX(-100%);

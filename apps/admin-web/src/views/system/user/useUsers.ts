@@ -7,7 +7,7 @@ export function useUsers(api = adminUsersApi) {
   const items = ref<AdminUser[]>([]), total = ref(0), page = ref(1);
   const keyword = ref(''), status = ref<AdminUser['status'] | null>(null);
   const loading = ref(false), busy = ref(false), detailLoading = ref(false), detailReady = ref(false);
-  const error = ref(''), formError = ref(''), notice = ref('');
+  const error = ref(''), formError = ref(''), actionError = ref(''), notice = ref('');
   const online = ref(typeof navigator === 'undefined' || navigator.onLine);
   const selected = ref<AdminUser | null>(null);
   const mode = ref<'create' | 'edit' | 'detail' | null>(null);
@@ -34,14 +34,14 @@ export function useUsers(api = adminUsersApi) {
   function create() {
     if (busy.value) return;
     detailSequence++; detailLoading.value = false; detailReady.value = true;
-    selected.value = null; formError.value = ''; notice.value = '';
+    selected.value = null; formError.value = ''; actionError.value = ''; notice.value = '';
     Object.assign(form, { email: '', displayName: '', password: '', status: 'active' }); mode.value = 'create';
   }
 
   async function open(user: AdminUser, nextMode: 'edit' | 'detail') {
     if (busy.value) return;
     const sequence = ++detailSequence;
-    selected.value = user; mode.value = nextMode; formError.value = ''; notice.value = '';
+    selected.value = user; mode.value = nextMode; formError.value = ''; actionError.value = ''; notice.value = '';
     detailLoading.value = true; detailReady.value = false;
     try {
       const current = await api.detail(user.id);
@@ -73,14 +73,19 @@ export function useUsers(api = adminUsersApi) {
     finally { busy.value = false; }
   }
 
-  async function remove() {
-    if (busy.value || !selected.value || !detailReady.value || !online.value) return;
-    busy.value = true; formError.value = ''; notice.value = '';
+  /**
+   * 删除入口在列表行内就地确认（不放进编辑/查看弹窗）。
+   * 失败回显在页面横幅，成功提示由表现层统一发出。
+   */
+  async function remove(user: AdminUser) {
+    if (busy.value || !online.value) return;
+    busy.value = true; actionError.value = ''; notice.value = '';
     try {
-      await api.remove(selected.value.id, selected.value.version);
-      mode.value = null; notice.value = '用户已删除，历史记录保留';
+      await api.remove(user.id, user.version);
+      if (mode.value && selected.value?.id === user.id) mode.value = null;
+      notice.value = '用户已删除，历史记录保留';
       await load(items.value.length === 1 && page.value > 1 ? page.value - 1 : page.value);
-    } catch (e) { formError.value = message(e); }
+    } catch (e) { actionError.value = message(e); }
     finally { busy.value = false; }
   }
 
@@ -94,6 +99,6 @@ export function useUsers(api = adminUsersApi) {
       window.removeEventListener('online', updateOnline); window.removeEventListener('offline', updateOnline);
     });
   }
-  return { items, total, page, keyword, status, loading, busy, detailLoading, error, formError, notice, online,
-    selected, mode, needsDisableConfirm, form, detailReady, load, create, open, close, save, remove };
+  return { items, total, page, keyword, status, loading, busy, detailLoading, error, formError, actionError, notice,
+    online, selected, mode, needsDisableConfirm, form, detailReady, load, create, open, close, save, remove };
 }

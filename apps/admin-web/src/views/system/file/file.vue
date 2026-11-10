@@ -1,9 +1,11 @@
 <script setup lang="ts">
+  import { computed } from 'vue';
   import { NButton, NInput, NSelect } from 'naive-ui';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
   import UiLoadingHint from '../../../components/ui/UiLoadingHint.vue';
   import FileDetail from './components/FileDetail.vue';
-  import { fileColumns, purposeOptions, retained, statusOptions } from './files.presentation';
+  import FileDeleteDialog from './components/FileDeleteDialog.vue';
+  import { fileColumns, purposeOptions, statusOptions } from './files.presentation';
   import { useFiles } from './useFiles';
   import AdminPage from '@/components/admin-shell/AdminPage.vue';
   import AdminFilterBar from '@/components/admin-shell/AdminFilterBar.vue';
@@ -12,16 +14,20 @@
   import AdminPagination from '@/components/admin-shell/AdminPagination.vue';
   import AdminStateBanner from '@/components/admin-shell/AdminStateBanner.vue';
   import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
-  import AdminConfirmButton from '@/components/admin-shell/AdminConfirmButton.vue';
   import UiSubmitHint from '../../../components/ui/UiSubmitHint.vue';
+  import { useCompactViewport } from '@/components/admin-shell/useCompactViewport';
 
   const {
-    items, total, page, keyword, ownerUserId, purpose, status, selected, selectedId, showing, loading, detailLoading,
-    busy, reason, error, formError, notice, online, load, reset, open, close, requestDelete, download, remove,
+    items, total, page, keyword, ownerKeyword, purpose, status, selected, selectedId, showing, loading, detailLoading,
+    busy, reason, error, formError, notice, deleteTarget, deleteReason, deleteError, online, load, reset, open, close,
+    download, askRemove, cancelRemove, submitRemove,
   } = useFiles();
 
   useUiFeedback(notice, 'info');
-  const columns = fileColumns(open);
+  const compact = useCompactViewport();
+  const columns = computed(() =>
+    fileColumns({ open, remove: askRemove, compact: compact.value, busy: busy.value })
+  );
 
   function startDownload() {
     void download((url) => {
@@ -61,9 +67,16 @@
           />
         </template>
       </AdminField>
-      <AdminField label="所属用户 ID" grow>
+      <AdminField label="所属用户" grow>
         <template #default="{ id }">
-          <NInput :id="id" v-model:value="ownerUserId" :maxlength="36" clearable placeholder="填写完整用户 UUID" />
+          <NInput
+            :id="id"
+            v-model:value="ownerKeyword"
+            :maxlength="100"
+            clearable
+            placeholder="按昵称或实名搜索"
+            @keyup.enter="load(1)"
+          />
         </template>
       </AdminField>
       <AdminField label="用途" fixed="132px">
@@ -108,7 +121,7 @@
 
     <AdminDialogShell
       :show="showing"
-      title="文件详情与管理"
+      title="文件详情"
       size="lg"
       :busy="busy"
       @update:show="!$event && close()"
@@ -142,15 +155,6 @@
 
       <template #footer>
         <UiSubmitHint :busy="busy" />
-        <AdminConfirmButton
-          class="footer-danger"
-          :label="selected?.status === 'deleted' ? '重试对象删除' : '删除文件'"
-          :message="`删除「${selected?.fileName ?? selected?.id ?? ''}」会先撤销访问再删除存储对象，无法撤销。`"
-          confirm-label="确认删除"
-          :disabled="busy || !online || !selected || retained(selected)"
-          @update:open="(open: boolean) => open && requestDelete()"
-          @confirm="remove"
-        />
         <NButton :disabled="busy" @click="close">关闭</NButton>
         <NButton
           type="primary"
@@ -162,6 +166,18 @@
         </NButton>
       </template>
     </AdminDialogShell>
+
+    <FileDeleteDialog
+      :show="!!deleteTarget"
+      :file="deleteTarget"
+      :reason="deleteReason"
+      :busy="busy"
+      :error="deleteError"
+      :online="online"
+      @update:reason="deleteReason = $event"
+      @close="cancelRemove"
+      @confirm="submitRemove"
+    />
   </section>
 </template>
 
@@ -182,9 +198,5 @@
     font-size: var(--admin-text-body-size);
     line-height: var(--admin-text-body-leading);
     color: var(--admin-body);
-  }
-
-  .footer-danger {
-    margin-right: auto;
   }
 </style>

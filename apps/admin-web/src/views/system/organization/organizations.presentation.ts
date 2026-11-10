@@ -1,7 +1,9 @@
 import { h } from 'vue';
-import { NButton, NDropdown, NTag, type DataTableColumns } from 'naive-ui';
+import type { DataTableColumns } from 'naive-ui';
 import type { Organization, OrganizationDecision } from '@refs-tools/contracts/organizations';
-import { iconPaths } from '@/components/admin-shell/icons';
+import { actionColumnWidth, rowAction, rowActions } from '@/components/admin-shell/row-actions';
+import { statusBadge } from '@/components/admin-shell/status-badge';
+import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 
 export const statusLabels: Record<Organization['status'], string> = {
   pending_review: '待审核',
@@ -52,61 +54,37 @@ export const actionDescriptions: Record<OrganizationDecision['action'], string> 
   unfreeze: '解冻后恢复正常运营，已撤销的角色和已结束的成员关系不会恢复。',
 };
 
-function iconSvg(name: keyof typeof iconPaths) {
-  return h('svg', {
-    width: 14,
-    height: 14,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    'stroke-width': 1.75,
-    'stroke-linecap': 'round',
-    'stroke-linejoin': 'round',
-    'aria-hidden': 'true',
-    innerHTML: iconPaths[name],
-  });
-}
+/**
+ * 状态语义：待审核待办黄、正常绿、冻结红、驳回与解散为终态虚线。
+ * 颜色之外始终保留文字，同一列表内不同状态颜色与样式均不同（FS-0010 v2 §6.4）。
+ */
+const statusTone: Record<Organization['status'], { tone: BadgeTone; variant?: BadgeVariant }> = {
+  pending_review: { tone: 'warning' },
+  active: { tone: 'success' },
+  frozen: { tone: 'danger' },
+  rejected: { tone: 'danger', variant: 'outline' },
+  dissolved: { tone: 'neutral', variant: 'outline' },
+};
 
-function rowIconButton(label: string, icon: keyof typeof iconPaths, onClick: () => void, disabled = false) {
-  return h(
-    NButton,
-    {
-      size: 'small',
-      quaternary: true,
-      circle: true,
-      disabled,
-      'aria-label': label,
-      title: label,
-      class: 'admin-row-action',
-      onClick: (event: MouseEvent) => {
-        event.stopPropagation();
-        onClick();
-      },
-    },
-    { default: () => iconSvg(icon) }
-  );
-}
-
-function statusTone(status: Organization['status']): 'success' | 'warning' | 'neutral' {
-  if (status === 'active') return 'success';
-  if (status === 'pending_review') return 'warning';
-  return 'neutral';
+export interface OrganizationColumnOptions {
+  open: (id: string) => void;
+  members?: (organization: Organization) => void;
+  transfer?: (organization: Organization) => void;
+  /** 触屏 / 窄屏：行内操作与列宽退化为纯图标。 */
+  compact: boolean;
 }
 
 /**
  * 列表仅显示组织摘要；实名与联系方式只在详情中读取。
  * 移交所有权入口只对 active / frozen 显示：待审核、已驳回、已解散的组织服务端也会拒绝。
  */
-export function organizationColumns(
-  open: (id: string) => void,
-  members?: (organization: Organization) => void,
-  transfer?: (organization: Organization) => void
-): DataTableColumns<Organization> {
+export function organizationColumns(options: OrganizationColumnOptions): DataTableColumns<Organization> {
+  const { open, members, transfer, compact } = options;
   return [
     {
       title: '组织名称',
       key: 'name',
-      width: 230,
+      width: 220,
       ellipsis: { tooltip: true },
       render: (row) =>
         h(
@@ -123,53 +101,36 @@ export function organizationColumns(
         ),
     },
     { title: '地区', key: 'region', width: 130, render: (row) => row.region || '未填写' },
-    { title: '用途', key: 'purpose', width: 230, ellipsis: { tooltip: true }, render: (row) => row.purpose || '未填写' },
+    { title: '用途', key: 'purpose', width: 210, ellipsis: { tooltip: true }, render: (row) => row.purpose || '未填写' },
     {
       title: '状态',
       key: 'status',
-      width: 110,
-      render: (row) =>
-        h(NTag, { bordered: false, size: 'medium', type: 'default', class: `admin-tag-${statusTone(row.status)}` }, () =>
-          statusLabels[row.status]
-        ),
+      width: 112,
+      render: (row) => {
+        const state = statusTone[row.status];
+        return statusBadge(statusLabels[row.status], state.tone, state.variant);
+      },
     },
     {
       title: '创建时间',
       key: 'createdAt',
-      width: 180,
+      width: 172,
       className: 'admin-col-meta',
       render: (row) => h('span', { class: 'admin-cell-mono' }, new Date(row.createdAt).toLocaleString()),
     },
     {
       title: '操作',
       key: 'actions',
-      width: 120,
+      width: actionColumnWidth(['详情', '成员', '移交'], compact),
       fixed: 'right',
       align: 'right',
       render: (row) => {
-        const canTransfer = transfer && (row.status === 'active' || row.status === 'frozen');
-        return h('div', { class: 'admin-row-actions' }, [
-          rowIconButton('查看 / 管理', 'eye', () => open(row.id)),
-          members ? rowIconButton('成员管理', 'users', () => members(row)) : null,
+        const canTransfer = !!transfer && (row.status === 'active' || row.status === 'frozen');
+        return rowActions([
+          rowAction({ label: '详情', icon: 'eye', onClick: () => open(row.id) }),
+          members ? rowAction({ label: '成员', icon: 'users', onClick: () => members(row) }) : null,
           canTransfer
-            ? h(
-                NDropdown,
-                {
-                  trigger: 'click',
-                  placement: 'bottom-end',
-                  options: [
-                    { label: '查看 / 管理', key: 'detail' },
-                    { label: '成员管理', key: 'members', disabled: !members },
-                    { label: '移交所有权', key: 'transfer', disabled: !canTransfer },
-                  ],
-                  onSelect: (key: string) => {
-                    if (key === 'detail') open(row.id);
-                    else if (key === 'members') members?.(row);
-                    else if (key === 'transfer') transfer?.(row);
-                  },
-                },
-                { default: () => rowIconButton('更多操作', 'more', () => {}) }
-              )
+            ? rowAction({ label: '移交', icon: 'key', onClick: () => transfer?.(row) })
             : null,
         ]);
       },

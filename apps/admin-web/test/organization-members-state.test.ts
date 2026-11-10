@@ -17,12 +17,14 @@ describe('组织成员页面状态', () => {
     expect(f.state.organization.value?.id).toBe('other'); expect(f.state.memberTotal.value).toBe(0);
     f.state.userId.value = 'private'; f.state.close(); expect(f.state.userId.value).toBe('');
   });
-  it('只读、离线、未就绪时不能邀请；失败保留输入', async () => {
+  it('只读、离线、未就绪或未选人时不能邀请；失败保留输入', async () => {
     const f = fixture(); await f.state.open(f.org);
-    f.state.userId.value = '12345678-1234-1234-1234-123456789012';
     f.state.canManage.value = false; await f.state.invite(); expect(f.api.invite).not.toHaveBeenCalled();
     f.state.canManage.value = true; f.state.online.value = false; await f.state.invite(); expect(f.api.invite).not.toHaveBeenCalled();
-    f.state.online.value = true; f.api.invite.mockRejectedValueOnce(new OrganizationMembersApiError('INVALID_MEMBER', 422));
+    f.state.online.value = true; f.state.validDays.value = 7; await f.state.invite();
+    expect(f.api.invite).not.toHaveBeenCalled(); expect(f.state.error.value).toContain('选择');
+    f.state.userId.value = 'picked-user';
+    f.api.invite.mockRejectedValueOnce(new OrganizationMembersApiError('INVALID_MEMBER', 422));
     await f.state.invite(); expect(f.state.userId.value).not.toBe(''); expect(f.state.error.value).toContain('有效');
     await f.state.invite(); expect(f.state.userId.value).toBe(''); expect(f.state.notice.value).toContain('等待');
   });
@@ -36,7 +38,7 @@ describe('组织成员页面状态', () => {
     f.state.requestConfirm(); expect(f.state.confirming.value).toBe(false);
   });
   it('提交互斥且提交期间不能关闭；读取失败不会当作空列表成功', async () => {
-    const f = fixture(); await f.state.open(f.org); f.state.userId.value = '12345678-1234-1234-1234-123456789012';
+    const f = fixture(); await f.state.open(f.org); f.state.userId.value = 'picked-user';
     let resolve!: () => void; f.api.invite.mockImplementationOnce(() => new Promise<void>(r => { resolve = r; }));
     const first = f.state.invite(); await f.state.invite(); f.state.close();
     expect(f.api.invite).toHaveBeenCalledTimes(1); expect(f.state.organization.value).not.toBeNull();

@@ -13,7 +13,8 @@
     CertificationHistory,
     CertificationReviewSummary,
   } from '@refs-tools/contracts/certifications';
-  import { decisionLabels, decisionOptions, levelLabels, statusLabels } from '../certifications.presentation';
+  import { decisionLabels, decisionOptions, levelLabels, statusLabels, statusTones } from '../certifications.presentation';
+  import AdminBadge from '@/components/admin-shell/AdminBadge.vue';
   import CertificationEvidence from './CertificationEvidence.vue';
   import CertificationHistoryList from './CertificationHistoryList.vue';
 
@@ -62,8 +63,10 @@
       <h2 tabindex="-1" class="record-title">{{ applicant.legalName || '未填写实名' }} · {{ applicant.nickname }}</h2>
       <p class="record-meta">账号 {{ record.subjectUserId }} · 版本 {{ record.version }}</p>
       <p class="record-status">
-        {{ statusLabels[record.status] }}
-        <template v-if="record.effectiveStatus !== record.status"> · 当前效力：{{ statusLabels[record.effectiveStatus] }}</template>
+        <AdminBadge v-bind="statusTones[record.status]">{{ statusLabels[record.status] }}</AdminBadge>
+        <template v-if="record.effectiveStatus !== record.status">
+          当前效力：<AdminBadge v-bind="statusTones[record.effectiveStatus]">{{ statusLabels[record.effectiveStatus] }}</AdminBadge>
+        </template>
       </p>
       <p v-if="record.reviewNote" class="record-note">原决定理由：{{ record.reviewNote }}</p>
     </header>
@@ -143,10 +146,14 @@
   }
 
   .record-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--admin-space-sm);
     font-size: var(--admin-text-body-size);
     line-height: var(--admin-text-body-leading);
     font-weight: var(--admin-text-body-strong-weight);
-    color: var(--admin-ink);
+    color: var(--admin-body);
   }
 
   .record-note,

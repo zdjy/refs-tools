@@ -190,6 +190,13 @@ describe.skipIf(!process.env['TEST_DATABASE_URL'])('用户视角组织 PostgreSQ
     const byEmail = await candidates.search(seed.ids.owner, seed.ids.orgA, { keyword: `${seed.ids.outsider}@example.com` })
     expect(byEmail.items).toEqual([expect.objectContaining({ userId: seed.ids.outsider, tag: seed.ids.outsider.slice(-4), relation: 'none' })])
     expect((await candidates.search(seed.ids.owner, seed.ids.orgA, { keyword: seed.ids.outsider.slice(0, 8) })).items).toEqual([])
+    // 实名只参与匹配：可按实名找到账号，但响应与审计都不回显实名。
+    const realName = randomUUID()
+    await db.pool.query("INSERT INTO users(id,email,display_name,email_verified_at) VALUES($1,$2,'昵称无实名',now())", [realName, `${realName}@example.com`])
+    await db.pool.query("INSERT INTO referee_profiles(user_id,legal_name) VALUES($1,'王五')", [realName])
+    const byRealName = await candidates.search(seed.ids.owner, seed.ids.orgA, { keyword: '王五' })
+    expect(byRealName.items).toEqual([expect.objectContaining({ userId: realName, relation: 'none' })])
+    expect(JSON.stringify(byRealName)).not.toContain('王五')
     await expect(candidates.search(seed.ids.actor, seed.ids.orgA, { keyword: '裁判' })).rejects.toMatchObject({ statusCode: 404 })
   })
   it('审计写入失败会回滚成员码兑换和新成员关系', async () => {
