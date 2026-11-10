@@ -2,6 +2,7 @@ import { h } from 'vue';
 import type { DataTableColumns } from 'naive-ui';
 import type { PlatformInvite } from '@refs-tools/contracts/platform-invites';
 import { actionColumnWidth, rowConfirm, rowActions } from '@/components/admin-shell/row-actions';
+import type { AdminRecordCard } from '@/components/admin-shell/record-card';
 import { statusBadge } from '@/components/admin-shell/status-badge';
 import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 
@@ -62,4 +63,41 @@ export function inviteColumns(
           : h('span', { class: 'admin-cell-meta' }, '—'),
     },
   ];
+}
+
+const badgeOf = (value: PlatformInvite['status']) => ({ label: labels[value], ...tones[value] });
+
+/** 窄屏卡片：末 4 位 + 状态标签 + 创建/过期/使用情况 + 撤销（仅可使用）。 */
+export function inviteCards(
+  rows: PlatformInvite[],
+  enabled: () => boolean,
+  revoke: (invite: PlatformInvite) => void
+): AdminRecordCard[] {
+  return rows.map((row) => ({
+    key: row.id,
+    title: `邀请码 …${row.hint}`,
+    badges: [badgeOf(row.status)],
+    fields: [
+      { label: '创建时间', value: date(row.createdAt) },
+      { label: '过期时间', value: date(row.expiresAt) },
+      {
+        label: '使用情况',
+        value: row.usedAt && row.usedOrganizationId
+          ? `${date(row.usedAt)} · 组织 ${row.usedOrganizationId.slice(0, 8)}`
+          : '未使用',
+      },
+    ],
+    actions:
+      row.status === 'active'
+        ? [{
+            kind: 'confirm' as const,
+            icon: 'ban' as const,
+            label: '撤销',
+            message: `撤销以「${row.hint}」结尾的邀请码后立即失效，已创建的组织不受影响。`,
+            confirmLabel: '确认撤销',
+            disabled: !enabled(),
+            onConfirm: () => revoke(row),
+          }]
+        : [],
+  }));
 }

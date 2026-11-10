@@ -5,7 +5,7 @@
   import UiLoadingHint from '../../../components/ui/UiLoadingHint.vue';
   import FileDetail from './components/FileDetail.vue';
   import FileDeleteDialog from './components/FileDeleteDialog.vue';
-  import { fileColumns, purposeOptions, statusOptions } from './files.presentation';
+  import { fileCards, fileColumns, purposeOptions, statusOptions } from './files.presentation';
   import { useFiles } from './useFiles';
   import AdminPage from '@/components/admin-shell/AdminPage.vue';
   import AdminFilterBar from '@/components/admin-shell/AdminFilterBar.vue';
@@ -25,9 +25,9 @@
 
   useUiFeedback(notice, 'info');
   const compact = useCompactViewport();
-  const columns = computed(() =>
-    fileColumns({ open, remove: askRemove, compact: compact.value, busy: busy.value })
-  );
+  const listOptions = computed(() => ({ open, remove: askRemove, compact: compact.value, busy: busy.value }));
+  const columns = computed(() => fileColumns(listOptions.value));
+  const cards = computed(() => fileCards(items.value, listOptions.value));
 
   function startDownload() {
     void download((url) => {
@@ -99,6 +99,7 @@
 
     <AdminDataTable
       :columns="columns"
+      :cards="cards"
       :data="items"
       :loading="loading"
       :row-key="(row) => row.id"

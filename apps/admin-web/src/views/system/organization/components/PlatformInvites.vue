@@ -8,7 +8,7 @@
   import type { PlatformInvite } from '@refs-tools/contracts/platform-invites';
   import { useUiFeedback } from '../../../../components/ui/useUiFeedback';
   import { usePlatformInvites } from '../usePlatformInvites';
-  import { inviteColumns } from '../platform-invites.presentation';
+  import { inviteCards, inviteColumns } from '../platform-invites.presentation';
   import PlatformInviteReveal from './PlatformInviteReveal.vue';
   import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
   import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
@@ -26,6 +26,7 @@
   const compact = useCompactViewport();
   const enabled = computed(() => ready.value && online.value && !busy.value && !loading.value);
   const columns = computed(() => inviteColumns(() => enabled.value, confirmRevoke, compact.value));
+  const cardList = computed(() => inviteCards(items.value, () => enabled.value, confirmRevoke));
 
   /** 行内确认即最终确认：登记目标后立即执行撤销。 */
   function confirmRevoke(invite: PlatformInvite) {
@@ -80,6 +81,7 @@
 
       <AdminDataTable
         :columns="columns"
+        :cards="cardList"
         :data="items"
         :loading="loading"
         :row-key="(row: any) => row.id"

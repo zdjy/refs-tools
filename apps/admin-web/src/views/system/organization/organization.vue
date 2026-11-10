@@ -3,7 +3,7 @@
   import { NButton, NInput, NSelect } from 'naive-ui';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
   import { useOrganizations } from './useOrganizations';
-  import { actionDescriptions, actionLabels, actionTypes, statusOptions, organizationColumns } from './organizations.presentation';
+  import { actionDescriptions, actionLabels, actionTypes, statusOptions, organizationCards, organizationColumns } from './organizations.presentation';
   import OrganizationCreateForm from './components/OrganizationCreateForm.vue';
   import OrganizationDetail from './components/OrganizationDetail.vue';
   import OrganizationMembers from './components/OrganizationMembers.vue';
@@ -38,9 +38,9 @@
     if (detail) await transferPanel.value?.open(detail);
   }
 
-  const columns = computed(() =>
-    organizationColumns({ open, members: (o) => void memberPanel.value?.open(o), transfer: startTransfer, compact: compact.value })
-  );
+  const listOptions = computed(() => ({ open, members: (o: { id: string }) => void memberPanel.value?.open(o as never), transfer: startTransfer, compact: compact.value }));
+  const columns = computed(() => organizationColumns(listOptions.value));
+  const cards = computed(() => organizationCards(items.value, listOptions.value));
 
   function updateForm(value: typeof form) {
     Object.assign(form, value);
@@ -103,6 +103,7 @@
 
     <AdminDataTable
       :columns="columns"
+      :cards="cards"
       :data="items"
       :loading="loading"
       :row-key="(row) => row.id"

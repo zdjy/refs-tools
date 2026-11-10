@@ -1,7 +1,8 @@
 import { h } from 'vue';
 import type { DataTableColumns } from 'naive-ui';
 import type { AdminMedia } from '@refs-tools/contracts/admin-media';
-import { actionColumnWidth, rowAction, rowActions } from '@/components/admin-shell/row-actions';
+import { actionColumnWidth, actionNode, rowActions } from '@/components/admin-shell/row-actions';
+import type { AdminRecordCard, RecordAction } from '@/components/admin-shell/record-card';
 import { statusBadge } from '@/components/admin-shell/status-badge';
 import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 
@@ -72,13 +73,29 @@ export interface FileColumnOptions {
   open: (id: string) => void;
   /** 删除需填写理由，因此进入独立的删除弹窗，不再放进详情弹窗。 */
   remove: (media: AdminMedia) => void;
+  /** 触屏 / 窄屏：列宽按纯图标取值，列表改用卡片。 */
   compact: boolean;
   busy: boolean;
 }
 
+/** 行内动作：详情 / 删除（留存证据禁用）。表格与窄屏卡片共用这份描述。 */
+function fileActions(row: AdminMedia, options: FileColumnOptions): RecordAction[] {
+  return [
+    { kind: 'action', label: '详情', icon: 'eye', onClick: () => options.open(row.id) },
+    {
+      kind: 'action',
+      label: '删除',
+      icon: 'trash',
+      danger: true,
+      disabled: options.busy || retained(row),
+      onClick: () => options.remove(row),
+    },
+  ];
+}
+
 /** 表格渲染与组件库类型仅留在表现层。 */
 export function fileColumns(options: FileColumnOptions): DataTableColumns<AdminMedia> {
-  const { open, remove, compact, busy } = options;
+  const { open, compact } = options;
   return [
     {
       title: '文件名',
@@ -129,17 +146,25 @@ export function fileColumns(options: FileColumnOptions): DataTableColumns<AdminM
       width: actionColumnWidth(['详情', '删除'], compact),
       fixed: 'right',
       align: 'right',
-      render: (row) =>
-        rowActions([
-          rowAction({ label: '详情', icon: 'eye', onClick: () => open(row.id) }),
-          rowAction({
-            label: '删除',
-            icon: 'trash',
-            danger: true,
-            disabled: busy || retained(row),
-            onClick: () => remove(row),
-          }),
-        ]),
+      render: (row) => rowActions(fileActions(row, options).map(actionNode)),
     },
   ];
+}
+
+/** 窄屏卡片：状态标签 + 具名字段（用途 / 类型 / 大小 / 所属用户 / 创建时间），操作常显。 */
+export function fileCards(rows: AdminMedia[], options: FileColumnOptions): AdminRecordCard[] {
+  return rows.map((row) => ({
+    key: row.id,
+    title: row.fileName ?? '未命名文件',
+    onOpen: () => options.open(row.id),
+    badges: [{ label: statusLabel(row.status), ...statusTones[row.status] }],
+    fields: [
+      { label: '用途', value: purposeLabel(row.purpose) },
+      { label: '类型', value: row.contentType },
+      { label: '大小', value: formatBytes(row.verifiedSizeBytes ?? row.expectedSizeBytes) },
+      { label: '所属用户', value: ownerLabel(row) },
+      { label: '创建时间', value: formatTime(row.createdAt) },
+    ],
+    actions: fileActions(row, options),
+  }));
 }

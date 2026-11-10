@@ -182,7 +182,8 @@ ol {
   font-variant-numeric: tabular-nums;
 }
 
-// 行内操作按钮：PC 显示图标 + 文字，触屏/窄屏只保留图标（节省列宽，命中区仍 44px）。
+// 行内操作按钮：PC 只显示图标（操作名称走 title 悬浮提示），
+// 触屏/窄屏没有 hover，改为显示图标 + 文字并保留 44px 命中区。
 .admin-row-actions {
   display: flex;
   align-items: center;
@@ -202,7 +203,7 @@ ol {
 
 .admin-row-action-button {
   --n-height: 24px !important;
-  --n-padding: 0 6px !important;
+  --n-padding: 0 5px !important;
   --n-border-radius: var(--admin-radius-sm) !important;
 }
 
@@ -217,6 +218,7 @@ ol {
 }
 
 .admin-row-action-label {
+  display: none;
   font-size: var(--admin-text-meta-size);
   line-height: var(--admin-text-meta-leading);
   white-space: nowrap;
@@ -228,15 +230,14 @@ ol {
     opacity: 1;
   }
 
-  // 窄屏只保留图标，文字由 aria-label 承担可访问名称。
+  // 触屏无法悬停，改为常显文字：可访问名称仍由 aria-label 提供。
   .admin-row-action-label {
-    display: none;
+    display: inline;
   }
 
   .admin-row-action-button {
     --n-height: 44px !important;
-    --n-width: 44px !important;
-    --n-padding: 0 !important;
+    --n-padding: 0 10px !important;
   }
 }
 

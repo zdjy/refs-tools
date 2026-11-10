@@ -4,7 +4,7 @@
   import { useUserStore } from '@/store/modules/user';
   import { useUiFeedback } from '../../../components/ui/useUiFeedback';
   import { useUsers } from './useUsers';
-  import { statusOptions, userColumns } from './users.presentation';
+  import { statusOptions, userCards, userColumns } from './users.presentation';
   import UserDialog from './components/UserDialog.vue';
   import AdminPage from '@/components/admin-shell/AdminPage.vue';
   import AdminFilterBar from '@/components/admin-shell/AdminFilterBar.vue';
@@ -44,9 +44,9 @@
 
   useUiFeedback(notice);
 
-  const columns = computed(() =>
-    userColumns({ open, remove, actorId: actor.info.id, compact: compact.value, busy: busy.value })
-  );
+  const listOptions = computed(() => ({ open, remove, actorId: actor.info.id, compact: compact.value, busy: busy.value }));
+  const columns = computed(() => userColumns(listOptions.value));
+  const cards = computed(() => userCards(items.value, listOptions.value));
 
   function updateForm(value: typeof form) {
     Object.assign(form, value);
@@ -115,6 +115,7 @@
 
     <AdminDataTable
       :columns="columns"
+      :cards="cards"
       :data="items"
       :loading="loading"
       :row-key="(row) => row.id"

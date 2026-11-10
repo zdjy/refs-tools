@@ -9,7 +9,7 @@
   import { useUiFeedback } from '../../../../components/ui/useUiFeedback';
   import { useUserStore } from '../../../../store/modules/user';
   import { useOrganizationMembers } from '../useOrganizationMembers';
-  import { invitationColumns, memberActionLabels, memberColumns } from '../members.presentation';
+  import { invitationCards, invitationColumns, memberActionLabels, memberCards, memberColumns } from '../members.presentation';
   import InviteCandidateSelect from './InviteCandidateSelect.vue';
   import AdminDialogShell from '@/components/admin-shell/AdminDialogShell.vue';
   import AdminDataTable from '@/components/admin-shell/AdminDataTable.vue';
@@ -30,10 +30,11 @@
 
   const compact = useCompactViewport();
   const enabled = computed(() => ready.value && canManage.value && online.value && !busy.value && !loading.value);
-  const ownerId = () => organization.value?.ownerUserId ?? '';
-  const actorId = () => user.info.id ?? '';
+  const ownerId = () => organization.value?.ownerUserId ?? '', actorId = () => user.info.id ?? '';
   const memberTable = computed(() => memberColumns(() => enabled.value, select, ownerId, actorId, compact.value));
   const invitationTable = computed(() => invitationColumns(() => enabled.value, select, compact.value));
+  const memberCardList = computed(() => memberCards(members.value, () => enabled.value, select, ownerId, actorId));
+  const invitationCardList = computed(() => invitationCards(invitations.value, () => enabled.value, select));
 
   function reload() {
     action.value = null;
@@ -100,6 +101,7 @@
         <NTabPane name="members" :tab="`成员与入会申请（${memberTotal}）`">
           <AdminDataTable
             :columns="memberTable"
+            :cards="memberCardList"
             :data="members"
             :loading="loading"
             :row-key="(row: any) => row.id"
@@ -120,6 +122,7 @@
         <NTabPane name="invitations" :tab="`定向邀请（${inviteTotal}）`">
           <AdminDataTable
             :columns="invitationTable"
+            :cards="invitationCardList"
             :data="invitations"
             :loading="loading"
             :row-key="(row: any) => row.id"

@@ -1,7 +1,8 @@
 import { h } from 'vue';
 import type { DataTableColumns } from 'naive-ui';
 import type { Membership, OrganizationInvitation } from '@refs-tools/contracts/organization-members';
-import { actionColumnWidth, rowConfirm, rowActions } from '@/components/admin-shell/row-actions';
+import { actionColumnWidth, actionNode, rowActions } from '@/components/admin-shell/row-actions';
+import type { AdminRecordCard, RecordAction } from '@/components/admin-shell/record-card';
 import { statusBadge } from '@/components/admin-shell/status-badge';
 import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 import type { MemberAction } from './useOrganizationMembers';
@@ -47,18 +48,34 @@ const status = (value: string) => {
 };
 const date = (value: string) => new Date(value).toLocaleString('zh-CN', { hour12: false });
 
-/** 行内动作：PC 图标 + 文字，触屏/窄屏纯图标，破坏性动作就地确认（FS-0010 v2 §5.1、§5.2）。 */
-function actionCell(kind: MemberAction['kind'], enabled: () => boolean, select: (value: MemberAction) => void, row: { id: string; version: number; name: string }) {
+/**
+ * 行内动作描述：表格（图标 + 悬浮提示）与窄屏卡片（图标 + 文字）共用；
+ * 破坏性动作就地确认，批准类用主色确认按钮（FS-0034 §3）。
+ */
+function actionSpec(
+  kind: MemberAction['kind'],
+  enabled: () => boolean,
+  select: (value: MemberAction) => void,
+  row: { id: string; version: number; name: string }
+): RecordAction {
   const hint = actionHints[kind];
-  return rowConfirm({
+  return {
+    kind: 'confirm',
     icon: hint.icon,
     label: memberActionLabels[kind],
     message: hint.message,
     confirmLabel: memberActionLabels[kind],
+    tone: hint.tone,
     disabled: !enabled(),
-    danger: hint.tone === 'danger',
     onConfirm: () => select({ kind, id: row.id, version: row.version, name: row.name }),
-  });
+  };
+}
+
+/** 按状态机投影可执行动作，不承担服务端授权。 */
+function actionKinds(row: { status: string; userId: string }, ownerId: string, actorId: string): MemberAction['kind'][] {
+  if (row.status === 'pending') return ['approve', 'reject'];
+  if (row.status === 'active' && row.userId !== ownerId && row.userId !== actorId) return ['remove'];
+  return [];
 }
 
 /** 表格仅适配表现层；操作能力与可写状态由服务端及页面状态提供。 */
@@ -71,7 +88,8 @@ export function memberColumns(
 ): DataTableColumns<Membership> {
   return [
     { title: '成员', key: 'displayName', minWidth: 120 },
-    { title: '用户 ID', key: 'userId', minWidth: 260, render: (row) => h('span', { class: 'admin-cell-mono' }, row.userId) },
+    // 720px 弹窗内要放下全部列：用户 ID 收窄并省略，完整值用 tooltip 查看。
+    { title: '用户 ID', key: 'userId', minWidth: 220, ellipsis: { tooltip: true }, render: (row) => h('span', { class: 'admin-cell-mono' }, row.userId) },
     { title: '状态', key: 'status', width: 104, render: (row) => status(row.status) },
     { title: '加入 / 申请时间', key: 'createdAt', width: 168, render: (row) => date(row.createdAt) },
     {
@@ -79,17 +97,12 @@ export function memberColumns(
       key: 'actions',
       width: actionColumnWidth([memberActionLabels.approve, memberActionLabels.reject], compact),
       align: 'right',
-      render: (row) => {
-        const kinds: MemberAction['kind'][] =
-          row.status === 'pending'
-            ? ['approve', 'reject']
-            : row.status === 'active' && row.userId !== ownerId() && row.userId !== actorId()
-              ? ['remove']
-              : [];
-        return rowActions(
-          kinds.map((kind) => actionCell(kind, enabled, select, { id: row.id, version: row.version, name: row.displayName }))
-        );
-      },
+      render: (row) =>
+        rowActions(
+          actionKinds(row, ownerId(), actorId()).map((kind) =>
+            actionNode(actionSpec(kind, enabled, select, { id: row.id, version: row.version, name: row.displayName }))
+          )
+        ),
     },
   ];
 }
@@ -102,7 +115,8 @@ export function invitationColumns(
 ): DataTableColumns<OrganizationInvitation> {
   return [
     { title: '受邀人', key: 'displayName', minWidth: 120 },
-    { title: '用户 ID', key: 'userId', minWidth: 260, render: (row) => h('span', { class: 'admin-cell-mono' }, row.userId) },
+    // 720px 弹窗内要放下全部列：用户 ID 收窄并省略，完整值用 tooltip 查看。
+    { title: '用户 ID', key: 'userId', minWidth: 220, ellipsis: { tooltip: true }, render: (row) => h('span', { class: 'admin-cell-mono' }, row.userId) },
     { title: '状态', key: 'status', width: 104, render: (row) => status(row.status) },
     { title: '过期时间', key: 'expiresAt', width: 168, render: (row) => date(row.expiresAt) },
     {
@@ -112,8 +126,49 @@ export function invitationColumns(
       align: 'right',
       render: (row) =>
         row.status === 'pending'
-          ? rowActions([actionCell('revoke', enabled, select, { id: row.id, version: row.version, name: row.displayName })])
+          ? rowActions([
+              actionNode(actionSpec('revoke', enabled, select, { id: row.id, version: row.version, name: row.displayName })),
+            ])
           : h('span', { class: 'admin-cell-meta' }, '—'),
     },
   ];
+}
+
+const badgeOf = (value: string) => ({ label: labels[value] ?? value, ...(tones[value] ?? { tone: 'neutral' as const }) });
+
+/** 窄屏卡片：成员名 + 状态标签 + 申请/加入时间 + 动作；用户 ID 等技术字段留在详情。 */
+export function memberCards(
+  rows: Membership[],
+  enabled: () => boolean,
+  select: (value: MemberAction) => void,
+  ownerId: () => string,
+  actorId: () => string
+): AdminRecordCard[] {
+  return rows.map((row) => ({
+    key: row.id,
+    title: row.displayName,
+    badges: [badgeOf(row.status)],
+    fields: [{ label: row.status === 'pending' ? '申请时间' : '加入时间', value: date(row.createdAt) }],
+    actions: actionKinds(row, ownerId(), actorId()).map((kind) =>
+      actionSpec(kind, enabled, select, { id: row.id, version: row.version, name: row.displayName })
+    ),
+  }));
+}
+
+/** 窄屏卡片：受邀人 + 状态标签 + 过期时间 + 撤销（仅待回应）。 */
+export function invitationCards(
+  rows: OrganizationInvitation[],
+  enabled: () => boolean,
+  select: (value: MemberAction) => void
+): AdminRecordCard[] {
+  return rows.map((row) => ({
+    key: row.id,
+    title: row.displayName,
+    badges: [badgeOf(row.status)],
+    fields: [{ label: '过期时间', value: date(row.expiresAt) }],
+    actions:
+      row.status === 'pending'
+        ? [actionSpec('revoke', enabled, select, { id: row.id, version: row.version, name: row.displayName })]
+        : [],
+  }));
 }

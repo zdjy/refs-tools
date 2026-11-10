@@ -1,7 +1,8 @@
 import { h } from 'vue';
 import type { DataTableColumns } from 'naive-ui';
 import type { Organization, OrganizationDecision } from '@refs-tools/contracts/organizations';
-import { actionColumnWidth, rowAction, rowActions } from '@/components/admin-shell/row-actions';
+import { actionColumnWidth, actionNode, rowActions } from '@/components/admin-shell/row-actions';
+import type { AdminRecordCard, RecordAction } from '@/components/admin-shell/record-card';
 import { statusBadge } from '@/components/admin-shell/status-badge';
 import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 
@@ -58,20 +59,35 @@ export const actionDescriptions: Record<OrganizationDecision['action'], string> 
  * 状态语义：待审核待办黄、正常绿、冻结红、驳回与解散为终态虚线。
  * 颜色之外始终保留文字，同一列表内不同状态颜色与样式均不同（FS-0010 v2 §6.4）。
  */
-const statusTone: Record<Organization['status'], { tone: BadgeTone; variant?: BadgeVariant }> = {
-  pending_review: { tone: 'warning' },
-  active: { tone: 'success' },
-  frozen: { tone: 'danger' },
-  rejected: { tone: 'danger', variant: 'outline' },
-  dissolved: { tone: 'neutral', variant: 'outline' },
+const statusTone: Record<Organization['status'], { label: string; tone: BadgeTone; variant?: BadgeVariant }> = {
+  pending_review: { label: statusLabels.pending_review, tone: 'warning' },
+  active: { label: statusLabels.active, tone: 'success' },
+  frozen: { label: statusLabels.frozen, tone: 'danger' },
+  rejected: { label: statusLabels.rejected, tone: 'danger', variant: 'outline' },
+  dissolved: { label: statusLabels.dissolved, tone: 'neutral', variant: 'outline' },
 };
 
 export interface OrganizationColumnOptions {
   open: (id: string) => void;
   members?: (organization: Organization) => void;
   transfer?: (organization: Organization) => void;
-  /** 触屏 / 窄屏：行内操作与列宽退化为纯图标。 */
+  /** 触屏 / 窄屏：列宽按纯图标取值，列表改用卡片。 */
   compact: boolean;
+}
+
+/**
+ * 行内动作：详情 / 成员 / 移交。移交只对 active、frozen 显示，
+ * 其他状态服务端也会拒绝。表格与窄屏卡片共用这份描述。
+ */
+function organizationActions(row: Organization, options: OrganizationColumnOptions): RecordAction[] {
+  const { open, members, transfer } = options;
+  const canTransfer = !!transfer && (row.status === 'active' || row.status === 'frozen');
+  const actions: RecordAction[] = [
+    { kind: 'action', label: '详情', icon: 'eye', onClick: () => open(row.id) },
+  ];
+  if (members) actions.push({ kind: 'action', label: '成员', icon: 'users', onClick: () => members(row) });
+  if (canTransfer) actions.push({ kind: 'action', label: '移交', icon: 'key', onClick: () => transfer?.(row) });
+  return actions;
 }
 
 /**
@@ -79,7 +95,7 @@ export interface OrganizationColumnOptions {
  * 移交所有权入口只对 active / frozen 显示：待审核、已驳回、已解散的组织服务端也会拒绝。
  */
 export function organizationColumns(options: OrganizationColumnOptions): DataTableColumns<Organization> {
-  const { open, members, transfer, compact } = options;
+  const { open, compact } = options;
   return [
     {
       title: '组织名称',
@@ -108,7 +124,7 @@ export function organizationColumns(options: OrganizationColumnOptions): DataTab
       width: 112,
       render: (row) => {
         const state = statusTone[row.status];
-        return statusBadge(statusLabels[row.status], state.tone, state.variant);
+        return statusBadge(state.label, state.tone, state.variant);
       },
     },
     {
@@ -124,16 +140,23 @@ export function organizationColumns(options: OrganizationColumnOptions): DataTab
       width: actionColumnWidth(['详情', '成员', '移交'], compact),
       fixed: 'right',
       align: 'right',
-      render: (row) => {
-        const canTransfer = !!transfer && (row.status === 'active' || row.status === 'frozen');
-        return rowActions([
-          rowAction({ label: '详情', icon: 'eye', onClick: () => open(row.id) }),
-          members ? rowAction({ label: '成员', icon: 'users', onClick: () => members(row) }) : null,
-          canTransfer
-            ? rowAction({ label: '移交', icon: 'key', onClick: () => transfer?.(row) })
-            : null,
-        ]);
-      },
+      render: (row) => rowActions(organizationActions(row, options).map(actionNode)),
     },
   ];
+}
+
+/** 窄屏卡片：状态标签 + 具名字段（地区 / 用途 / 创建时间），操作常显。 */
+export function organizationCards(rows: Organization[], options: OrganizationColumnOptions): AdminRecordCard[] {
+  return rows.map((row) => ({
+    key: row.id,
+    title: row.name,
+    onOpen: () => options.open(row.id),
+    badges: [statusTone[row.status]],
+    fields: [
+      { label: '地区', value: row.region || '未填写' },
+      { label: '用途', value: row.purpose || '未填写' },
+      { label: '创建时间', value: new Date(row.createdAt).toLocaleString() },
+    ],
+    actions: organizationActions(row, options),
+  }));
 }

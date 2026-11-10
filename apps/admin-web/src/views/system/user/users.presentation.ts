@@ -1,8 +1,9 @@
 import { h } from 'vue';
 import type { DataTableColumns } from 'naive-ui';
 import type { AdminUser } from '@refs-tools/contracts/admin-users';
-import { actionColumnWidth, rowAction, rowConfirm, rowActions } from '@/components/admin-shell/row-actions';
+import { actionColumnWidth, actionNode, rowActions } from '@/components/admin-shell/row-actions';
 import { statusBadge } from '@/components/admin-shell/status-badge';
+import type { RecordAction, AdminRecordCard } from '@/components/admin-shell/record-card';
 import type { BadgeTone, BadgeVariant } from '@/components/admin-shell/badge';
 
 export const roleLabels: Record<string, string> = {
@@ -23,15 +24,40 @@ const statusTone: Record<AdminUser['status'], { label: string; tone: BadgeTone; 
   disabled: { label: '已停用', tone: 'neutral' },
 };
 
+const roleText = (user: AdminUser) => user.roles.map((role) => roleLabels[role] ?? role).join('、') || '普通用户';
+const verifyBadge = (user: AdminUser) =>
+  user.emailVerified ? { label: '已验证', tone: 'neutral' as BadgeTone } : { label: '未验证', tone: 'warning' as BadgeTone };
+
 export interface UserColumnOptions {
   open: (user: AdminUser, mode: 'edit' | 'detail') => void;
   remove: (user: AdminUser) => void;
   /** 本人账号不允许删除：由调用方给出当前操作员 ID。 */
   actorId?: string;
-  /** 触屏 / 窄屏：行内操作与列宽退化为纯图标。 */
+  /** 触屏 / 窄屏：列宽按纯图标取值。 */
   compact: boolean;
   /** 删除进行中禁用入口，避免重复提交。 */
   busy: boolean;
+}
+
+/**
+ * 行内动作只描述语义，由表格（图标 + 悬浮提示）和窄屏卡片（图标 + 文字）各自渲染。
+ * 破坏性动作在原位就地确认，不进入编辑/查看弹窗。
+ */
+function userActions(row: AdminUser, options: UserColumnOptions): RecordAction[] {
+  const isSelf = row.id === options.actorId;
+  return [
+    { kind: 'action', label: '详情', icon: 'eye', onClick: () => options.open(row, 'detail') },
+    { kind: 'action', label: '编辑', icon: 'edit', disabled: isSelf, onClick: () => options.open(row, 'edit') },
+    {
+      kind: 'confirm',
+      label: '删除',
+      icon: 'trash',
+      disabled: isSelf || options.busy,
+      message: `删除「${row.displayName}」后将撤销全部会话，邮箱不释放，历史记录保留。`,
+      confirmLabel: '确认删除',
+      onConfirm: () => options.remove(row),
+    },
+  ];
 }
 
 /**
@@ -39,10 +65,9 @@ export interface UserColumnOptions {
  *
  * 主标识（显示名称）可点击进入详情，保证键盘用户有进入路径；
  * 行内操作在悬停或聚焦时显现，但始终保留在 Tab 顺序内。
- * 破坏性动作（删除）在行内就地确认，不放进编辑/查看弹窗。
  */
 export function userColumns(options: UserColumnOptions): DataTableColumns<AdminUser> {
-  const { open, remove, actorId, compact, busy } = options;
+  const { open, compact } = options;
   return [
     {
       title: '显示名称',
@@ -68,10 +93,10 @@ export function userColumns(options: UserColumnOptions): DataTableColumns<AdminU
       title: '邮箱验证',
       key: 'emailVerified',
       width: 104,
-      render: (row) =>
-        row.emailVerified
-          ? statusBadge('已验证', 'neutral')
-          : statusBadge('未验证', 'warning'),
+      render: (row) => {
+        const badge = verifyBadge(row);
+        return statusBadge(badge.label, badge.tone);
+      },
     },
     {
       title: '状态',
@@ -82,12 +107,7 @@ export function userColumns(options: UserColumnOptions): DataTableColumns<AdminU
         return statusBadge(state.label, state.tone, state.variant);
       },
     },
-    {
-      title: '当前平台角色',
-      key: 'roles',
-      width: 190,
-      render: (row) => row.roles.map((role) => roleLabels[role] ?? role).join('、') || '普通用户',
-    },
+    { title: '当前平台角色', key: 'roles', width: 190, render: roleText },
     {
       title: '创建时间',
       key: 'createdAt',
@@ -101,21 +121,23 @@ export function userColumns(options: UserColumnOptions): DataTableColumns<AdminU
       width: actionColumnWidth(['详情', '编辑', '删除'], compact),
       fixed: 'right',
       align: 'right',
-      render: (row) => {
-        const isSelf = row.id === actorId;
-        return rowActions([
-          rowAction({ label: '详情', icon: 'eye', onClick: () => open(row, 'detail') }),
-          rowAction({ label: '编辑', icon: 'edit', onClick: () => open(row, 'edit'), disabled: isSelf }),
-          rowConfirm({
-            label: '删除',
-            icon: 'trash',
-            disabled: isSelf || busy,
-            message: `删除「${row.displayName}」后将撤销全部会话，邮箱不释放，历史记录保留。`,
-            confirmLabel: '确认删除',
-            onConfirm: () => remove(row),
-          }),
-        ]);
-      },
+      render: (row) => rowActions(userActions(row, options).map(actionNode)),
     },
   ];
+}
+
+/** 窄屏卡片：状态标签 + 具名字段（邮箱 / 角色 / 创建时间），操作常显。 */
+export function userCards(rows: AdminUser[], options: UserColumnOptions): AdminRecordCard[] {
+  return rows.map((row) => ({
+    key: row.id,
+    title: row.displayName,
+    onOpen: () => options.open(row, 'detail'),
+    badges: [statusTone[row.status], verifyBadge(row)],
+    fields: [
+      { label: '邮箱', value: row.email },
+      { label: '平台角色', value: roleText(row) },
+      { label: '创建时间', value: new Date(row.createdAt).toLocaleString() },
+    ],
+    actions: userActions(row, options),
+  }));
 }

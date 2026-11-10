@@ -8,7 +8,7 @@
    * Esc 在捕获阶段拦下：先关气泡并把焦点交回触发按钮，不再继续冒泡去关掉底层弹窗。
    *
    * 触发形态 `variant`：`button` 文字按钮（弹窗页脚）、`icon` 纯图标（弹窗内行内动作）、
-   * `row` 表格行内动作（PC 图标 + 文字，触屏/窄屏只留图标）。
+   * `row` 表格行内动作（PC 只留图标 + 悬浮提示，触屏/窄屏显示图标 + 文字）。
    */
   import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
   import { NButton, NPopconfirm } from 'naive-ui';
@@ -113,6 +113,7 @@
           quaternary
           :disabled="disabled"
           :aria-label="label"
+          :title="label"
           :class="['admin-row-action-button', tone === 'danger' ? 'is-danger' : '']"
         >
           <AdminIcon v-if="icon" :name="icon" :size="14" />

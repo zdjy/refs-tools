@@ -3,6 +3,8 @@
    * 数据表格卡：surface 底 + 1px 边框 + 6px 圆角 + 粘性表头。
    *
    * 只负责密度、空态与加载呈现，列定义仍由页面通过 `columns` 传入。
+   * 触屏 / 窄屏下若传入 `cards`，改用卡片列表（`AdminRecordList`）：
+   * 没有 hover、也无法在窄视口里放下多列，卡片比横向滚动更好读（FS-0034 §3）。
    * 加载态沿用 `UiLoadingHint` 的慢速/超时协议，不新增第二套。
    */
   import { computed } from 'vue';
@@ -10,6 +12,9 @@
   import type { DataTableColumns } from 'naive-ui';
   import UiLoadingHint from '@/components/ui/UiLoadingHint.vue';
   import AdminIcon from './AdminIcon.vue';
+  import AdminRecordList from './AdminRecordList.vue';
+  import type { AdminRecordCard } from './record-card';
+  import { useCompactViewport } from './useCompactViewport';
 
   const props = withDefaults(
     defineProps<{
@@ -20,12 +25,15 @@
       emptyText?: string;
       emptyHint?: string;
       scrollX?: number;
+      /** 窄屏 / 触屏使用的卡片投影；不传则始终渲染表格。 */
+      cards?: AdminRecordCard[];
     }>(),
     {
       loading: false,
       emptyText: '暂无数据',
       emptyHint: undefined,
       scrollX: undefined,
+      cards: undefined,
     }
   );
   const emit = defineEmits<{ retry: []; 'row-click': [row: any] }>();
@@ -39,6 +47,9 @@
     tr?.querySelector<HTMLElement>('.admin-cell-link')?.focus();
     emit('row-click', row);
   }
+
+  const compact = useCompactViewport();
+  const showCards = computed(() => compact.value && !!props.cards);
 
   const rowHeight = computed(() => 'var(--admin-row-height)');
 
@@ -57,10 +68,17 @@
 </script>
 
 <template>
-  <div class="admin-table-card">
+  <div class="admin-table-card" :class="{ 'is-cards': showCards }">
     <UiLoadingHint :loading="loading" label="读取列表" @retry="emit('retry')" />
 
-    <div class="admin-table-scroll">
+    <AdminRecordList
+      v-if="showCards"
+      :cards="cards ?? []"
+      :empty-text="emptyText"
+      :empty-hint="emptyHint"
+    />
+
+    <div v-else class="admin-table-scroll">
       <NDataTable
         :columns="columns"
         :data="data"
@@ -103,6 +121,18 @@
     border-radius: var(--admin-radius-md);
     box-shadow: var(--admin-shadow);
     overflow: hidden;
+  }
+
+  /* 卡片形态：每张卡片自带表面与边框，外层壳不再重复画一层。 */
+  .admin-table-card.is-cards {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .admin-table-card.is-cards .admin-table-footer {
+    border-top: 0;
   }
 
   .admin-table-card :deep(.admin-table-scroll) {
